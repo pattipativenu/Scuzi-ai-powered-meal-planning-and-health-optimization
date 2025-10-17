@@ -30,11 +30,11 @@ export function AnimatedHeroSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* WHOOP Connect Section */}
         {!isConnected ? (
-          <div className="mb-8 flex justify-center">
+          <div className="mb-8 flex justify-start">
             <button
               onClick={connect}
               disabled={isLoading}
-              className="inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-full font-semibold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 bg-black text-white px-6 py-3 rounded-full font-semibold hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Activity className="w-5 h-5" />
               {isLoading ? "Connecting..." : "WHOOP CONNECT"}
@@ -54,9 +54,9 @@ export function AnimatedHeroSection() {
               <div className="overflow-hidden relative">
                 <div className="flex gap-8 animate-scroll-rtl">
                   {/* Triple the metrics for seamless loop */}
-                  {[...Array(3)].map((_, setIndex) => (
+                  {[...Array(3)].map((_, setIndex) =>
                     <div key={setIndex} className="flex gap-8 flex-shrink-0">
-                      {getMetricsDisplay().map((metric, idx) => (
+                      {getMetricsDisplay().map((metric, idx) =>
                         <div key={`${setIndex}-${idx}`} className="flex items-center gap-3 px-6 py-2 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg flex-shrink-0">
                           <div className="flex flex-col">
                             <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">
@@ -67,9 +67,9 @@ export function AnimatedHeroSection() {
                             </span>
                           </div>
                         </div>
-                      ))}
+                      )}
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>
@@ -97,16 +97,14 @@ export function AnimatedHeroSection() {
           {/* Right Side - Hero Image */}
           <div className="relative h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden rounded-3xl">
             {!imageError ?
-            <Image
-              src="https://scuziassests.s3.us-east-1.amazonaws.com/hero%20image.webp"
-              alt="Delicious meal prep"
-              fill
-              className="object-cover object-center"
-              onError={() => setImageError(true)}
-              unoptimized /> :
-
-
-            <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-100 rounded-3xl">
+              <Image
+                src="https://scuziassests.s3.us-east-1.amazonaws.com/hero%20image.webp"
+                alt="Delicious meal prep"
+                fill
+                className="object-cover object-center"
+                onError={() => setImageError(true)}
+                unoptimized /> :
+              <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-100 rounded-3xl">
                 <div className="text-center space-y-2">
                   <p className="font-semibold">Image not accessible</p>
                   <p className="text-sm">Check S3 bucket permissions and CORS</p>
