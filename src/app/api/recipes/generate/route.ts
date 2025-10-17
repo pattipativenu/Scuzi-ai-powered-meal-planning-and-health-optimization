@@ -54,10 +54,10 @@ Rules:
 - Always provide the nutrition table.
 - If meal type is unclear, infer it logically.
 
-Return ONLY valid JSON (no markdown, no code blocks).`;
+CRITICAL: Return ONLY valid JSON. No markdown, no code blocks, no comments, no trailing commas.`;
 
     const recipeCommand = new InvokeModelCommand({
-      modelId: "anthropic.claude-3-haiku-20240307",
+      modelId: "anthropic.claude-3-haiku-20240307-v1:0",
       contentType: "application/json",
       accept: "application/json",
       body: JSON.stringify({
@@ -78,8 +78,40 @@ Return ONLY valid JSON (no markdown, no code blocks).`;
     const recipeData = JSON.parse(new TextDecoder().decode(recipeResponse.body));
     const recipeText = recipeData.content[0].text;
     
-    // Parse the recipe JSON
-    const recipe = JSON.parse(recipeText);
+    console.log("Raw Claude response:", recipeText);
+    
+    // Parse the recipe JSON - handle various formatting issues
+    let cleanedText = recipeText.trim();
+    
+    // Remove markdown code blocks if present
+    if (cleanedText.includes("```")) {
+      cleanedText = cleanedText.replace(/```json\n?/g, "").replace(/```\n?/g, "");
+    }
+    
+    // Extract JSON if surrounded by text
+    const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      cleanedText = jsonMatch[0];
+    }
+    
+    // Remove trailing commas before closing braces/brackets
+    cleanedText = cleanedText.replace(/,(\s*[}\]])/g, "$1");
+    
+    // Remove comments (// and /* */)
+    cleanedText = cleanedText.replace(/\/\*[\s\S]*?\*\//g, "");
+    cleanedText = cleanedText.replace(/\/\/.*/g, "");
+    
+    console.log("Cleaned JSON:", cleanedText);
+    
+    // Parse the cleaned JSON
+    let recipe;
+    try {
+      recipe = JSON.parse(cleanedText.trim());
+    } catch (parseError) {
+      console.error("JSON parse error:", parseError);
+      console.error("Failed to parse:", cleanedText);
+      throw new Error(`Invalid JSON from Claude: ${parseError instanceof Error ? parseError.message : "Unknown error"}`);
+    }
 
     // Step 2: Generate image using Titan G1 V2
     const imagePrompt = `A professional, high-quality food photography shot of ${recipe.meal_name}. Natural daylight, cinematic composition, appetizing presentation on a clean white plate, shallow depth of field, restaurant quality, sharp focus on the food.`;
