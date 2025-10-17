@@ -10,8 +10,7 @@ export function AnimatedHeroSection() {
   
   return (
     <section
-      className="relative py-16 md:py-24 overflow-hidden"
-      style={{ backgroundColor: "rgb(247, 248, 212)" }}
+      className="relative py-16 md:py-24 overflow-hidden bg-white"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -33,18 +32,18 @@ export function AnimatedHeroSection() {
           </div>
 
           {/* Right Side - Hero Image */}
-          <div className="relative h-[600px] bg-gray-200 rounded-lg overflow-hidden">
+          <div className="relative h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden rounded-3xl">
             {!imageError ? (
               <Image
                 src="https://scuziassests.s3.us-east-1.amazonaws.com/hero%20image.webp"
                 alt="Delicious meal prep"
                 fill
-                className="object-cover"
+                className="object-cover object-center"
                 onError={() => setImageError(true)}
                 unoptimized
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-500">
+              <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-100 rounded-3xl">
                 <div className="text-center space-y-2">
                   <p className="font-semibold">Image not accessible</p>
                   <p className="text-sm">Check S3 bucket permissions and CORS</p>
