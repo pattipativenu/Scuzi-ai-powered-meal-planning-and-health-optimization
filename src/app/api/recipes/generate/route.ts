@@ -5,6 +5,7 @@ import { PutCommand } from "@aws-sdk/lib-dynamodb";
 import { bedrockClient, s3Client, docClient, S3_BUCKET, DYNAMODB_TABLE } from "@/lib/aws-config";
 import { v4 as uuidv4 } from "uuid";
 
+// API Route for AI-powered recipe generation using AWS Bedrock Claude 3.5 Sonnet
 export async function POST(request: NextRequest) {
   try {
     const { query, userId } = await request.json();
