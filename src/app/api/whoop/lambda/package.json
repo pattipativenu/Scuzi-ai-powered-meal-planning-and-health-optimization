@@ -1,0 +1,19 @@
+{
+  "name": "whoop-lambda-callback",
+  "version": "1.0.0",
+  "description": "AWS Lambda handler for WHOOP OAuth callback",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "package": "npm run build && zip -r whoop-lambda.zip node_modules dist package.json"
+  },
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.540.0",
+    "jose": "^5.2.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.134",
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}
