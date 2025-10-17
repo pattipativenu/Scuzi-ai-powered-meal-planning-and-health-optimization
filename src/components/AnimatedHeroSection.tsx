@@ -9,11 +9,9 @@ export function AnimatedHeroSection() {
   const [imageError, setImageError] = useState(false);
 
   return (
-    <section
-      className="relative py-16 md:py-24 overflow-hidden bg-white !w-full !h-[841px]">
-
+    <section className="relative py-20 md:py-28 lg:py-32 overflow-hidden bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center !w-full !h-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center !w-full !h-full" style={{ backgroundColor: "rgb(247, 248, 212)" }}>
           {/* Left Side - Text Content */}
           <div className="z-10 space-y-6">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
