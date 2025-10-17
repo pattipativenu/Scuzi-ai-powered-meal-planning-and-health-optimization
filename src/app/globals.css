@@ -1,3 +1,4 @@
+/* Updated: 2025-10-17T18:04:39.808Z */
 /* Updated: 2025-10-17T16:10:29.919Z */
 /* Updated: 2025-10-17T16:02:19.629Z */
 /* Updated: 2025-10-17T15:52:21.807Z */
@@ -164,6 +165,51 @@
   
   .animate-scroll-rtl:hover {
     animation-play-state: paused;
+  }
+  
+  /* Hero Section Vertical Scroll Animations */
+  @keyframes scroll-up {
+    0% {
+      transform: translateY(0);
+    }
+    100% {
+      transform: translateY(-50%);
+    }
+  }
+  
+  @keyframes scroll-down {
+    0% {
+      transform: translateY(-50%);
+    }
+    100% {
+      transform: translateY(0);
+    }
+  }
+  
+  .animate-scroll-up {
+    animation: scroll-up 40s linear infinite;
+  }
+  
+  .animate-scroll-down {
+    animation: scroll-down 40s linear infinite;
+  }
+  
+  .animate-scroll-up-mobile {
+    animation: scroll-up 30s linear infinite;
+  }
+  
+  .animate-scroll-down-mobile {
+    animation: scroll-down 30s linear infinite;
+  }
+  
+  .hover\:animation-pause:hover {
+    animation-play-state: paused;
+  }
+  
+  /* Gradient mask for clipped bottom effect */
+  .mask-gradient {
+    -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
   }
   
   /* Hide scrollbar for horizontal scrolling */

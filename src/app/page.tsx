@@ -1,4 +1,5 @@
 import { MealCard } from "@/components/MealCard";
+import { AnimatedHeroSection } from "@/components/AnimatedHeroSection";
 import { currentWeekMeals, healthySnacks, breakfastRecipes, freezableDinners } from "@/lib/mockMeals";
 import { ChevronRight, Star, Users } from "lucide-react";
 import Link from "next/link";
@@ -9,33 +10,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-b from-secondary to-background py-16 md:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-              Your home for easy, delicious meal prep recipes
-            </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-8">
-              Plan your week with confidence. Get organized, save time, and enjoy healthy meals every day.
-            </p>
-            <Link
-              href="/plan-ahead"
-              className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity"
-            >
-              Start Planning
-              <ChevronRight className="w-5 h-5" />
-            </Link>
-          </div>
-
-          {/* Featured Meal Preview Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-            {[freezableDinners[0], breakfastRecipes[0], healthySnacks[0]].map((meal) => (
-              <MealCard key={meal.id} meal={meal} size="medium" />
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Hero Section - Animated with AWS Titan Generated Images */}
+      <AnimatedHeroSection />
 
       {/* Current Week's Meals */}
       <section className="py-16 bg-background">
