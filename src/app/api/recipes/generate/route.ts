@@ -7,16 +7,16 @@ import { v4 as uuidv4 } from "uuid";
 
 export async function POST(request: NextRequest) {
   try {
-    const { searchQuery, userId } = await request.json();
+    const { query, userId } = await request.json();
 
-    if (!searchQuery) {
+    if (!query) {
       return NextResponse.json({ error: "Search query is required" }, { status: 400 });
     }
 
     const recipeId = uuidv4();
 
     // Step 1: Generate recipe using Claude 3.5 Sonnet
-    const recipePrompt = `You are a professional chef and nutritionist. Generate a detailed recipe for: "${searchQuery}".
+    const recipePrompt = `You are a professional chef and nutritionist. Generate a detailed recipe for: "${query}".
 
 Return ONLY valid JSON (no markdown, no code blocks) in this exact format:
 {
