@@ -34,7 +34,7 @@ export function AnimatedHeroSection() {
             <button
             onClick={connect}
             disabled={isLoading}
-            className="inline-flex items-center gap-2 bg-black text-white px-6 py-3 rounded-full font-semibold hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed">
+            className="inline-flex items-center gap-2 bg-black text-white py-3 rounded-full font-semibold hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed !gap-[7px] !text-sm !px-0">
 
               <Activity className="w-5 h-5" />
               {isLoading ? "Connecting..." : "WHOOP CONNECT"}
