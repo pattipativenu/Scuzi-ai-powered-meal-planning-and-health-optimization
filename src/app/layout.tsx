@@ -3,10 +3,12 @@ import "./globals.css";
 import VisualEditsMessenger from "../visual-edits/VisualEditsMessenger";
 import ErrorReporter from "@/components/ErrorReporter";
 import Script from "next/script";
+import { Navigation } from "@/components/Navigation";
+import { FloatingAIChat } from "@/components/FloatingAIChat";
 
 export const metadata: Metadata = {
-  title: "Scuzi - AI Food & Health Assistant",
-  description: "Your personal AI assistant for food and health guidance",
+  title: "MealPrep - Easy, Delicious Meal Planning",
+  description: "Your home for easy, delicious meal prep recipes with AI assistance",
 };
 
 export default function RootLayout({
@@ -28,7 +30,9 @@ export default function RootLayout({
           data-debug="true"
           data-custom-data='{"appName": "YourApp", "version": "1.0.0", "greeting": "hi"}'
         />
+        <Navigation />
         {children}
+        <FloatingAIChat />
         <VisualEditsMessenger />
       </body>
     </html>
