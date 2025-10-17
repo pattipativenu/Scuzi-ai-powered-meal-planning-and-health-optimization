@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { Search } from "lucide-react";
 import { useState } from "react";
 
 const navLinks = [
@@ -14,7 +14,16 @@ const navLinks = [
 
 export function Navigation() {
   const pathname = usePathname();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      // TODO: Implement recipe search functionality
+      console.log("Searching for:", searchQuery);
+    }
+  };
 
   return (
     <div>
@@ -28,6 +37,15 @@ export function Navigation() {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
+              {/* Search Icon */}
+              <button
+                onClick={() => setSearchOpen(!searchOpen)}
+                className="p-2 hover:bg-black/5 rounded-lg transition-colors"
+                title="Search recipes"
+              >
+                <Search className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
+              </button>
+              
               {navLinks.map((link) =>
               <Link
                 key={link.href}
@@ -53,6 +71,14 @@ export function Navigation() {
 
             {/* Mobile Navigation */}
             <div className="md:hidden flex items-center gap-4">
+              <button
+                onClick={() => setSearchOpen(!searchOpen)}
+                className="p-2 hover:bg-black/5 rounded-lg transition-colors"
+                title="Search recipes"
+              >
+                <Search className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
+              </button>
+              
               {navLinks.map((link) =>
               <Link
                 key={link.href}
@@ -76,6 +102,27 @@ export function Navigation() {
               )}
             </div>
           </div>
+          
+          {/* Search Bar (Expandable) */}
+          {searchOpen && (
+            <div className="pb-4">
+              <form onSubmit={handleSearch} className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search recipes..."
+                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-900/20 focus:border-gray-900 focus:outline-none transition-colors"
+                  style={{ 
+                    fontFamily: '"Right Grotesk Wide", ui-sans-serif, system-ui, sans-serif',
+                    fontSize: "16px"
+                  }}
+                  autoFocus
+                />
+                <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              </form>
+            </div>
+          )}
         </div>
       </nav>
     </div>);

@@ -1,16 +1,81 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Activity, X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import { useWhoopConnect } from "@/hooks/useWhoopConnect";
 
 export function AnimatedHeroSection() {
   const [imageError, setImageError] = useState(false);
+  const { metrics, isLoading, connect, disconnect, isConnected } = useWhoopConnect();
+
+  const getMetricsDisplay = () => {
+    const items = [];
+    if (metrics.recovery) items.push({ label: "Recovery", value: `${metrics.recovery}%` });
+    if (metrics.sleep) items.push({ label: "Sleep", value: `${metrics.sleep}h` });
+    if (metrics.strain) items.push({ label: "Strain", value: metrics.strain });
+    if (metrics.calories) items.push({ label: "Calories", value: `${metrics.calories} kcal` });
+    if (metrics.hrv) items.push({ label: "HRV", value: `${metrics.hrv} ms` });
+    if (metrics.rhr) items.push({ label: "RHR", value: `${metrics.rhr} bpm` });
+    if (metrics.avgHeartRate) items.push({ label: "Avg HR", value: `${metrics.avgHeartRate} bpm` });
+    if (metrics.spo2) items.push({ label: "SpO2", value: `${metrics.spo2}%` });
+    if (metrics.skinTemp) items.push({ label: "Skin Temp", value: `${metrics.skinTemp}°C` });
+    if (metrics.respiratoryRate) items.push({ label: "Respiratory", value: `${metrics.respiratoryRate} br/min` });
+    return items;
+  };
 
   return (
     <section className="relative py-20 md:py-28 lg:py-32 overflow-hidden bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* WHOOP Connect Section */}
+        {!isConnected ? (
+          <div className="mb-8 flex justify-center">
+            <button
+              onClick={connect}
+              disabled={isLoading}
+              className="inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-full font-semibold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Activity className="w-5 h-5" />
+              {isLoading ? "Connecting..." : "WHOOP CONNECT"}
+            </button>
+          </div>
+        ) : (
+          <div className="mb-8 relative overflow-hidden bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-1">
+            <div className="bg-white rounded-xl p-4 relative">
+              <button
+                onClick={disconnect}
+                className="absolute top-2 right-2 p-2 hover:bg-gray-100 rounded-full transition-colors z-10"
+                title="Disconnect WHOOP"
+              >
+                <X className="w-4 h-4 text-gray-600" />
+              </button>
+              
+              <div className="overflow-hidden relative">
+                <div className="flex gap-8 animate-scroll-rtl">
+                  {/* Triple the metrics for seamless loop */}
+                  {[...Array(3)].map((_, setIndex) => (
+                    <div key={setIndex} className="flex gap-8 flex-shrink-0">
+                      {getMetricsDisplay().map((metric, idx) => (
+                        <div key={`${setIndex}-${idx}`} className="flex items-center gap-3 px-6 py-2 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg flex-shrink-0">
+                          <div className="flex flex-col">
+                            <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                              {metric.label}
+                            </span>
+                            <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                              {metric.value}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center !w-full !h-full rounded-[2rem] p-8 md:p-12 lg:p-16" style={{ backgroundColor: "rgb(247, 248, 212)" }}>
           {/* Left Side - Text Content */}
           <div className="z-10 space-y-6">
