@@ -5,7 +5,7 @@ import { PutCommand } from "@aws-sdk/lib-dynamodb";
 import { bedrockClient, s3Client, docClient, S3_BUCKET, DYNAMODB_TABLE } from "@/lib/aws-config";
 import { v4 as uuidv4 } from "uuid";
 
-// API Route for AI-powered recipe generation using AWS Bedrock Claude 3.5 Sonnet
+// API Route for AI-powered recipe generation using AWS Bedrock Claude 3 Haiku
 export async function POST(request: NextRequest) {
   try {
     const { query, userId } = await request.json();
@@ -16,38 +16,59 @@ export async function POST(request: NextRequest) {
 
     const recipeId = uuidv4();
 
-    // Step 1: Generate recipe using Claude 3.5 Sonnet
-    const recipePrompt = `You are a professional chef and nutritionist. Generate a detailed recipe for: "${query}".
+    // Step 1: Generate recipe using Claude 3 Haiku
+    const systemPrompt = `You are an expert chef and nutritionist who writes precise, structured, and clear recipes.
+The user will provide a meal name.
+Your goal is to generate a recipe for exactly ONE serving.
 
-Return ONLY valid JSON (no markdown, no code blocks) in this exact format:
+Structure your output strictly in this JSON format:
+
 {
-  "title": "Recipe Name",
-  "mealType": "Breakfast|Lunch|Snack|Dinner",
+  "meal_name": "<exact user text>",
+  "servings": 1,
+  "meal_type": "Breakfast | Lunch | Snack | Dinner",
   "ingredients": [
-    {"item": "ingredient name", "quantity": "exact amount with unit"}
+    {"name": "ingredient name", "quantity": "numeric value", "unit": "g/ml/cup/tsp/etc"}
   ],
-  "instructions": ["Step 1", "Step 2", "Step 3"],
-  "nutrition": {
-    "calories": "number kcal",
-    "protein": "number g",
-    "fat": "number g",
-    "carbs": "number g"
+  "instructions": [
+    "Step 1: ...",
+    "Step 2: ...",
+    "Step 3: ..."
+  ],
+  "nutrition_table": {
+    "calories": "... kcal",
+    "protein": "... g",
+    "carbohydrates": "... g",
+    "fat": "... g",
+    "fiber": "... g",
+    "sugar": "... g"
   },
-  "prepTime": "X minutes",
-  "cookTime": "Y minutes"
-}`;
+  "prep_time_minutes": number,
+  "cook_time_minutes": number
+}
+
+Rules:
+- Always assume one serving.
+- Include realistic ingredient quantities and cooking times.
+- Write clear, numbered, step-by-step instructions.
+- Always provide the nutrition table.
+- If meal type is unclear, infer it logically.
+
+Return ONLY valid JSON (no markdown, no code blocks).`;
 
     const recipeCommand = new InvokeModelCommand({
-      modelId: "anthropic.claude-3-5-sonnet-20241022-v2:0",
+      modelId: "anthropic.claude-3-haiku-20240307",
       contentType: "application/json",
       accept: "application/json",
       body: JSON.stringify({
         anthropic_version: "bedrock-2023-05-31",
         max_tokens: 2000,
+        temperature: 0.55,
+        system: systemPrompt,
         messages: [
           {
             role: "user",
-            content: recipePrompt,
+            content: query,
           },
         ],
       }),
@@ -61,7 +82,7 @@ Return ONLY valid JSON (no markdown, no code blocks) in this exact format:
     const recipe = JSON.parse(recipeText);
 
     // Step 2: Generate image using Titan G1 V2
-    const imagePrompt = `A professional, high-quality food photography shot of ${recipe.title}. Natural daylight, cinematic composition, appetizing presentation on a clean white plate, shallow depth of field, restaurant quality, sharp focus on the food.`;
+    const imagePrompt = `A professional, high-quality food photography shot of ${recipe.meal_name}. Natural daylight, cinematic composition, appetizing presentation on a clean white plate, shallow depth of field, restaurant quality, sharp focus on the food.`;
 
     const imageCommand = new InvokeModelCommand({
       modelId: "amazon.titan-image-generator-v2:0",
@@ -104,16 +125,17 @@ Return ONLY valid JSON (no markdown, no code blocks) in this exact format:
     const recipeRecord = {
       recipe_id: recipeId,
       user_id: userId || "anonymous",
-      title: recipe.title,
-      meal_type: recipe.mealType,
+      meal_name: recipe.meal_name,
+      servings: recipe.servings,
+      meal_type: recipe.meal_type,
       ingredients: recipe.ingredients,
       instructions: recipe.instructions,
-      nutrition: recipe.nutrition,
-      prep_time: recipe.prepTime,
-      cook_time: recipe.cookTime,
+      nutrition_table: recipe.nutrition_table,
+      prep_time_minutes: recipe.prep_time_minutes,
+      cook_time_minutes: recipe.cook_time_minutes,
       image_s3_url: imageUrl,
       created_at: new Date().toISOString(),
-      generated_by: "AWS Bedrock Claude 3.5 Sonnet",
+      generated_by: "AWS Bedrock Claude 3 Haiku",
     };
 
     await docClient.send(
@@ -129,6 +151,15 @@ Return ONLY valid JSON (no markdown, no code blocks) in this exact format:
     });
   } catch (error) {
     console.error("Recipe generation error:", error);
+    
+    // Retry logic for Bedrock throttling
+    if (error instanceof Error && (error.message.includes("throttl") || error.message.includes("timeout"))) {
+      return NextResponse.json(
+        { error: "Service is busy. Please try again." },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
       { error: "Failed to generate recipe", details: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }

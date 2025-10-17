@@ -5,18 +5,25 @@ import Image from "next/image";
 
 interface RecipeData {
   recipe_id: string;
-  title: string;
+  meal_name: string;
+  servings: number;
   meal_type: string;
-  ingredients: string[];
+  ingredients: Array<{
+    name: string;
+    quantity: string;
+    unit: string;
+  }>;
   instructions: string[];
-  nutrition: {
-    calories: number;
-    protein: number;
-    fat: number;
-    carbs: number;
+  nutrition_table: {
+    calories: string;
+    protein: string;
+    carbohydrates: string;
+    fat: string;
+    fiber: string;
+    sugar: string;
   };
-  prep_time: string;
-  cook_time: string;
+  prep_time_minutes: number;
+  cook_time_minutes: number;
   image_s3_url: string;
   created_at: string;
 }
@@ -68,16 +75,19 @@ export default async function RecipePage({
             <span className="px-3 py-1 bg-primary/10 text-primary text-sm font-medium rounded-full">
               {recipe.meal_type}
             </span>
+            <span className="text-sm text-muted-foreground">
+              {recipe.servings} serving
+            </span>
           </div>
-          <h1 className="text-4xl font-bold mb-4">{recipe.title}</h1>
+          <h1 className="text-4xl font-bold mb-4">{recipe.meal_name}</h1>
           <div className="flex items-center gap-6 text-muted-foreground">
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
-              <span className="text-sm">Prep: {recipe.prep_time}</span>
+              <span className="text-sm">Prep: {recipe.prep_time_minutes} min</span>
             </div>
             <div className="flex items-center gap-2">
               <ChefHat className="w-4 h-4" />
-              <span className="text-sm">Cook: {recipe.cook_time}</span>
+              <span className="text-sm">Cook: {recipe.cook_time_minutes} min</span>
             </div>
           </div>
         </div>
@@ -87,7 +97,7 @@ export default async function RecipePage({
           <div className="relative w-full h-[400px]">
             <Image
               src={recipe.image_s3_url}
-              alt={recipe.title}
+              alt={recipe.meal_name}
               fill
               className="object-cover"
               priority
@@ -111,7 +121,9 @@ export default async function RecipePage({
                     className="flex items-start gap-2 text-muted-foreground"
                   >
                     <span className="text-primary mt-1">•</span>
-                    <span>{ingredient}</span>
+                    <span>
+                      {ingredient.quantity} {ingredient.unit} {ingredient.name}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -123,19 +135,27 @@ export default async function RecipePage({
               <div className="space-y-3">
                 <div className="flex justify-between items-center pb-2 border-b border-border">
                   <span className="text-muted-foreground">Calories</span>
-                  <span className="font-semibold">{recipe.nutrition.calories}</span>
+                  <span className="font-semibold">{recipe.nutrition_table.calories}</span>
                 </div>
                 <div className="flex justify-between items-center pb-2 border-b border-border">
                   <span className="text-muted-foreground">Protein</span>
-                  <span className="font-semibold">{recipe.nutrition.protein}g</span>
+                  <span className="font-semibold">{recipe.nutrition_table.protein}</span>
+                </div>
+                <div className="flex justify-between items-center pb-2 border-b border-border">
+                  <span className="text-muted-foreground">Carbohydrates</span>
+                  <span className="font-semibold">{recipe.nutrition_table.carbohydrates}</span>
                 </div>
                 <div className="flex justify-between items-center pb-2 border-b border-border">
                   <span className="text-muted-foreground">Fat</span>
-                  <span className="font-semibold">{recipe.nutrition.fat}g</span>
+                  <span className="font-semibold">{recipe.nutrition_table.fat}</span>
+                </div>
+                <div className="flex justify-between items-center pb-2 border-b border-border">
+                  <span className="text-muted-foreground">Fiber</span>
+                  <span className="font-semibold">{recipe.nutrition_table.fiber}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Carbs</span>
-                  <span className="font-semibold">{recipe.nutrition.carbs}g</span>
+                  <span className="text-muted-foreground">Sugar</span>
+                  <span className="font-semibold">{recipe.nutrition_table.sugar}</span>
                 </div>
               </div>
             </div>
@@ -157,6 +177,11 @@ export default async function RecipePage({
               </ol>
             </div>
           </div>
+        </div>
+
+        {/* Generated By Footer */}
+        <div className="mt-8 text-center text-sm text-muted-foreground">
+          Generated by Claude 3 Haiku
         </div>
       </div>
     </div>
