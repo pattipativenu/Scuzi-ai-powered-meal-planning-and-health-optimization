@@ -22,52 +22,20 @@ export function Navigation() {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim() && !isGenerating) {
-      setIsGenerating(true);
+      // Navigate to the generate page immediately
+      const encodedQuery = encodeURIComponent(searchQuery.trim());
+      router.push(`/generate/${encodedQuery}`);
       
-      try {
-        const response = await fetch("/api/recipes/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: searchQuery.trim() }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to generate recipe");
-        }
-
-        const data = await response.json();
-        
-        // Navigate to the recipe page using the correct path
-        router.push(`/recipe/${data.recipe.recipe_id}`);
-        
-        // Reset search
-        setSearchQuery("");
-        setSearchOpen(false);
-      } catch (error) {
-        console.error("Error generating recipe:", error);
-        alert(error instanceof Error ? error.message : "Failed to generate recipe. Please try again.");
-      } finally {
-        setIsGenerating(false);
-      }
+      // Reset search
+      setSearchQuery("");
+      setSearchOpen(false);
     }
   };
 
   return (
     <div>
-      {/* Fullscreen Loading Overlay */}
-      {isGenerating && (
-        <div className="fixed inset-0 z-[100] bg-background flex items-center justify-center">
-          <div className="text-center space-y-4">
-            <Loader2 className="w-16 h-16 animate-spin mx-auto text-primary" />
-            <div className="space-y-2">
-              <h2 className="text-2xl font-bold">Generating Your Recipe</h2>
-              <p className="text-muted-foreground">Claude 3.5 Sonnet is creating "{searchQuery}"...</p>
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* Remove the fullscreen loading overlay - now handled by /generate/[query] page */}
+      
       <nav className="sticky top-0 z-50 border-b border-border" style={{ backgroundColor: "rgb(209, 222, 38)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">

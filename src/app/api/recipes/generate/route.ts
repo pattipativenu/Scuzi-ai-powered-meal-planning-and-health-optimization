@@ -5,7 +5,7 @@ import { PutCommand } from "@aws-sdk/lib-dynamodb";
 import { bedrockClient, s3Client, docClient, S3_BUCKET, DYNAMODB_TABLE } from "@/lib/aws-config";
 import { v4 as uuidv4 } from "uuid";
 
-// API Route for AI-powered recipe generation using AWS Bedrock Claude 3 Haiku
+// API Route for AI-powered recipe generation using AWS Bedrock Claude 3.5 Sonnet
 export async function POST(request: NextRequest) {
   try {
     const { query, userId } = await request.json();
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
 
     const recipeId = uuidv4();
 
-    // Step 1: Generate recipe using Claude 3 Haiku
+    // Step 1: Generate recipe using Claude 3.5 Sonnet (working with bearer token)
     const systemPrompt = `You are an expert chef and nutritionist who writes precise, structured, and clear recipes.
 The user will provide a meal name.
 Your goal is to generate a recipe for exactly ONE serving.
@@ -57,7 +57,7 @@ Rules:
 - Return ONLY valid JSON. No markdown, no code blocks, no comments, no trailing commas.`;
 
     const recipeCommand = new InvokeModelCommand({
-      modelId: "anthropic.claude-3-haiku-20240307-v1:0",
+      modelId: "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
       contentType: "application/json",
       accept: "application/json",
       body: JSON.stringify({
