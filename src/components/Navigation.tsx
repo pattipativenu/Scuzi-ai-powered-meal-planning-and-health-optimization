@@ -6,11 +6,11 @@ import { UtensilsCrossed, Menu, X } from "lucide-react";
 import { useState } from "react";
 
 const navLinks = [
-  { name: "Home", href: "/" },
-  { name: "Plan Ahead", href: "/plan-ahead" },
-  { name: "Pantry", href: "/pantry" },
-  { name: "Account", href: "/account" },
-];
+{ name: "Home", href: "/" },
+{ name: "Plan Ahead", href: "/plan-ahead" },
+{ name: "Pantry", href: "/pantry" },
+{ name: "Account", href: "/account" }];
+
 
 export function Navigation() {
   const pathname = usePathname();
@@ -24,46 +24,46 @@ export function Navigation() {
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 font-semibold text-lg" style={{ fontFamily: 'var(--font-heading)' }}>
               <UtensilsCrossed className="w-6 h-6" />
-              <span>MealPrep</span>
+              <span className="!whitespace-pre-line">SCUZI</span>
             </Link>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`text-sm font-medium transition-colors hover:text-primary ${
-                    pathname === link.href
-                      ? "text-foreground"
-                      : "text-muted-foreground"
-                  }`}
-                  style={{ fontFamily: 'var(--font-heading)' }}
-                >
+              {navLinks.map((link) =>
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                pathname === link.href ?
+                "text-foreground" :
+                "text-muted-foreground"}`
+                }
+                style={{ fontFamily: 'var(--font-heading)' }}>
+
                   {link.name}
                 </Link>
-              ))}
+              )}
             </div>
 
             {/* Mobile Navigation */}
             <div className="md:hidden flex items-center gap-4">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`text-xs font-medium transition-colors ${
-                    pathname === link.href
-                      ? "text-foreground"
-                      : "text-muted-foreground"
-                  }`}
-                >
+              {navLinks.map((link) =>
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`text-xs font-medium transition-colors ${
+                pathname === link.href ?
+                "text-foreground" :
+                "text-muted-foreground"}`
+                }>
+
                   {link.name}
                 </Link>
-              ))}
+              )}
             </div>
           </div>
         </div>
       </nav>
-    </div>
-  );
+    </div>);
+
 }
