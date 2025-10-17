@@ -10,7 +10,7 @@ export function AnimatedHeroSection() {
 
   return (
     <section
-      className="relative py-16 md:py-24 overflow-hidden bg-white">
+      className="relative py-16 md:py-24 overflow-hidden bg-white !w-full !h-[841px]">
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center !w-full !h-full">
