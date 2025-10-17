@@ -18,7 +18,7 @@ export function Navigation() {
 
   return (
     <div>
-      <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
+      <nav className="sticky top-0 z-50 border-b border-border" style={{ backgroundColor: "rgb(209, 222, 38)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
@@ -32,12 +32,19 @@ export function Navigation() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
+                className={`transition-colors hover:opacity-80 ${
                 pathname === link.href ?
-                "text-foreground" :
-                "text-muted-foreground"}`
+                "opacity-100" :
+                "opacity-90"}`
                 }
-                style={{ fontFamily: 'var(--font-heading)' }}>
+                style={{ 
+                  fontFamily: '"Right Grotesk Wide", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
+                  fontStyle: "normal",
+                  fontWeight: 500,
+                  fontSize: "16px",
+                  lineHeight: "24px",
+                  color: "rgb(39, 39, 42)"
+                }}>
 
                   {link.name}
                 </Link>
@@ -50,11 +57,19 @@ export function Navigation() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`text-xs font-medium transition-colors ${
+                className={`transition-colors ${
                 pathname === link.href ?
-                "text-foreground" :
-                "text-muted-foreground"}`
-                }>
+                "opacity-100" :
+                "opacity-90"}`
+                }
+                style={{ 
+                  fontFamily: '"Right Grotesk Wide", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
+                  fontStyle: "normal",
+                  fontWeight: 500,
+                  fontSize: "14px",
+                  lineHeight: "20px",
+                  color: "rgb(39, 39, 42)"
+                }}>
 
                   {link.name}
                 </Link>

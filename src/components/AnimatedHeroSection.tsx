@@ -11,7 +11,7 @@ export function AnimatedHeroSection() {
   return (
     <section className="relative py-20 md:py-28 lg:py-32 overflow-hidden bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center !w-full !h-full" style={{ backgroundColor: "rgb(247, 248, 212)" }}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center !w-full !h-full rounded-[2rem] p-8 md:p-12 lg:p-16" style={{ backgroundColor: "rgb(247, 248, 212)" }}>
           {/* Left Side - Text Content */}
           <div className="z-10 space-y-6">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
@@ -30,7 +30,7 @@ export function AnimatedHeroSection() {
           </div>
 
           {/* Right Side - Hero Image */}
-          <div className="relative h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden rounded-3xl">
+          <div className="relative h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden rounded-3xl">
             {!imageError ?
             <Image
               src="https://scuziassests.s3.us-east-1.amazonaws.com/hero%20image.webp"
