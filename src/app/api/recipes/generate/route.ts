@@ -28,7 +28,7 @@ Structure your output strictly in this JSON format:
   "servings": 1,
   "meal_type": "Breakfast | Lunch | Snack | Dinner",
   "ingredients": [
-    {"name": "ingredient name", "quantity": "numeric value", "unit": "g/ml/cup/tsp/etc"}
+    {"name": "ingredient name", "quantity": 0.5, "unit": "g/ml/cup/tsp/etc"}
   ],
   "instructions": [
     "Step 1: ...",
@@ -43,8 +43,8 @@ Structure your output strictly in this JSON format:
     "fiber": "... g",
     "sugar": "... g"
   },
-  "prep_time_minutes": number,
-  "cook_time_minutes": number
+  "prep_time_minutes": 15,
+  "cook_time_minutes": 20
 }
 
 Rules:
@@ -53,8 +53,8 @@ Rules:
 - Write clear, numbered, step-by-step instructions.
 - Always provide the nutrition table.
 - If meal type is unclear, infer it logically.
-
-CRITICAL: Return ONLY valid JSON. No markdown, no code blocks, no comments, no trailing commas.`;
+- CRITICAL: Use decimal numbers (0.25, 0.5, 0.75) NOT fractions (1/4, 1/2, 3/4) for quantities.
+- Return ONLY valid JSON. No markdown, no code blocks, no comments, no trailing commas.`;
 
     const recipeCommand = new InvokeModelCommand({
       modelId: "anthropic.claude-3-haiku-20240307-v1:0",
@@ -78,8 +78,6 @@ CRITICAL: Return ONLY valid JSON. No markdown, no code blocks, no comments, no t
     const recipeData = JSON.parse(new TextDecoder().decode(recipeResponse.body));
     const recipeText = recipeData.content[0].text;
     
-    console.log("Raw Claude response:", recipeText);
-    
     // Parse the recipe JSON - handle various formatting issues
     let cleanedText = recipeText.trim();
     
@@ -93,6 +91,12 @@ CRITICAL: Return ONLY valid JSON. No markdown, no code blocks, no comments, no t
     if (jsonMatch) {
       cleanedText = jsonMatch[0];
     }
+    
+    // Convert fractions to decimals (e.g., 1/4 -> 0.25, 1/2 -> 0.5)
+    cleanedText = cleanedText.replace(/:\s*(\d+)\/(\d+)/g, (match, num, den) => {
+      const decimal = parseInt(num) / parseInt(den);
+      return `: ${decimal}`;
+    });
     
     // Remove trailing commas before closing braces/brackets
     cleanedText = cleanedText.replace(/,(\s*[}\]])/g, "$1");
@@ -110,7 +114,16 @@ CRITICAL: Return ONLY valid JSON. No markdown, no code blocks, no comments, no t
     } catch (parseError) {
       console.error("JSON parse error:", parseError);
       console.error("Failed to parse:", cleanedText);
-      throw new Error(`Invalid JSON from Claude: ${parseError instanceof Error ? parseError.message : "Unknown error"}`);
+      // Return the raw response for debugging
+      return NextResponse.json(
+        {
+          error: "Invalid JSON from Claude",
+          details: parseError instanceof Error ? parseError.message : "Unknown error",
+          rawResponse: recipeText,
+          cleanedResponse: cleanedText
+        },
+        { status: 500 }
+      );
     }
 
     // Step 2: Generate image using Titan G1 V2
