@@ -103,7 +103,7 @@ export function AnimatedHeroSection() {
       fill
       priority
       unoptimized
-      className="object-cover object-right-top rounded-[0px_33px_33px_0px]"
+      className="object-cover object-right rounded-[0px_33px_33px_0px]"
       onError={() => setImageError(true)}
     />
   ) : (
