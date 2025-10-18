@@ -1,25 +1,20 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useWhoopSummary } from "@/hooks/useWhoopSummary";
 
 export function WhoopMiniMetrics() {
-  const { data, isLoading } = useWhoopSummary();
-
-  if (isLoading || !data) {
-    return null;
-  }
-
-  const metrics = [
-    { label: "Recovery", data: data.recovery },
-    { label: "Strain", data: data.strain },
-    { label: "Sleep", data: data.sleep },
-    { label: "HRV", data: data.hrv },
-    { label: "Calories", data: data.calories },
+  // Mock data from CSV until AWS is fully connected
+  const mockMetrics = [
+    { label: "Recovery", value: "+3%", status: "positive" },
+    { label: "Heart Rate", value: "-2 bpm", status: "negative" },
+    { label: "Sleep", value: "+0.5h", status: "positive" },
+    { label: "Strain", value: "+0.6", status: "positive" },
+    { label: "Calories", value: "+150 cal", status: "positive" },
+    { label: "HRV", value: "+3 ms", status: "positive" },
   ];
 
   // Duplicate metrics 3 times for seamless infinite scroll
-  const scrollingMetrics = [...metrics, ...metrics, ...metrics];
+  const scrollingMetrics = [...mockMetrics, ...mockMetrics, ...mockMetrics];
 
   return (
     <div className="overflow-hidden max-w-full">
@@ -30,7 +25,7 @@ export function WhoopMiniMetrics() {
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
         {scrollingMetrics.map((metric, index) => {
-          const isPositive = metric.data.status === "positive";
+          const isPositive = metric.status === "positive";
           const textColor = isPositive ? "#16A34A" : "#DC2626";
           const arrow = isPositive ? "▲" : "▼";
 
@@ -48,7 +43,7 @@ export function WhoopMiniMetrics() {
                   color: textColor,
                 }}
               >
-                {arrow} {metric.data.value}
+                {arrow} {metric.value}
               </span>
               <span
                 style={{
