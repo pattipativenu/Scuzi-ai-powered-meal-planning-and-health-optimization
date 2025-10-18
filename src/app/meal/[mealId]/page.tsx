@@ -56,7 +56,7 @@ export default function MealDetailPage({ params }: MealDetailPageProps) {
         <div className="grid md:grid-cols-2 gap-8 lg:gap-12 mb-16">
           {/* Left Side - Content */}
           <div className="flex flex-col justify-center order-2 md:order-1">
-            <h1 className="!font-bold !not-italic">
+            <h1 className="!font-bold !not-italic !text-[42px]">
 
 
 
@@ -67,13 +67,13 @@ export default function MealDetailPage({ params }: MealDetailPageProps) {
               {meal.name}
             </h1>
             
-            <p style={{
-              fontFamily: '"General Sans", sans-serif',
-              fontSize: '17px',
-              lineHeight: '24px',
-              color: 'rgb(82, 82, 91)',
-              marginBottom: '24px'
-            }}>
+            <p className="!font-normal">
+
+
+
+
+
+
               {meal.description}
             </p>
 
