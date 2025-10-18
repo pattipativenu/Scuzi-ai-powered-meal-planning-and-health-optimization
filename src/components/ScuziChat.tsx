@@ -461,17 +461,28 @@ export default function ScuziChat() {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <h1 
+            <h3 
               className="font-bold text-[rgb(17,24,39)]"
               style={{
-                fontFamily: '"Right Grotesk Spatial", sans-serif',
-                fontSize: '65px',
-                lineHeight: '58px',
-                fontWeight: 700
+                fontFamily: '"Right Grotesk Wide", sans-serif',
+                fontSize: '16px',
+                lineHeight: '24px',
+                fontWeight: 500
               }}
             >
-              Scuzi, your AI food and health analyst
-            </h1>
+              Scuzi
+            </h3>
+            <p
+              className="text-[rgb(17,24,39)]"
+              style={{
+                fontFamily: '"General Sans", sans-serif',
+                fontSize: '15px',
+                lineHeight: '21px',
+                fontWeight: 400
+              }}
+            >
+              Your AI food and health analyst
+            </p>
             {whoopMetrics.connected && (
               <div className="flex items-center gap-2 mt-2">
                 <Button
@@ -501,7 +512,7 @@ export default function ScuziChat() {
                   fontWeight: 500
                 }}
               >
-                {isConnectingWhoop ? "Connecting..." : "Connect WHOOP"}
+                {isConnectingWhoop ? "Connecting..." : ""}
               </Button>
             )}
           </div>
