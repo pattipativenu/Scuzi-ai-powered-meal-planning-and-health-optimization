@@ -18,20 +18,20 @@ interface Message {
 
 export default function ScuziChat() {
   const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content: "👋 Hey there! I'm Scuzi, your AI food and health companion powered by Claude 3.5 Sonnet V2 with vision capabilities.\n\n**I can help you with:**\n\n🥗 Recipe ideas from leftover ingredients\n📊 Nutrition analysis of your meals\n🛒 Meal plans from grocery receipts (1-28 meals, up to 7 days)\n🍳 Cooking tips and health advice\n🏷️ Packaged food health assessments\n\nJust chat with me or upload an image to get started!",
-      timestamp: new Date(),
-    },
-  ]);
-  
+  {
+    id: "welcome",
+    role: "assistant",
+    content: "👋 Hey there! I'm Scuzi, your AI food and health companion powered by Claude 3.5 Sonnet V2 with vision capabilities.\n\n**I can help you with:**\n\n🥗 Recipe ideas from leftover ingredients\n📊 Nutrition analysis of your meals\n🛒 Meal plans from grocery receipts (1-28 meals, up to 7 days)\n🍳 Cooking tips and health advice\n🏷️ Packaged food health assessments\n\nJust chat with me or upload an image to get started!",
+    timestamp: new Date()
+  }]
+  );
+
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showCamera, setShowCamera] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -48,7 +48,7 @@ export default function ScuziChat() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
+
     const initialQuery = sessionStorage.getItem('chatInitialQuery');
     if (initialQuery) {
       setInput(initialQuery);
@@ -70,7 +70,7 @@ export default function ScuziChat() {
   const startCamera = async () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
+        video: { facingMode: "environment" }
       });
       setStream(mediaStream);
       setShowCamera(true);
@@ -128,7 +128,7 @@ export default function ScuziChat() {
       role: "user",
       content: input,
       image: selectedImage || undefined,
-      timestamp: new Date(),
+      timestamp: new Date()
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -139,29 +139,29 @@ export default function ScuziChat() {
 
     try {
       const conversationMessages = messages.filter((m) => m.id !== "welcome");
-      
+
       console.log("[FRONTEND] Calling /api/chat...");
-      
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
           messages: [
-            ...conversationMessages.map((m) => ({
-              role: m.role,
-              content: m.content,
-              // CRITICAL: Only include images for user messages, not assistant messages
-              image: m.role === "user" ? m.image : undefined,
-            })),
-            {
-              role: "user",
-              content: input,
-              image: imageToSend,
-            },
-          ],
-        }),
+          ...conversationMessages.map((m) => ({
+            role: m.role,
+            content: m.content,
+            // CRITICAL: Only include images for user messages, not assistant messages
+            image: m.role === "user" ? m.image : undefined
+          })),
+          {
+            role: "user",
+            content: input,
+            image: imageToSend
+          }]
+
+        })
       });
 
       console.log("[FRONTEND] Response status:", response.status);
@@ -183,7 +183,7 @@ export default function ScuziChat() {
         id: (Date.now() + 1).toString(),
         role: "assistant",
         content: data.content,
-        timestamp: new Date(),
+        timestamp: new Date()
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -191,16 +191,16 @@ export default function ScuziChat() {
       // Generate meal image if metadata is provided
       if (data.shouldGenerateImage && data.imageMetadata) {
         console.log("[FRONTEND] Generating image with metadata...");
-        
+
         try {
           const imageResponse = await fetch("/api/generate-meal-image", {
             method: "POST",
             headers: {
-              "Content-Type": "application/json",
+              "Content-Type": "application/json"
             },
             body: JSON.stringify({
-              imageMetadata: data.imageMetadata,
-            }),
+              imageMetadata: data.imageMetadata
+            })
           });
 
           console.log("[FRONTEND] Image response status:", imageResponse.status);
@@ -208,13 +208,13 @@ export default function ScuziChat() {
           if (imageResponse.ok) {
             const imageData = await imageResponse.json();
             console.log("[FRONTEND] Image generated successfully");
-            
+
             const imageMessage: Message = {
               id: (Date.now() + 2).toString(),
               role: "assistant",
               content: `Here's what ${imageData.mealDescription} looks like:`,
               image: imageData.imageUrl,
-              timestamp: new Date(),
+              timestamp: new Date()
             };
             setMessages((prev) => [...prev, imageMessage]);
           } else {
@@ -227,14 +227,14 @@ export default function ScuziChat() {
       }
     } catch (error) {
       console.error("[FRONTEND] Fatal error:", error);
-      
+
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: error instanceof Error 
-          ? `⚠️ ${error.message}\n\nPlease try again in a moment.`
-          : "⚠️ I encountered a technical issue. Please try again.",
-        timestamp: new Date(),
+        content: error instanceof Error ?
+        `⚠️ ${error.message}\n\nPlease try again in a moment.` :
+        "⚠️ I encountered a technical issue. Please try again.",
+        timestamp: new Date()
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
@@ -262,125 +262,125 @@ export default function ScuziChat() {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <h3 
+            <h3
               className="font-bold text-[rgb(17,24,39)]"
               style={{
                 fontFamily: '"Right Grotesk Wide", sans-serif',
                 fontSize: '16px',
                 lineHeight: '24px',
                 fontWeight: 500
-              }}
-            >
-              Scuzi
+              }}>Scuzi 
+
+
             </h3>
             <p
-              className="text-[rgb(17,24,39)]"
+              className="text-[rgb(17,24,39)] !whitespace-pre-line"
               style={{
                 fontFamily: '"General Sans", sans-serif',
                 fontSize: '15px',
                 lineHeight: '21px',
                 fontWeight: 400
-              }}
-            >
-              Claude 3.5 Sonnet V2 • Vision + Text
+              }}>
+              Your Food & Health Assistant....
+
             </p>
           </div>
         </div>
       </div>
 
       {/* Camera Modal */}
-      {showCamera && (
-        <div className="fixed inset-0 z-50 bg-black flex flex-col">
+      {showCamera &&
+      <div className="fixed inset-0 z-50 bg-black flex flex-col">
           <div className="flex-1 relative">
             <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              className="w-full h-full object-cover"
-            />
+            ref={videoRef}
+            autoPlay
+            playsInline
+            className="w-full h-full object-cover" />
+
             <canvas ref={canvasRef} className="hidden" />
           </div>
           <div className="bg-white p-4 flex justify-center gap-4">
             <Button
-              onClick={closeCamera}
-              size="lg"
-              variant="ghost"
-              className="text-[rgb(39,39,42)] hover:bg-gray-100"
-            >
+            onClick={closeCamera}
+            size="lg"
+            variant="ghost"
+            className="text-[rgb(39,39,42)] hover:bg-gray-100">
+
               <X className="h-6 w-6" />
             </Button>
             <Button
-              onClick={capturePhoto}
-              size="lg"
-              className="bg-[rgb(209,222,38)] hover:bg-[rgb(209,222,38)]/90 text-[rgb(39,39,42)] rounded-full w-16 h-16"
-            >
+            onClick={capturePhoto}
+            size="lg"
+            className="bg-[rgb(209,222,38)] hover:bg-[rgb(209,222,38)]/90 text-[rgb(39,39,42)] rounded-full w-16 h-16">
+
               <Camera className="h-8 w-8" />
             </Button>
           </div>
         </div>
-      )}
+      }
 
       {/* Scrollable Messages Container */}
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={cn(
-              "flex gap-3 max-w-[85%]",
-              message.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto"
-            )}
-          >
-            {message.role === "assistant" && (
-              <Avatar className="h-10 w-10 flex-shrink-0">
+        {messages.map((message) =>
+        <div
+          key={message.id}
+          className={cn(
+            "flex gap-3 max-w-[85%]",
+            message.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto"
+          )}>
+
+            {message.role === "assistant" &&
+          <Avatar className="h-10 w-10 flex-shrink-0">
                 <AvatarFallback className="bg-[rgb(209,222,38)] text-[rgb(39,39,42)]">
                   <ChefHat className="h-5 w-5" />
                 </AvatarFallback>
               </Avatar>
-            )}
+          }
             <div
-              className={cn(
-                "rounded-xl px-4 py-3 shadow-sm",
-                message.role === "user"
-                  ? "bg-[rgb(209,222,38)] text-[rgb(39,39,42)]"
-                  : "bg-gray-50 text-[rgb(17,24,39)]"
-              )}
-            >
-              {message.image && (
-                <img
-                  src={message.image}
-                  alt="Uploaded content"
-                  className="rounded-lg mb-3 max-w-full h-auto"
-                />
-              )}
-              <p 
-                className="whitespace-pre-wrap break-words"
-                style={{
-                  fontFamily: '"General Sans", sans-serif',
-                  fontSize: '15px',
-                  lineHeight: '21px',
-                  fontWeight: 400
-                }}
-              >
+            className={cn(
+              "rounded-xl px-4 py-3 shadow-sm",
+              message.role === "user" ?
+              "bg-[rgb(209,222,38)] text-[rgb(39,39,42)]" :
+              "bg-gray-50 text-[rgb(17,24,39)]"
+            )}>
+
+              {message.image &&
+            <img
+              src={message.image}
+              alt="Uploaded content"
+              className="rounded-lg mb-3 max-w-full h-auto" />
+
+            }
+              <p
+              className="whitespace-pre-wrap break-words"
+              style={{
+                fontFamily: '"General Sans", sans-serif',
+                fontSize: '15px',
+                lineHeight: '21px',
+                fontWeight: 400
+              }}>
+
                 {message.content}
               </p>
-              <p 
-                className="text-gray-400 mt-2"
-                style={{
-                  fontFamily: '"General Sans", sans-serif',
-                  fontSize: '12px',
-                  fontWeight: 400
-                }}
-              >
+              <p
+              className="text-gray-400 mt-2"
+              style={{
+                fontFamily: '"General Sans", sans-serif',
+                fontSize: '12px',
+                fontWeight: 400
+              }}>
+
                 {message.timestamp.toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                hour: "2-digit",
+                minute: "2-digit"
+              })}
               </p>
             </div>
           </div>
-        ))}
-        {isLoading && (
-          <div className="flex gap-3 max-w-[85%] mr-auto">
+        )}
+        {isLoading &&
+        <div className="flex gap-3 max-w-[85%] mr-auto">
             <Avatar className="h-10 w-10 flex-shrink-0">
               <AvatarFallback className="bg-[rgb(209,222,38)] text-[rgb(39,39,42)]">
                 <ChefHat className="h-5 w-5" />
@@ -393,42 +393,42 @@ export default function ScuziChat() {
               </div>
             </div>
           </div>
-        )}
+        }
         <div ref={messagesEndRef} />
       </div>
 
       {/* Sticky Input Area */}
       <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 z-50">
-        {selectedImage && (
-          <div className="mb-3 relative inline-block">
+        {selectedImage &&
+        <div className="mb-3 relative inline-block">
             <img
-              src={selectedImage}
-              alt="Selected"
-              className="h-24 rounded-lg"
-            />
+            src={selectedImage}
+            alt="Selected"
+            className="h-24 rounded-lg" />
+
             <button
-              onClick={() => setSelectedImage(null)}
-              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
-            >
+            onClick={() => setSelectedImage(null)}
+            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors">
+
               ×
             </button>
           </div>
-        )}
+        }
         <div className="flex items-end gap-3">
           <input
             type="file"
             ref={fileInputRef}
             onChange={handleImageSelect}
             accept="image/*"
-            className="hidden"
-          />
+            className="hidden" />
+
           <Button
             variant="ghost"
             size="icon"
             onClick={startCamera}
             disabled={isLoading}
-            className="text-[rgb(39,39,42)] hover:text-[rgb(17,24,39)] hover:bg-gray-100"
-          >
+            className="text-[rgb(39,39,42)] hover:text-[rgb(17,24,39)] hover:bg-gray-100">
+
             <Camera className="h-5 w-5" />
           </Button>
           <Button
@@ -436,8 +436,8 @@ export default function ScuziChat() {
             size="icon"
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
-            className="text-[rgb(39,39,42)] hover:text-[rgb(17,24,39)] hover:bg-gray-100"
-          >
+            className="text-[rgb(39,39,42)] hover:text-[rgb(17,24,39)] hover:bg-gray-100">
+
             <ImageIcon className="h-5 w-5" />
           </Button>
           <Textarea
@@ -454,22 +454,22 @@ export default function ScuziChat() {
               lineHeight: '24px',
               fontWeight: 500
             }}
-            rows={1}
-          />
+            rows={1} />
+
           <Button
             onClick={handleSend}
-            disabled={isLoading || (!input.trim() && !selectedImage)}
+            disabled={isLoading || !input.trim() && !selectedImage}
             size="icon"
-            className="bg-[rgb(209,222,38)] hover:bg-[rgb(209,222,38)]/90 text-[rgb(39,39,42)] h-11 w-11 rounded-lg disabled:opacity-50"
-          >
-            {isLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <Send className="h-5 w-5" />
-            )}
+            className="bg-[rgb(209,222,38)] hover:bg-[rgb(209,222,38)]/90 text-[rgb(39,39,42)] h-11 w-11 rounded-lg disabled:opacity-50">
+
+            {isLoading ?
+            <Loader2 className="h-5 w-5 animate-spin" /> :
+
+            <Send className="h-5 w-5" />
+            }
           </Button>
         </div>
       </div>
-    </div>
-  );
+    </div>);
+
 }
