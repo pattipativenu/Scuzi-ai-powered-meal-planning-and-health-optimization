@@ -115,30 +115,8 @@ async function generateMealImage(prompt: string, mealName: string): Promise<stri
 }
 
 // ============================================
-// UPLOAD IMAGE TO S3
-// ============================================
-
-async function uploadToS3(base64Image: string, mealName: string): Promise<string> {
-  const imageBuffer = Buffer.from(base64Image, "base64");
-  const fileName = `meal-plans/${randomUUID()}-${mealName.toLowerCase().replace(/\s+/g, "-")}.png`;
-  
-  const command = new PutObjectCommand({
-    Bucket: process.env.AWS_S3_BUCKET_NAME,
-    Key: fileName,
-    Body: imageBuffer,
-    ContentType: "image/png",
-  });
-  
-  await s3Client.send(command);
-  
-  const imageUrl = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
-  console.log(`[S3] Uploaded: ${imageUrl}`);
-  
-  return imageUrl;
-}
-
-// ============================================
 // BATCH PROCESS IMAGES WITH RATE LIMITING
+// Returns meals with base64 images for Lambda processing
 // ============================================
 
 async function batchGenerateImages(meals: any[]): Promise<any[]> {
@@ -155,22 +133,19 @@ async function batchGenerateImages(meals: any[]): Promise<any[]> {
     const batchResults = await Promise.all(
       batch.map(async (meal) => {
         try {
-          // Generate image
+          // Generate image and keep base64 for Lambda
           const base64Image = await generateMealImage(meal.image_prompt, meal.name);
-          
-          // Upload to S3
-          const imageUrl = await uploadToS3(base64Image, meal.name);
           
           return {
             ...meal,
-            image: imageUrl,
+            image_base64: base64Image, // Keep base64 for Lambda
           };
         } catch (error) {
           console.error(`[BATCH] Error processing ${meal.name}:`, error);
-          // Return meal with fallback image
+          // Return meal without image
           return {
             ...meal,
-            image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80", // Fallback
+            image_base64: null,
           };
         }
       })
@@ -207,7 +182,7 @@ export async function POST(request: NextRequest) {
     
     console.log(`[IMAGE BATCH] Processing ${meals.length} meals`);
     
-    // Generate all images
+    // Generate all images (returns base64 for Lambda)
     const mealsWithImages = await batchGenerateImages(meals);
     
     console.log(`[IMAGE BATCH] Successfully generated ${mealsWithImages.length} images`);

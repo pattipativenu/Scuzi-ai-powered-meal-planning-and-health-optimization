@@ -60,7 +60,7 @@ export default function PlanAheadPage() {
 
     try {
       // Step 1: Generate meals with Claude
-      setGenerationStep("Creating personalized meal plan...");
+      setGenerationStep("Creating personalized meal plan with AI...");
       const generateResponse = await fetch("/api/plan-ahead/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -77,8 +77,8 @@ export default function PlanAheadPage() {
         throw new Error(generateData.message || "Failed to generate meals");
       }
 
-      // Step 2: Generate images for all meals
-      setGenerationStep(`Generating images for ${generateData.meals.length} meals...`);
+      // Step 2: Generate images with Titan (returns base64)
+      setGenerationStep(`Generating ${generateData.meals.length} meal images...`);
       const imageResponse = await fetch("/api/plan-ahead/generate-images", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -95,24 +95,42 @@ export default function PlanAheadPage() {
         throw new Error(imageData.message || "Failed to generate images");
       }
 
-      // Step 3: Save to DynamoDB
-      setGenerationStep("Saving your meal plan...");
+      // Step 3: Store via Lambda (DynamoDB + S3)
+      setGenerationStep("Storing your meal plan to AWS...");
+      const lambdaResponse = await fetch("/api/plan-ahead/lambda-store", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ meals: imageData.meals }),
+      });
+
+      if (!lambdaResponse.ok) {
+        throw new Error("Failed to store meals");
+      }
+
+      const lambdaData = await lambdaResponse.json();
+      
+      if (lambdaData.status !== "success") {
+        throw new Error(lambdaData.message || "Failed to store meals");
+      }
+
+      // Step 4: Save reference to DynamoDB for retrieval
+      setGenerationStep("Finalizing your meal plan...");
       const saveResponse = await fetch("/api/plan-ahead/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          meals: imageData.meals,
+          meals: lambdaData.meals,
           whoopSummary: generateData.whoopSummary,
           dietaryPreferences: "",
         }),
       });
 
       if (!saveResponse.ok) {
-        throw new Error("Failed to save meal plan");
+        console.warn("Failed to save meal plan reference, but meals are stored");
       }
 
-      // Success!
-      setMeals(imageData.meals);
+      // Success! Display meals with S3 image URLs from Lambda
+      setMeals(lambdaData.meals);
       setGenerationStep("");
       setIsGenerating(false);
     } catch (error) {
