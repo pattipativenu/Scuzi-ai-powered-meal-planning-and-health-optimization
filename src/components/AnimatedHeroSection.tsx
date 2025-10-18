@@ -95,13 +95,13 @@ export function AnimatedHeroSection() {
           </div>
 
           {/* Right Side - Hero Image */}
-          <div className="relative h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden">
+          <div className="relative h-[400px] md:h-[500px] lg:h-[600px] overflow-visible -mr-8 md:-mr-12 lg:-mr-16 -mt-8 md:-mt-12 lg:-mt-16 -mb-8 md:-mb-12 lg:-mb-16">
             {!imageError ?
             <Image
               src="https://scuziassests.s3.us-east-1.amazonaws.com/hero%20image.webp"
               alt="Delicious meal prep"
               fill
-              className="object-contain object-center"
+              className="object-contain object-right !w-full !h-[621px] !max-w-full"
               onError={() => setImageError(true)}
               unoptimized /> :
             <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-100">
