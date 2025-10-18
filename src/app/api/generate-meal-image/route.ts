@@ -4,80 +4,93 @@ import {
   InvokeModelCommand,
 } from "@aws-sdk/client-bedrock-runtime";
 
-// Configure client with bearer token authentication
+// ============================================
+// AWS BEDROCK CLIENT WITH BEARER TOKEN
+// ============================================
+
 const getBedrockClient = () => {
   const bearerToken = process.env.AWS_BEARER_TOKEN_BEDROCK;
   
-  if (bearerToken) {
-    const client = new BedrockRuntimeClient({
-      region: process.env.AWS_REGION || "us-east-1",
-    });
-
-    client.middlewareStack.add(
-      (next: any) => async (args: any) => {
-        args.request.headers.Authorization = `Bearer ${bearerToken}`;
-        return next(args);
-      },
-      {
-        step: "build",
-        name: "addBearerToken",
-      }
-    );
-
-    return client;
-  } else {
-    return new BedrockRuntimeClient({
-      region: process.env.AWS_REGION || "us-east-1",
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
-      },
-    });
+  if (!bearerToken) {
+    throw new Error("AWS_BEARER_TOKEN_BEDROCK is required but not found in environment variables");
   }
+  
+  const client = new BedrockRuntimeClient({
+    region: process.env.AWS_REGION || "us-east-1",
+  });
+
+  // Inject bearer token in Authorization header
+  client.middlewareStack.add(
+    (next: any) => async (args: any) => {
+      args.request.headers.Authorization = `Bearer ${bearerToken}`;
+      return next(args);
+    },
+    {
+      step: "build",
+      name: "addBearerToken",
+    }
+  );
+
+  return client;
 };
 
 const client = getBedrockClient();
 
-// Retry logic helper
+// ============================================
+// ENHANCED RETRY LOGIC WITH EXPONENTIAL BACKOFF
+// ============================================
+
 async function retryOperation<T>(
   operation: () => Promise<T>,
-  maxRetries: number = 3,
-  delay: number = 1000
+  maxRetries: number = 5,
+  baseDelay: number = 1000
 ): Promise<T> {
   let lastError: Error | undefined;
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
+      console.log(`[IMAGE RETRY] Attempt ${attempt}/${maxRetries}`);
       return await operation();
     } catch (error) {
       lastError = error as Error;
-      console.error(`Image generation attempt ${attempt} failed:`, error);
+      console.error(`[IMAGE RETRY] Attempt ${attempt} failed:`, error);
       
       if (attempt < maxRetries) {
-        await new Promise(resolve => setTimeout(resolve, delay * attempt));
+        const delay = baseDelay * Math.pow(2, attempt - 1);
+        console.log(`[IMAGE RETRY] Waiting ${delay}ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
   }
   
-  throw lastError || new Error("Image generation failed after retries");
+  throw lastError || new Error("Image generation failed after all retries");
 }
 
+// ============================================
+// MAIN IMAGE GENERATION API
+// ============================================
+
 export async function POST(request: NextRequest) {
+  console.log("[IMAGE API] Request received");
+  
   try {
     const { mealDescription, imageMetadata } = await request.json();
 
     if (!mealDescription && !imageMetadata) {
+      console.error("[IMAGE API] Missing required parameters");
       return NextResponse.json(
         { error: "Meal description or image metadata is required" },
         { status: 400 }
       );
     }
 
-    // Build enhanced prompt from structured metadata if available
+    // ============================================
+    // BUILD ENHANCED PROMPT FROM METADATA
+    // ============================================
+    
     let enhancedPrompt: string;
     
     if (imageMetadata) {
-      // Use structured metadata for precise image generation
       const {
         dishName,
         mainIngredients,
@@ -86,19 +99,29 @@ export async function POST(request: NextRequest) {
         presentationStyle
       } = imageMetadata;
       
-      enhancedPrompt = `A professional food photography shot of ${dishName}, featuring ${mainIngredients}. ${cuisineStyle} cuisine style, ${cookingMethod} cooking method. ${presentationStyle} presentation on a clean white plate. The dish is beautifully plated with perfect lighting from a 45-degree angle, appetizing colors, shallow depth of field, restaurant-quality styling, sharp focus on the food, high resolution, natural daylight.`;
+      console.log("[IMAGE API] Using structured metadata:", imageMetadata);
+      
+      // CRITICAL: Keep prompt under 512 characters for AWS Titan
+      enhancedPrompt = `${dishName}, ${cuisineStyle} cuisine, ${mainIngredients}, ${cookingMethod}, ${presentationStyle} plating, white plate, 45-degree angle, natural daylight, shallow depth of field, sharp focus, restaurant quality, appetizing, high resolution`;
     } else {
-      // Fallback to basic description
-      enhancedPrompt = `A professional food photography shot of ${mealDescription}. The dish is beautifully plated on a clean white plate, with perfect lighting, appetizing colors, and artistic presentation. The photo is taken from a 45-degree angle with shallow depth of field. High-resolution, restaurant-quality food styling.`;
+      console.log("[IMAGE API] Using fallback description:", mealDescription);
+      
+      enhancedPrompt = `${mealDescription}, beautiful plating, white plate, natural daylight, 45-degree angle, shallow depth of field, sharp focus, restaurant quality, appetizing, high resolution`;
     }
 
-    // Call AWS Titan Image Generator G1 v2 with retry logic
+    console.log("[IMAGE API] Generated prompt:", enhancedPrompt);
+    console.log("[IMAGE API] Prompt length:", enhancedPrompt.length, "characters");
+
+    // ============================================
+    // CALL AWS TITAN G1 V2 WITH RETRY LOGIC
+    // ============================================
+
     const imageResponse = await retryOperation(async () => {
       const input = {
         taskType: "TEXT_IMAGE",
         textToImageParams: {
           text: enhancedPrompt,
-          negativeText: "blurry, low quality, dark, unappetizing, messy, dirty, amateur, cartoon, illustration, text, watermark, people, hands",
+          negativeText: "blurry, low quality, dark, unappetizing, messy, dirty, amateur, cartoon, illustration, text, watermark, logo, people, hands, fingers, utensils being held, poor lighting, oversaturated, artificial, plastic, fake",
         },
         imageGenerationConfig: {
           numberOfImages: 1,
@@ -117,19 +140,30 @@ export async function POST(request: NextRequest) {
         accept: "application/json",
       });
 
+      console.log("[TITAN] Sending image generation request...");
       return await client.send(command);
-    }, 3, 1000);
+    }, 5, 1000);
+
+    console.log("[TITAN] Image generated successfully");
+
+    // ============================================
+    // PROCESS AND RETURN IMAGE
+    // ============================================
 
     const responseBody = JSON.parse(new TextDecoder().decode(imageResponse.body));
     const base64Image = responseBody.images[0];
     const imageUrl = `data:image/png;base64,${base64Image}`;
 
+    console.log(`[IMAGE API] Returning image (${base64Image.length} chars)`);
+
     return NextResponse.json({
       imageUrl,
       mealDescription: imageMetadata?.dishName || mealDescription,
     });
+
   } catch (error) {
-    console.error("Error generating meal image:", error);
+    console.error("[IMAGE API] Fatal error:", error);
+    
     return NextResponse.json(
       {
         error: "Failed to generate image",

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Send, Image as ImageIcon, Loader2, ChefHat, Camera, X } from "lucide-react";
+import { Send, Image as ImageIcon, Loader2, ChefHat, Camera, X, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Message {
@@ -73,7 +73,7 @@ export default function ScuziChat() {
       {
         id: "welcome",
         role: "assistant",
-        content: "👋 Hey there! I'm Scuzi, your AI food and health companion. I can help you with:\n\n🥗 Recipe ideas from leftover ingredients\n📊 Nutrition analysis of your meals\n🛒 Meal plans from grocery receipts\n🍳 Cooking tips and health advice\n🏷️ Packaged food health assessments\n\nJust chat with me or upload an image to get started!",
+        content: "👋 Hey there! I'm Scuzi, your AI food and health companion powered by Claude 3.5 Sonnet with vision capabilities.\n\n**I can help you with:**\n\n🥗 Recipe ideas from leftover ingredients\n📊 Nutrition analysis of your meals\n🛒 Meal plans from grocery receipts (1-28 meals, up to 7 days)\n🍳 Cooking tips and health advice\n🏷️ Packaged food health assessments\n\nJust chat with me or upload an image to get started!",
         timestamp: new Date(),
       },
     ];
@@ -84,7 +84,6 @@ export default function ScuziChat() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showCamera, setShowCamera] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -181,6 +180,8 @@ export default function ScuziChat() {
   const handleSend = async () => {
     if (!input.trim() && !selectedImage) return;
 
+    console.log("[FRONTEND] Sending message...");
+
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
@@ -194,10 +195,11 @@ export default function ScuziChat() {
     const imageToSend = selectedImage;
     setSelectedImage(null);
     setIsLoading(true);
-    setRetryCount(0);
 
     try {
       const conversationMessages = messages.filter((m) => m.id !== "welcome");
+      
+      console.log("[FRONTEND] Calling /api/chat...");
       
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -220,13 +222,21 @@ export default function ScuziChat() {
         }),
       });
 
+      console.log("[FRONTEND] Response status:", response.status);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to get response");
+        const errorData = await response.json().catch(() => ({ error: "Network error" }));
+        throw new Error(errorData.error || `Request failed with status ${response.status}`);
       }
 
       const data = await response.json();
+      console.log("[FRONTEND] Response data:", {
+        hasContent: !!data.content,
+        shouldGenerateImage: data.shouldGenerateImage,
+        hasMetadata: !!data.imageMetadata
+      });
 
+      // Add assistant's text response
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
@@ -238,6 +248,8 @@ export default function ScuziChat() {
 
       // Generate meal image if metadata is provided
       if (data.shouldGenerateImage && data.imageMetadata) {
+        console.log("[FRONTEND] Generating image with metadata...");
+        
         try {
           const imageResponse = await fetch("/api/generate-meal-image", {
             method: "POST",
@@ -249,8 +261,12 @@ export default function ScuziChat() {
             }),
           });
 
+          console.log("[FRONTEND] Image response status:", imageResponse.status);
+
           if (imageResponse.ok) {
             const imageData = await imageResponse.json();
+            console.log("[FRONTEND] Image generated successfully");
+            
             const imageMessage: Message = {
               id: (Date.now() + 2).toString(),
               role: "assistant",
@@ -259,26 +275,29 @@ export default function ScuziChat() {
               timestamp: new Date(),
             };
             setMessages((prev) => [...prev, imageMessage]);
+          } else {
+            console.warn("[FRONTEND] Image generation failed, but continuing...");
           }
         } catch (imageError) {
-          console.error("Image generation failed:", imageError);
+          console.error("[FRONTEND] Image generation error (non-critical):", imageError);
           // Don't show error to user - image generation is non-critical
         }
       }
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error("[FRONTEND] Fatal error:", error);
       
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: error instanceof Error && error.message 
-          ? error.message 
-          : "Oops! Something got a bit scrambled there 🥚! Mind giving that another shot?",
+        content: error instanceof Error 
+          ? `⚠️ ${error.message}\n\nPlease try again in a moment.`
+          : "⚠️ I encountered a technical issue. Please try again.",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
+      console.log("[FRONTEND] Request completed");
     }
   };
 
@@ -321,7 +340,7 @@ export default function ScuziChat() {
                 fontWeight: 400
               }}
             >
-              Your AI food and health analyst
+              Claude 3.5 Sonnet • Vision + Text
             </p>
           </div>
         </div>
@@ -426,10 +445,9 @@ export default function ScuziChat() {
               </AvatarFallback>
             </Avatar>
             <div className="bg-gray-50 rounded-xl px-4 py-3">
-              <div className="flex gap-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0.2s]" />
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0.4s]" />
+              <div className="flex gap-1 items-center">
+                <Loader2 className="w-4 h-4 animate-spin text-[rgb(209,222,38)]" />
+                <span className="text-sm text-gray-500 ml-2">Claude is thinking...</span>
               </div>
             </div>
           </div>
@@ -485,7 +503,7 @@ export default function ScuziChat() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type a message..."
+            placeholder="Type a message or upload an image..."
             disabled={isLoading}
             className="flex-1 min-h-[44px] max-h-[120px] bg-white border border-gray-200 text-[rgb(17,24,39)] placeholder:text-gray-400 resize-none rounded-lg focus:border-[rgb(209,222,38)] focus:ring-1 focus:ring-[rgb(209,222,38)]"
             style={{
@@ -500,7 +518,7 @@ export default function ScuziChat() {
             onClick={handleSend}
             disabled={isLoading || (!input.trim() && !selectedImage)}
             size="icon"
-            className="bg-[rgb(209,222,38)] hover:bg-[rgb(209,222,38)]/90 text-[rgb(39,39,42)] h-11 w-11 rounded-lg"
+            className="bg-[rgb(209,222,38)] hover:bg-[rgb(209,222,38)]/90 text-[rgb(39,39,42)] h-11 w-11 rounded-lg disabled:opacity-50"
           >
             {isLoading ? (
               <Loader2 className="h-5 w-5 animate-spin" />

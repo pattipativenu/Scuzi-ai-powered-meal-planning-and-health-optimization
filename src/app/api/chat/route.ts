@@ -4,39 +4,41 @@ import {
   ConverseCommand,
 } from "@aws-sdk/client-bedrock-runtime";
 
-// Configure client with bearer token authentication
+// ============================================
+// AWS BEDROCK CLIENT WITH BEARER TOKEN
+// ============================================
+
 const getBedrockClient = () => {
   const bearerToken = process.env.AWS_BEARER_TOKEN_BEDROCK;
   
-  if (bearerToken) {
-    const client = new BedrockRuntimeClient({
-      region: process.env.AWS_REGION || "us-east-1",
-    });
-
-    client.middlewareStack.add(
-      (next: any) => async (args: any) => {
-        args.request.headers.Authorization = `Bearer ${bearerToken}`;
-        return next(args);
-      },
-      {
-        step: "build",
-        name: "addBearerToken",
-      }
-    );
-
-    return client;
-  } else {
-    return new BedrockRuntimeClient({
-      region: process.env.AWS_REGION || "us-east-1",
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
-      },
-    });
+  if (!bearerToken) {
+    throw new Error("AWS_BEARER_TOKEN_BEDROCK is required but not found in environment variables");
   }
+  
+  const client = new BedrockRuntimeClient({
+    region: process.env.AWS_REGION || "us-east-1",
+  });
+
+  // Inject bearer token in Authorization header
+  client.middlewareStack.add(
+    (next: any) => async (args: any) => {
+      args.request.headers.Authorization = `Bearer ${bearerToken}`;
+      return next(args);
+    },
+    {
+      step: "build",
+      name: "addBearerToken",
+    }
+  );
+
+  return client;
 };
 
 const client = getBedrockClient();
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
 
 const sanitizeText = (text: string): string => {
   if (!text) return "";
@@ -44,13 +46,9 @@ const sanitizeText = (text: string): string => {
 };
 
 // ============================================
-// TOPIC CLASSIFICATION - CRITICAL LOGIC
+// TOPIC CLASSIFICATION
 // ============================================
 
-/**
- * Classifies if the user message is relevant to food/health topics
- * Returns: { isRelevant: boolean, category: string }
- */
 function classifyTopic(message: string): { isRelevant: boolean; category: string } {
   if (!message || typeof message !== 'string') {
     return { isRelevant: true, category: "unknown" };
@@ -60,7 +58,6 @@ function classifyTopic(message: string): { isRelevant: boolean; category: string
 
   // ✅ RELEVANT KEYWORDS - Food, Cooking, Health, Nutrition
   const relevantKeywords = [
-    // Food & Cooking
     "recipe", "cook", "food", "meal", "dish", "ingredient", "spice", "flavor",
     "bake", "fry", "grill", "roast", "boil", "sauté", "simmer", "steam",
     "breakfast", "lunch", "dinner", "snack", "dessert", "appetizer",
@@ -68,155 +65,84 @@ function classifyTopic(message: string): { isRelevant: boolean; category: string
     "pasta", "rice", "bread", "curry", "soup", "salad", "sandwich",
     "cuisine", "indian", "italian", "chinese", "mexican", "thai", "japanese",
     "tikka", "masala", "biryani", "pizza", "burger", "taco", "sushi",
-    
-    // Nutrition & Diet
     "nutrition", "calories", "protein", "carbs", "fat", "fiber", "vitamin",
-    "mineral", "macro", "micro", "nutrient", "dietary", "diet",
-    "healthy", "health", "wellness", "fitness", "weight", "calorie",
-    "keto", "paleo", "mediterranean", "low-carb", "high-protein",
-    "allergy", "intolerance", "gluten", "dairy", "lactose", "nut",
-    
-    // Grocery & Planning
-    "grocery", "shopping", "receipt", "pantry", "leftover", "fridge",
-    "store", "market", "plan", "meal prep", "portion", "serving",
-    
-    // Kitchen & Tools
-    "kitchen", "oven", "stove", "pan", "pot", "knife", "blender",
-    "pressure cooker", "air fryer", "microwave", "refrigerator",
-    
-    // Health & Supplements
-    "supplement", "vitamin", "protein shake", "smoothie", "juice",
-    "hydration", "water intake", "sugar", "sodium", "cholesterol"
+    "healthy", "health", "wellness", "fitness", "weight", "diet",
+    "grocery", "shopping", "receipt", "pantry", "leftover", "fridge"
   ];
 
-  // 🚫 IRRELEVANT KEYWORDS - Everything else
+  // 🚫 IRRELEVANT KEYWORDS
   const irrelevantKeywords = [
-    // Weather & Environment
-    "weather", "temperature", "rain", "snow", "sunny", "cloudy", "storm",
-    "forecast", "climate", "wind", "humidity",
-    
-    // Traffic & Transportation
-    "traffic", "road", "highway", "commute", "drive", "car", "bus", "train",
-    "airplane", "flight", "travel route", "congestion", "accident",
-    
-    // Politics & News
-    "politics", "politician", "election", "government", "president", "minister",
-    "vote", "campaign", "policy", "law", "congress", "parliament",
-    
-    // Sports & Entertainment
-    "football", "soccer", "basketball", "cricket", "tennis", "match", "game",
-    "player", "team", "score", "tournament", "championship",
-    "movie", "film", "actor", "celebrity", "tv show", "series",
-    
-    // Technology (non-food related)
-    "computer", "phone", "laptop", "software", "app", "website", "coding",
-    "programming", "internet", "wifi", "browser", "email",
-    
-    // Finance & Business
-    "stock", "market", "investment", "crypto", "bitcoin", "trading",
-    "business", "company", "startup", "economy",
-    
-    // Geography & Places
-    "country", "city", "capital", "state", "province", "continent",
-    "mountain", "river", "ocean", "tourist", "landmark"
+    "weather", "temperature", "rain", "snow", "sunny", "cloudy",
+    "traffic", "road", "highway", "commute", "drive", "car",
+    "politics", "politician", "election", "government",
+    "football", "soccer", "basketball", "cricket", "sports",
+    "movie", "film", "actor", "celebrity", "tv show"
   ];
 
-  // Check for irrelevant keywords first
+  // Check irrelevant first
   for (const keyword of irrelevantKeywords) {
     if (lowerMessage.includes(keyword)) {
       return { isRelevant: false, category: keyword };
     }
   }
 
-  // Check for relevant keywords
+  // Check relevant
   for (const keyword of relevantKeywords) {
     if (lowerMessage.includes(keyword)) {
       return { isRelevant: true, category: "food_health" };
     }
   }
 
-  // Default: treat as relevant (give benefit of doubt for food questions)
-  // Unless it clearly mentions non-food topics
   return { isRelevant: true, category: "food_health" };
 }
 
-/**
- * Generates a humorous rejection for off-topic questions
- */
-function generateHumorousRejection(category: string): string {
+function generateHumorousRejection(): string {
   const rejections = [
     "Haha, I'd love to help, but I'm strictly your food and health partner 🍳 — I only answer things like recipes, ingredients, or nutrition. Let's get back to food, shall we?",
     "I'd absolutely love to chat about that, but my expertise stops at spices and spinach 🥬! How about we whip up something delicious instead?",
-    "Ooh, that's above my pay grade — I'm more of a 'what's for dinner?' kind of AI 😄. Got any food questions for me?",
-    "Haha, I wish I could help with that! But I'm programmed to be your food guru. Shall we talk recipes instead?",
-    "I'm great with curries, not with that topic 🍛💨 — let's talk food instead!",
-    "My knowledge starts in the kitchen and ends at the dinner table 🍽️ — anything food-related I can help with?"
+    "I'm great with curries, not with that topic 🍛💨 — let's talk food instead!"
   ];
-
-  // Return a random rejection
   return rejections[Math.floor(Math.random() * rejections.length)];
 }
 
 // ============================================
-// SYSTEM PROMPT - FOCUSED ON TASK EXECUTION
+// COMPREHENSIVE SYSTEM PROMPT
 // ============================================
 
-const SYSTEM_PROMPT = `You are Scuzi, a professional, warm, and encouraging AI chef and nutritionist. Your primary goal is to help people with food, cooking, nutrition, and health questions.
+const SYSTEM_PROMPT = `You are Scuzi, a professional AI chef and nutritionist powered by Claude 3.5 Sonnet with multimodal capabilities (vision + text).
 
 🎯 **Your Core Mission:**
-Always complete the user's request when it's food or health-related. Be thorough, helpful, and actionable. Never deflect valid food questions with jokes or humor.
+Help users with food, cooking, nutrition, and health. Be thorough, actionable, and focused on delivering results.
 
-**Your Personality:**
-- **Professional & Warm**: Friendly but focused on delivering results
-- **Encouraging**: Make users feel confident about cooking and eating well
-- **Detail-Oriented**: Provide complete, actionable information
-- **Clear & Concise**: Every instruction should be easy to follow
+**Your Capabilities:**
+1. **Recipe Generation from Leftover Ingredients** - Analyze images of ingredients and suggest creative recipes
+2. **Nutrition Analysis of Cooked Meals** - Examine meal images and provide detailed nutrition breakdowns
+3. **Meal Planning from Grocery Receipts** - Process receipt images and create meal plans (1-28 meals, up to 7 days)
+4. **Packaged Food Health Analysis** - Extract ingredients from labels and categorize health risks
+5. **Cooking Tips & Health Advice** - Answer food/health questions with expert guidance
 
-**Critical Rule:** NEVER use humor or jokes when answering valid food, recipe, health, or nutrition questions. Always execute the task seriously and completely.
+**Personality:**
+- Professional, warm, and encouraging
+- Detail-oriented and actionable
+- Make users feel confident about cooking
+- NEVER use humor for valid food/health questions - only for off-topic requests
 
-🍳 **Your Core Capabilities:**
-
-1. **Recipe Generation from Leftover Ingredients**
-   - Analyze images of leftover ingredients/pantry items
-   - Suggest 2-3 creative, practical recipe ideas
-   - Provide complete recipes with step-by-step instructions and nutrition info
-
-2. **Nutrition Analysis of Cooked Meals**
-   - Examine images of prepared dishes
-   - Provide detailed nutrition breakdown per serving
-   - Offer insights on health benefits and improvements
-
-3. **Meal Planning from Grocery Receipts**
-   - Process images of grocery receipts
-   - Create structured meal plans (1-28 meals spanning up to 7 days)
-   - Balance nutrition, variety, and ingredient utilization
-
-4. **Packaged Food Health Analysis**
-   - Extract ALL ingredients from product labels
-   - Categorize each ingredient by risk level: SAFE ✅ | LOW RISK 🟢 | MEDIUM RISK 🟡 | HIGH RISK 🔴
-   - Provide detailed analysis and long-term health risks
-
-5. **Cooking Tips & Health Advice**
-   - Answer food and health questions clearly
-   - Share practical cooking techniques
-   - Explain nutritional concepts simply
-
-📋 **Recipe Format (MANDATORY for all recipes):**
+**Recipe Format (MANDATORY):**
 
 🥘 **[Dish Name]**
 
 ⏱️ **Time:** Prep: X min | Cook: Y min | Total: Z min
-🍽️ **Servings:** 1 (or specify)
+🍽️ **Servings:** [number]
 📊 **Meal Type:** Breakfast/Lunch/Dinner/Snack
 
 **Ingredients:**
-- X measurement ingredient name
-- Y measurement ingredient name
+- [quantity] [unit] [ingredient]
+- [quantity] [unit] [ingredient]
 
 **Step-by-Step Instructions:**
-1. [Action] + specific details (temperature, time, technique)
-2. [Next action] + what to look for or when it's ready
-3. Continue with clear, brief, actionable steps
+1. [Action with specific temperature, time, technique] - [what to look for]
+2. [Next action] - [visual cues or timing]
+3. [Continue with clear, actionable steps]
 
 **Nutrition Table (per serving):**
 | Nutrient | Amount |
@@ -229,67 +155,62 @@ Always complete the user's request when it's food or health-related. Be thorough
 | Sugar | XX g |
 | Sodium | XXX mg |
 
-**Chef's Tip:** [One helpful tip about storage, variations, or serving]
+**Chef's Tip:** [Storage, variations, or serving suggestion]
 
 ---
 
-🎨 **Image Generation Trigger:**
-After providing a complete recipe, ALWAYS include:
+**Image Generation Metadata:**
+After providing a recipe, include this metadata:
 
 [IMAGE_METADATA]
 DISH_NAME: [exact dish name]
 MAIN_INGREDIENTS: [key visible ingredients, comma-separated]
-CUISINE_STYLE: [e.g., Italian, Asian, Mediterranean]
-COOKING_METHOD: [e.g., grilled, baked, sautéed]
+CUISINE_STYLE: [e.g., Italian, Indian, Asian]
+COOKING_METHOD: [e.g., grilled, baked, fried]
 PRESENTATION_STYLE: [e.g., rustic, elegant, casual]
 [/IMAGE_METADATA]
 
----
-
-💬 **Response Guidelines:**
-- **Be direct and actionable**: Complete the task, don't deflect
-- **Use specific details**: Include temperatures (°F), times (minutes), measurements (tbsp, cups)
-- **Be thorough yet concise**: Cover all steps without being verbose
-- **Show encouragement**: Brief phrases like "Great question!", "You've got this!"
-- **Reference context naturally**: If this is a follow-up, acknowledge previous messages
-
-**CRITICAL:** Never use humor, jokes, or deflections when answering valid food/health questions. Always complete the requested task.`;
+**Response Guidelines:**
+- Be direct and complete the task
+- Use specific measurements, temperatures (°F), and times
+- Be thorough yet concise
+- Reference previous context naturally
+- CRITICAL: Always execute valid food/health requests seriously - no humor or deflection`;
 
 // ============================================
-// MESSAGE PROCESSING WITH TOPIC CLASSIFICATION
+// ENHANCED RETRY LOGIC WITH EXPONENTIAL BACKOFF
 // ============================================
 
-interface Message {
-  role: string;
-  content: string;
-  image?: string;
-}
-
-// Retry logic helper
 async function retryOperation<T>(
   operation: () => Promise<T>,
-  maxRetries: number = 3,
-  delay: number = 1000
+  maxRetries: number = 5,
+  baseDelay: number = 1000
 ): Promise<T> {
   let lastError: Error | undefined;
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
+      console.log(`[RETRY] Attempt ${attempt}/${maxRetries}`);
       return await operation();
     } catch (error) {
       lastError = error as Error;
-      console.error(`Attempt ${attempt} failed:`, error);
+      console.error(`[RETRY] Attempt ${attempt} failed:`, error);
       
       if (attempt < maxRetries) {
-        await new Promise(resolve => setTimeout(resolve, delay * attempt));
+        const delay = baseDelay * Math.pow(2, attempt - 1);
+        console.log(`[RETRY] Waiting ${delay}ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
   }
   
-  throw lastError || new Error("Operation failed after retries");
+  throw lastError || new Error("Operation failed after all retries");
 }
 
-// Extract structured image metadata from response
+// ============================================
+// IMAGE METADATA EXTRACTION
+// ============================================
+
 function extractImageMetadata(text: string): {
   shouldGenerate: boolean;
   dishName: string;
@@ -329,62 +250,82 @@ function extractImageMetadata(text: string): {
   };
 }
 
+// ============================================
+// MAIN API ROUTE WITH FULL ERROR HANDLING
+// ============================================
+
+interface Message {
+  role: string;
+  content: string;
+  image?: string;
+}
+
 export async function POST(request: NextRequest) {
+  console.log("[CHAT API] Request received");
+  
   try {
     const { messages } = await request.json();
 
     if (!messages || !Array.isArray(messages)) {
+      console.error("[CHAT API] Invalid messages format");
       return NextResponse.json(
         { error: "Messages array is required" },
         { status: 400 }
       );
     }
 
+    console.log(`[CHAT API] Processing ${messages.length} messages`);
+
     // ============================================
     // STEP 1: TOPIC CLASSIFICATION
     // ============================================
     
-    // Get the last user message for classification
     const lastUserMessage = [...messages].reverse().find((m: Message) => m.role === "user");
     
     if (lastUserMessage && lastUserMessage.content) {
       const classification = classifyTopic(lastUserMessage.content);
       
-      // If topic is irrelevant, return humorous rejection immediately
       if (!classification.isRelevant) {
-        console.log(`[TOPIC FILTER] Rejected off-topic query: "${classification.category}"`);
+        console.log(`[TOPIC FILTER] Rejected: "${classification.category}"`);
         return NextResponse.json({
-          content: generateHumorousRejection(classification.category),
+          content: generateHumorousRejection(),
           shouldGenerateImage: false,
           imageMetadata: null,
         });
       }
       
-      console.log(`[TOPIC FILTER] Approved food/health query: "${classification.category}"`);
+      console.log(`[TOPIC FILTER] Approved: "${classification.category}"`);
     }
 
     // ============================================
-    // STEP 2: PROCESS VALID FOOD/HEALTH QUERY
+    // STEP 2: PREPARE MESSAGES FOR CLAUDE
     // ============================================
 
-    // Convert messages to Bedrock format
     const converseMessages = messages.map((msg: Message) => {
       const content = [];
 
+      // Add image first if present (Claude processes images before text)
       if (msg.image) {
-        const base64Data = msg.image.split(",")[1] || msg.image;
-        const imageBytes = Buffer.from(base64Data, "base64");
+        try {
+          const base64Data = msg.image.split(",")[1] || msg.image;
+          const imageBytes = Buffer.from(base64Data, "base64");
+          
+          console.log(`[IMAGE] Processing image: ${imageBytes.length} bytes`);
 
-        content.push({
-          image: {
-            format: "jpeg",
-            source: {
-              bytes: imageBytes,
+          content.push({
+            image: {
+              format: "jpeg",
+              source: {
+                bytes: imageBytes,
+              },
             },
-          },
-        });
+          });
+        } catch (imageError) {
+          console.error("[IMAGE] Error processing image:", imageError);
+        }
       }
 
+      // Add text content
       if (msg.content) {
         content.push({
           text: msg.content,
@@ -397,7 +338,12 @@ export async function POST(request: NextRequest) {
       };
     });
 
-    // Call Bedrock with retry logic
+    console.log("[BEDROCK] Sending request to Claude 3.5 Sonnet...");
+
+    // ============================================
+    // STEP 3: CALL CLAUDE WITH RETRY LOGIC
+    // ============================================
+
     const response = await retryOperation(async () => {
       const command = new ConverseCommand({
         modelId: "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
@@ -411,9 +357,14 @@ export async function POST(request: NextRequest) {
       });
 
       return await client.send(command);
-    }, 3, 1000);
+    }, 5, 1000);
 
-    // Extract response content
+    console.log("[BEDROCK] Response received successfully");
+
+    // ============================================
+    // STEP 4: EXTRACT RESPONSE TEXT
+    // ============================================
+
     let responseText = "";
 
     if (response.output?.message?.content) {
@@ -425,11 +376,15 @@ export async function POST(request: NextRequest) {
     }
 
     responseText = sanitizeText(responseText);
+    console.log(`[RESPONSE] Extracted ${responseText.length} characters`);
 
-    // Extract image metadata for generation
+    // ============================================
+    // STEP 5: EXTRACT IMAGE METADATA
+    // ============================================
+
     const imageMetadata = extractImageMetadata(responseText);
+    console.log("[IMAGE METADATA]", imageMetadata);
     
-    // Remove metadata tags from user-facing response
     const cleanedResponse = responseText.replace(/\[IMAGE_METADATA\][\s\S]*?\[\/IMAGE_METADATA\]/g, "").trim();
 
     return NextResponse.json({
@@ -437,15 +392,13 @@ export async function POST(request: NextRequest) {
       shouldGenerateImage: imageMetadata.shouldGenerate,
       imageMetadata: imageMetadata.shouldGenerate ? imageMetadata : null,
     });
+
   } catch (error) {
-    console.error("Error calling Bedrock:", error);
-    
-    // For valid food queries, show professional error message (no humor)
-    const errorMessage = "I encountered a technical issue while processing your request. Please try again.";
+    console.error("[CHAT API] Fatal error:", error);
     
     return NextResponse.json(
       {
-        error: errorMessage,
+        error: "I encountered a technical issue while processing your request. Please try again.",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
