@@ -57,23 +57,10 @@ export default function MealDetailPage({ params }: MealDetailPageProps) {
           {/* Left Side - Content */}
           <div className="flex flex-col justify-center order-2 md:order-1">
             <h1 className="!font-bold !not-italic !text-[42px]">
-
-
-
-
-
-
-
               {meal.name}
             </h1>
             
             <p className="!font-normal">
-
-
-
-
-
-
               {meal.description}
             </p>
 
@@ -136,7 +123,7 @@ export default function MealDetailPage({ params }: MealDetailPageProps) {
                 src={meal.image}
                 alt={meal.name}
                 fill
-                className="object-cover"
+                className="object-contain"
                 priority />
 
             </div>
