@@ -94,23 +94,16 @@ export function AnimatedHeroSection() {
             </Link>
           </div>
 
-          {/* Right Side - Hero Image */}
-<div
-  className="relative w-full h-[600px] md:h-[700px] lg:h-[750px] overflow-hidden rounded-[33px]"
-  style={{
-    borderRadius: "33px",
-    backgroundColor: "transparent",
-  }}
->
+         {/* Right Side - Hero Image */}
+<div className="relative overflow-hidden rounded-[33px] w-full h-full">
   {!imageError ? (
     <Image
       src="https://scuziassests.s3.us-east-1.amazonaws.com/hero%20image.webp"
       alt="Delicious meal prep"
       fill
-      priority
-      unoptimized
-      className="object-contain object-right-top rounded-[33px] absolute top-0 right-0 bottom-0"
+      className="object-cover object-right rounded-[33px] absolute top-0 right-0 bottom-0"
       onError={() => setImageError(true)}
+      unoptimized
     />
   ) : (
     <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-100 rounded-[33px]">
@@ -121,6 +114,7 @@ export function AnimatedHeroSection() {
     </div>
   )}
 </div>
+
         </div>
       </div>
     </section>);
