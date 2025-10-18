@@ -95,7 +95,7 @@ export function AnimatedHeroSection() {
           </div>
 
   {/* Right Side - Hero Image */}
-<div className="relative w-full h-full overflow-hidden rounded-[0px_33px_33px_0px]">
+<div className="relative w-full h-full overflow-hidden rounded-[0px_33px_33px_0px] -mt-8 md:-mt-12 lg:-mt-16 -mb-8 md:-mb-12 lg:-mb-16 -mr-8 md:-mr-12 lg:-mr-16">
   {!imageError ? (
     <Image
       src="https://scuziassests.s3.us-east-1.amazonaws.com/hero%20image.webp"
@@ -103,14 +103,7 @@ export function AnimatedHeroSection() {
       fill
       priority
       unoptimized
-      className="object-cover object-right-top absolute top-0 right-0 bottom-0 left-0 rounded-[0px_33px_33px_0px]"
-      style={{
-        width: 'calc(100% + 4rem)',   // expand beyond padding
-        height: 'calc(100% + 4rem)',  // expand beyond padding
-        marginTop: '-2rem',           // pull upward to touch top
-        marginBottom: '-2rem',        // pull downward to touch bottom
-        marginRight: '-2rem',         // pull outward to touch right edge
-      }}
+      className="object-cover object-right-top rounded-[0px_33px_33px_0px]"
       onError={() => setImageError(true)}
     />
   ) : (
