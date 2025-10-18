@@ -2,15 +2,163 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Search, Camera, Upload, Menu, X, ArrowLeft } from "lucide-react";
+import { Search, Camera, Upload, ArrowLeft } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+
+// Animation variants for the menu
+const perspective = {
+  initial: { opacity: 0, rotateX: 90, translateY: 80, translateX: -20 },
+  enter: (i: number) => ({
+    opacity: 1, rotateX: 0, translateY: 0, translateX: 0,
+    transition: {
+      duration: 0.65,
+      delay: 0.5 + (i * 0.1),
+      ease: [.215, .61, .355, 1],
+      opacity: { duration: 0.35 }
+    }
+  }),
+  exit: { opacity: 0, transition: { duration: 0.5, type: "linear", ease: [0.76, 0, 0.24, 1] } }
+};
+
+const slideIn = {
+  initial: { opacity: 0, y: 20 },
+  enter: (i: number) => ({
+    opacity: 1, y: 0,
+    transition: {
+      duration: 0.5,
+      delay: 0.75 + (i * 0.1),
+      ease: [.215, .61, .355, 1]
+    }
+  }),
+  exit: { opacity: 0, transition: { duration: 0.5, type: "tween", ease: "easeInOut" } }
+};
+
+const menuVariants = {
+  open: {
+    width: "480px",
+    height: "650px",
+    top: "-25px",
+    right: "-25px",
+    transition: { duration: 0.75, type: "tween", ease: [0.76, 0, 0.24, 1] }
+  },
+  closed: {
+    width: "100px",
+    height: "40px",
+    top: "0px",
+    right: "0px",
+    transition: { duration: 0.75, delay: 0.35, type: "tween", ease: [0.76, 0, 0.24, 1] }
+  }
+};
 
 const navLinks = [
-  { name: "Home Page", href: "/" },
-  { name: "Plan Ahead", href: "/plan-ahead" },
-  { name: "Pantry", href: "/pantry" },
-  { name: "Account", href: "/account" }
+  { name: "home", href: "/" },
+  { name: "plan ahead", href: "/plan-ahead" },
+  { name: "pantry", href: "/pantry" },
+  { name: "account", href: "/account" }
 ];
+
+const footerLinks = [
+  { title: "Facebook", href: "https://facebook.com" },
+  { title: "LinkedIn", href: "https://linkedin.com" },
+  { title: "Instagram", href: "https://instagram.com" },
+  { title: "Twitter", href: "https://twitter.com" }
+];
+
+// PerspectiveText component for button animation
+const PerspectiveText = ({ label }: { label: string }) => {
+  return (
+    <div className="flex flex-col justify-center items-center h-full w-full" style={{ transformStyle: "preserve-3d", transition: "transform 0.75s cubic-bezier(0.76, 0, 0.24, 1)" }}>
+      <p className="uppercase font-bold m-0 pointer-events-none" style={{ transition: "all 0.75s cubic-bezier(0.76, 0, 0.24, 1)" }}>{label}</p>
+      <p className="uppercase font-bold m-0 pointer-events-none absolute opacity-0" style={{ transformOrigin: "bottom center", transform: "rotateX(-90deg) translateY(9px)", transition: "all 0.75s cubic-bezier(0.76, 0, 0.24, 1)" }}>{label}</p>
+    </div>
+  );
+};
+
+// Button component
+const MenuButton = ({ isActive, toggleMenu }: { isActive: boolean; toggleMenu: () => void }) => {
+  return (
+    <div className="absolute top-0 right-0 w-[100px] h-[40px] cursor-pointer rounded-[25px] overflow-hidden">
+      <motion.div
+        className="relative w-full h-full"
+        animate={{ top: isActive ? "-100%" : "0%" }}
+        transition={{ duration: 0.5, type: "tween", ease: [0.76, 0, 0.24, 1] }}
+      >
+        <div 
+          className="w-full h-full flex items-center justify-center hover:[&_.perspectiveText]:rotate-x-90"
+          style={{ backgroundColor: "rgb(209, 222, 38)" }}
+          onClick={toggleMenu}
+        >
+          <PerspectiveText label="Menu" />
+        </div>
+        <div 
+          className="w-full h-full flex items-center justify-center bg-black"
+          onClick={toggleMenu}
+        >
+          <div className="flex flex-col justify-center items-center h-full w-full" style={{ transformStyle: "preserve-3d", transition: "transform 0.75s cubic-bezier(0.76, 0, 0.24, 1)" }}>
+            <p className="uppercase font-bold m-0 pointer-events-none" style={{ color: "rgb(209, 222, 38)", transition: "all 0.75s cubic-bezier(0.76, 0, 0.24, 1)" }}>Close</p>
+            <p className="uppercase font-bold m-0 pointer-events-none absolute opacity-0" style={{ color: "rgb(209, 222, 38)", transformOrigin: "bottom center", transform: "rotateX(-90deg) translateY(9px)", transition: "all 0.75s cubic-bezier(0.76, 0, 0.24, 1)" }}>Close</p>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// Nav component
+const Nav = ({ setMenuOpen }: { setMenuOpen: (open: boolean) => void }) => {
+  return (
+    <div className="flex flex-col justify-between h-full box-border p-[100px_40px_50px_40px]" style={{ color: "rgb(17, 24, 39)" }}>
+      <div className="flex flex-col gap-[10px]">
+        {navLinks.map((link, i) => (
+          <div key={`b_${i}`} style={{ perspective: "120px", perspectiveOrigin: "bottom" }}>
+            <motion.a
+              href={link.href}
+              custom={i}
+              variants={perspective}
+              initial="initial"
+              animate="enter"
+              exit="exit"
+              onClick={() => setMenuOpen(false)}
+              className="block cursor-pointer no-underline"
+              style={{
+                fontFamily: '"Right Grotesk Spatial", sans-serif',
+                fontSize: "65px",
+                lineHeight: "58px",
+                fontWeight: 700,
+                color: "rgb(17, 24, 39)"
+              }}
+            >
+              {link.name}
+            </motion.a>
+          </div>
+        ))}
+      </div>
+      <motion.div className="flex flex-wrap">
+        {footerLinks.map((link, i) => (
+          <motion.a
+            variants={slideIn}
+            custom={i}
+            initial="initial"
+            animate="enter"
+            exit="exit"
+            key={`f_${i}`}
+            href={link.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-1/2 mt-[5px] no-underline"
+            style={{
+              color: "rgb(17, 24, 39)",
+              fontSize: "14px"
+            }}
+          >
+            {link.title}
+          </motion.a>
+        ))}
+      </motion.div>
+    </div>
+  );
+};
 
 export function Navigation() {
   const pathname = usePathname();
@@ -19,7 +167,6 @@ export function Navigation() {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   const placeholders = [
     "Have leftovers? I can make a meal.",
@@ -38,33 +185,16 @@ export function Navigation() {
     }
   }, [searchQuery, placeholders.length]);
 
-  // Close menu on click outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setMenuOpen(false);
-      }
-    };
-
-    if (menuOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
-    }
-  }, [menuOpen]);
-
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Store the search query in sessionStorage for the chat page
     if (searchQuery.trim()) {
       sessionStorage.setItem('chatInitialQuery', searchQuery.trim());
     }
-    // Navigate to chat page
     router.push('/chat');
     setSearchQuery("");
   };
 
   const handleSearchIconClick = () => {
-    // Navigate to chat page when search icon is clicked
     if (searchQuery.trim()) {
       sessionStorage.setItem('chatInitialQuery', searchQuery.trim());
     }
@@ -82,10 +212,9 @@ export function Navigation() {
     <nav className="sticky top-0 z-50 border-b border-border" style={{ backgroundColor: "rgb(209, 222, 38)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-6 h-20">
-          {/* Chat Page Layout (Desktop/Tablet only - md and up) */}
+          {/* Chat Page Layout */}
           {isOnChatPage && (
             <>
-              {/* Desktop/Tablet: Go Back button and Logo only */}
               <div className="hidden md:flex items-center gap-4 flex-1">
                 <button
                   onClick={handleGoBack}
@@ -94,19 +223,16 @@ export function Navigation() {
                 >
                   <ArrowLeft className="w-6 h-6" style={{ color: "rgb(39, 39, 42)" }} />
                 </button>
-                <Link href="/" className="flex items-center gap-2 font-semibold text-lg" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"' }}>
-                  <span className="!whitespace-pre-line">SCUZI</span>
+                <Link href="/" className="flex items-center gap-2 font-semibold text-lg" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
+                  <span>SCUZI</span>
                 </Link>
               </div>
 
-              {/* Mobile: Keep existing layout */}
               <div className="md:hidden flex items-center justify-between gap-6 w-full">
-                {/* Logo */}
-                <Link href="/" className="flex items-center gap-2 font-semibold text-lg flex-shrink-0" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"' }}>
-                  <span className="!whitespace-pre-line">SCUZI</span>
+                <Link href="/" className="flex items-center gap-2 font-semibold text-lg flex-shrink-0" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
+                  <span>SCUZI</span>
                 </Link>
 
-                {/* Search Bar */}
                 <div className="flex-1 max-w-2xl">
                   <form onSubmit={handleSearch} className="relative w-full">
                     <input
@@ -127,7 +253,6 @@ export function Navigation() {
                       }}
                     />
                     
-                    {/* Icons Container */}
                     <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                       <button
                         type="button"
@@ -157,62 +282,31 @@ export function Navigation() {
                   </form>
                 </div>
 
-                {/* Mobile Menu */}
-                <div className="relative" ref={menuRef}>
-                  <button
-                    onClick={() => setMenuOpen(!menuOpen)}
-                    className="p-2 hover:bg-black/5 rounded-lg transition-colors"
-                    title="Menu"
+                <div className="fixed right-[50px] top-[50px] z-[100]">
+                  <motion.div
+                    className="rounded-[25px] relative overflow-hidden"
+                    style={{ backgroundColor: "rgb(209, 222, 38)" }}
+                    variants={menuVariants}
+                    animate={menuOpen ? "open" : "closed"}
+                    initial="closed"
                   >
-                    {menuOpen ? (
-                      <X className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
-                    ) : (
-                      <Menu className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
-                    )}
-                  </button>
-
-                  {menuOpen && (
-                    <div 
-                      className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 animate-in fade-in slide-in-from-top-2 duration-200"
-                      style={{
-                        border: "1px solid rgba(0,0,0,0.1)"
-                      }}
-                    >
-                      {navLinks.map((link) => (
-                        <Link
-                          key={link.href}
-                          href={link.href}
-                          onClick={() => setMenuOpen(false)}
-                          className={`block px-4 py-3 transition-colors hover:bg-gray-50 ${
-                            pathname === link.href ? "bg-gray-100" : ""
-                          }`}
-                          style={{ 
-                            fontFamily: '"Right Grotesk Wide", ui-sans-serif, system-ui, sans-serif',
-                            fontWeight: 500,
-                            fontSize: "14px",
-                            lineHeight: "20px",
-                            color: "rgb(39, 39, 42)"
-                          }}
-                        >
-                          {link.name}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
+                    <AnimatePresence>
+                      {menuOpen && <Nav setMenuOpen={setMenuOpen} />}
+                    </AnimatePresence>
+                  </motion.div>
+                  <MenuButton isActive={menuOpen} toggleMenu={() => setMenuOpen(!menuOpen)} />
                 </div>
               </div>
             </>
           )}
 
-          {/* Default Layout (All other pages) */}
+          {/* Default Layout */}
           {!isOnChatPage && (
             <>
-              {/* Logo */}
-              <Link href="/" className="flex items-center gap-2 font-semibold text-lg flex-shrink-0" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"' }}>
-                <span className="!whitespace-pre-line">SCUZI</span>
+              <Link href="/" className="flex items-center gap-2 font-semibold text-lg flex-shrink-0" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
+                <span>SCUZI</span>
               </Link>
 
-              {/* Always-Visible Search Bar */}
               <div className="flex-1 max-w-2xl">
                 <form onSubmit={handleSearch} className="relative w-full">
                   <input
@@ -233,7 +327,6 @@ export function Navigation() {
                     }}
                   />
                   
-                  {/* Icons Container */}
                   <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                     <button
                       type="button"
@@ -263,94 +356,20 @@ export function Navigation() {
                 </form>
               </div>
 
-              {/* Desktop: Hamburger Menu */}
-              <div className="hidden md:block relative" ref={menuRef}>
-                <button
-                  onClick={() => setMenuOpen(!menuOpen)}
-                  className="p-2 hover:bg-black/5 rounded-lg transition-colors"
-                  title="Menu"
+              {/* Animated Menu for Desktop & Mobile */}
+              <div className="fixed right-[50px] top-[50px] z-[100]">
+                <motion.div
+                  className="rounded-[25px] relative overflow-hidden"
+                  style={{ backgroundColor: "rgb(209, 222, 38)" }}
+                  variants={menuVariants}
+                  animate={menuOpen ? "open" : "closed"}
+                  initial="closed"
                 >
-                  {menuOpen ? (
-                    <X className="w-6 h-6" style={{ color: "rgb(39, 39, 42)" }} />
-                  ) : (
-                    <Menu className="w-6 h-6" style={{ color: "rgb(39, 39, 42)" }} />
-                  )}
-                </button>
-
-                {/* Dropdown Menu */}
-                {menuOpen && (
-                  <div 
-                    className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 animate-in fade-in slide-in-from-top-2 duration-200"
-                    style={{
-                      border: "1px solid rgba(0,0,0,0.1)"
-                    }}
-                  >
-                    {navLinks.map((link) => (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        onClick={() => setMenuOpen(false)}
-                        className={`block px-4 py-3 transition-colors hover:bg-gray-50 ${
-                          pathname === link.href ? "bg-gray-100" : ""
-                        }`}
-                        style={{ 
-                          fontFamily: '"Right Grotesk Wide", ui-sans-serif, system-ui, sans-serif',
-                          fontWeight: 500,
-                          fontSize: "16px",
-                          lineHeight: "24px",
-                          color: "rgb(39, 39, 42)"
-                        }}
-                      >
-                        {link.name}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Mobile: Hamburger Menu */}
-              <div className="md:hidden relative" ref={menuRef}>
-                <button
-                  onClick={() => setMenuOpen(!menuOpen)}
-                  className="p-2 hover:bg-black/5 rounded-lg transition-colors"
-                  title="Menu"
-                >
-                  {menuOpen ? (
-                    <X className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
-                  ) : (
-                    <Menu className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
-                  )}
-                </button>
-
-                {/* Mobile Dropdown Menu */}
-                {menuOpen && (
-                  <div 
-                    className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 animate-in fade-in slide-in-from-top-2 duration-200"
-                    style={{
-                      border: "1px solid rgba(0,0,0,0.1)"
-                    }}
-                  >
-                    {navLinks.map((link) => (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        onClick={() => setMenuOpen(false)}
-                        className={`block px-4 py-3 transition-colors hover:bg-gray-50 ${
-                          pathname === link.href ? "bg-gray-100" : ""
-                        }`}
-                        style={{ 
-                          fontFamily: '"Right Grotesk Wide", ui-sans-serif, system-ui, sans-serif',
-                          fontWeight: 500,
-                          fontSize: "14px",
-                          lineHeight: "20px",
-                          color: "rgb(39, 39, 42)"
-                        }}
-                      >
-                        {link.name}
-                      </Link>
-                    ))}
-                  </div>
-                )}
+                  <AnimatePresence>
+                    {menuOpen && <Nav setMenuOpen={setMenuOpen} />}
+                  </AnimatePresence>
+                </motion.div>
+                <MenuButton isActive={menuOpen} toggleMenu={() => setMenuOpen(!menuOpen)} />
               </div>
             </>
           )}
