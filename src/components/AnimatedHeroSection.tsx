@@ -34,7 +34,7 @@ export function AnimatedHeroSection() {
             <button
             onClick={connect}
             disabled={isLoading}
-            className="inline-flex items-center gap-2 bg-black text-white py-3 rounded-full font-semibold hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed !px-4"
+            className="inline-flex items-center gap-2 bg-black text-white py-3 rounded-full font-semibold hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed !px-[15px]"
             style={{
               fontFamily: '"Right Grotesk Wide", sans-serif',
               fontSize: '14px'
