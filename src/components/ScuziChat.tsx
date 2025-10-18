@@ -152,7 +152,8 @@ export default function ScuziChat() {
             ...conversationMessages.map((m) => ({
               role: m.role,
               content: m.content,
-              image: m.image,
+              // CRITICAL: Only include images for user messages, not assistant messages
+              image: m.role === "user" ? m.image : undefined,
             })),
             {
               role: "user",
