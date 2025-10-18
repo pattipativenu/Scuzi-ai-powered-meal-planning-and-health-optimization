@@ -359,24 +359,24 @@ export function Navigation() {
       {/* Second Row - Whitish Background with WHOOP Connect and Menu */}
       <div style={{ backgroundColor: "rgb(250, 250, 250)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-6 h-24">
+          <div className="flex items-center gap-3 h-20">
             {/* WHOOP Connect Button */}
-            <Link href="/connect" className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-black text-white hover:bg-gray-800 transition-colors">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <Link href="/connect" className="flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white hover:bg-gray-800 transition-colors flex-shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
               </svg>
-              <span style={{ fontFamily: '"Right Grotesk Wide", sans-serif', fontWeight: 500, fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              <span style={{ fontFamily: '"Right Grotesk Wide", sans-serif', fontWeight: 500, fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.3px", whiteSpace: "nowrap" }}>
                 WHOOP CONNECT
               </span>
             </Link>
 
-            {/* WHOOP Mini Metrics */}
-            <div className="hidden lg:flex flex-1 justify-center">
+            {/* WHOOP Mini Metrics - Constrained width */}
+            <div className="hidden lg:flex flex-1 justify-center overflow-hidden max-w-2xl mx-auto">
               <WhoopMiniMetrics />
             </div>
 
             {/* Menu Button with Animation */}
-            <div className="relative h-[40px] flex items-center ml-auto">
+            <div className="relative h-[40px] flex items-center flex-shrink-0">
               <motion.div
                 className="rounded-[25px] absolute overflow-hidden"
                 style={{ backgroundColor: "rgb(209, 222, 38)" }}
