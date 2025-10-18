@@ -27,7 +27,7 @@ export function AnimatedHeroSection() {
 
   return (
     <section className="relative py-12 md:py-16 overflow-hidden bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-20">
+      <div className="mx-auto px-2 md:px-4 lg:px-6">
         {/* WHOOP Connect Section */}
         {!isConnected ? (
           <div className="mb-8 flex justify-start">
@@ -81,7 +81,7 @@ export function AnimatedHeroSection() {
 
         {/* Hero Content with Yellow Background */}
         <div 
-          className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center rounded-[25px] px-12 md:px-16 lg:px-20 py-16 md:py-20 lg:py-28"
+          className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center rounded-[33px] px-12 md:px-16 lg:px-20 py-16 md:py-20 lg:py-28"
           style={{ backgroundColor: "rgb(247, 248, 212)" }}
         >
           {/* Left Side - Text Content */}
@@ -143,7 +143,7 @@ export function AnimatedHeroSection() {
                 fill
                 priority
                 unoptimized
-                className="object-cover object-right"
+                className="object-contain object-right"
                 onError={() => setImageError(true)}
               />
             ) : (
