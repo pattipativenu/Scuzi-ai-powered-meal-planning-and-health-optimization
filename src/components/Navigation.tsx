@@ -209,26 +209,87 @@ export function Navigation() {
   const isOnChatPage = pathname === '/chat';
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border" style={{ backgroundColor: "rgb(209, 222, 38)" }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-6 h-20">
-          {/* Chat Page Layout */}
-          {isOnChatPage && (
-            <>
-              <div className="hidden md:flex items-center gap-4 flex-1">
-                <button
-                  onClick={handleGoBack}
-                  className="p-2 hover:bg-black/5 rounded-lg transition-colors"
-                  title="Go Back"
-                >
-                  <ArrowLeft className="w-6 h-6" style={{ color: "rgb(39, 39, 42)" }} />
-                </button>
-                <Link href="/" className="flex items-center gap-2 font-semibold text-lg" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
-                  <span>SCUZI</span>
-                </Link>
-              </div>
+    <nav className="sticky top-0 z-50 border-b border-border">
+      {/* Top Bar - Yellow Background */}
+      <div style={{ backgroundColor: "rgb(209, 222, 38)" }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between gap-6 h-20">
+            {/* Chat Page Layout */}
+            {isOnChatPage && (
+              <>
+                <div className="hidden md:flex items-center gap-4 flex-1">
+                  <button
+                    onClick={handleGoBack}
+                    className="p-2 hover:bg-black/5 rounded-lg transition-colors"
+                    title="Go Back"
+                  >
+                    <ArrowLeft className="w-6 h-6" style={{ color: "rgb(39, 39, 42)" }} />
+                  </button>
+                  <Link href="/" className="flex items-center gap-2 font-semibold text-lg" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
+                    <span>SCUZI</span>
+                  </Link>
+                </div>
 
-              <div className="md:hidden flex items-center justify-between gap-6 w-full">
+                <div className="md:hidden flex items-center justify-between gap-6 w-full">
+                  <Link href="/" className="flex items-center gap-2 font-semibold text-lg flex-shrink-0" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
+                    <span>SCUZI</span>
+                  </Link>
+
+                  <div className="flex-1 max-w-2xl">
+                    <form onSubmit={handleSearch} className="relative w-full">
+                      <input
+                        ref={searchInputRef}
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder={placeholders[placeholderIndex]}
+                        className="w-full h-11 pl-4 pr-28 rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-black/10 transition-all shimmer-placeholder"
+                        style={{
+                          backgroundColor: "rgb(209, 222, 38)",
+                          fontFamily: '"Right Grotesk Wide", ui-sans-serif, system-ui, sans-serif',
+                          fontWeight: 500,
+                          fontSize: "16px",
+                          lineHeight: "24px",
+                          color: "rgb(39, 39, 42)",
+                          boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.05)"
+                        }}
+                      />
+                      
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                        <button
+                          type="button"
+                          className="p-2 hover:bg-black/5 rounded-lg transition-colors icon-glow"
+                          title="Take photo"
+                          onClick={handleSearchIconClick}
+                        >
+                          <Camera className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
+                        </button>
+                        <button
+                          type="button"
+                          className="p-2 hover:bg-black/5 rounded-lg transition-colors icon-glow"
+                          title="Upload photo"
+                          onClick={handleSearchIconClick}
+                        >
+                          <Upload className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleSearchIconClick}
+                          className="p-2 hover:bg-black/5 rounded-lg transition-colors"
+                          title="Search"
+                        >
+                          <Search className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Default Layout */}
+            {!isOnChatPage && (
+              <>
                 <Link href="/" className="flex items-center gap-2 font-semibold text-lg flex-shrink-0" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
                   <span>SCUZI</span>
                 </Link>
@@ -281,84 +342,43 @@ export function Navigation() {
                     </div>
                   </form>
                 </div>
-              </div>
-            </>
-          )}
-
-          {/* Default Layout */}
-          {!isOnChatPage && (
-            <>
-              <Link href="/" className="flex items-center gap-2 font-semibold text-lg flex-shrink-0" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
-                <span>SCUZI</span>
-              </Link>
-
-              <div className="flex-1 max-w-2xl">
-                <form onSubmit={handleSearch} className="relative w-full">
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={placeholders[placeholderIndex]}
-                    className="w-full h-11 pl-4 pr-28 rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-black/10 transition-all shimmer-placeholder"
-                    style={{
-                      backgroundColor: "rgb(209, 222, 38)",
-                      fontFamily: '"Right Grotesk Wide", ui-sans-serif, system-ui, sans-serif',
-                      fontWeight: 500,
-                      fontSize: "16px",
-                      lineHeight: "24px",
-                      color: "rgb(39, 39, 42)",
-                      boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.05)"
-                    }}
-                  />
-                  
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                    <button
-                      type="button"
-                      className="p-2 hover:bg-black/5 rounded-lg transition-colors icon-glow"
-                      title="Take photo"
-                      onClick={handleSearchIconClick}
-                    >
-                      <Camera className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
-                    </button>
-                    <button
-                      type="button"
-                      className="p-2 hover:bg-black/5 rounded-lg transition-colors icon-glow"
-                      title="Upload photo"
-                      onClick={handleSearchIconClick}
-                    >
-                      <Upload className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleSearchIconClick}
-                      className="p-2 hover:bg-black/5 rounded-lg transition-colors"
-                      title="Search"
-                    >
-                      <Search className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </>
-          )}
+              </>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Animated Menu - Floating on all pages */}
-      <div className="fixed right-[50px] top-[140px] z-[100]">
-        <motion.div
-          className="rounded-[25px] relative overflow-hidden"
-          style={{ backgroundColor: "rgb(209, 222, 38)" }}
-          variants={menuVariants}
-          animate={menuOpen ? "open" : "closed"}
-          initial="closed"
-        >
-          <AnimatePresence>
-            {menuOpen && <Nav setMenuOpen={setMenuOpen} />}
-          </AnimatePresence>
-        </motion.div>
-        <MenuButton isActive={menuOpen} toggleMenu={() => setMenuOpen(!menuOpen)} />
+      {/* Second Row - Whitish Background with WHOOP Connect and Menu */}
+      <div style={{ backgroundColor: "rgb(250, 250, 250)" }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* WHOOP Connect Button */}
+            <Link href="/connect" className="flex items-center gap-2 px-6 py-2 rounded-full bg-black text-white hover:bg-gray-800 transition-colors">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+              </svg>
+              <span style={{ fontFamily: '"Right Grotesk Wide", sans-serif', fontWeight: 500, fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                WHOOP CONNECT
+              </span>
+            </Link>
+
+            {/* Menu Button with Animation */}
+            <div className="relative">
+              <motion.div
+                className="rounded-[25px] relative overflow-hidden"
+                style={{ backgroundColor: menuOpen ? "rgb(209, 222, 38)" : "rgb(209, 222, 38)" }}
+                variants={menuVariants}
+                animate={menuOpen ? "open" : "closed"}
+                initial="closed"
+              >
+                <AnimatePresence>
+                  {menuOpen && <Nav setMenuOpen={setMenuOpen} />}
+                </AnimatePresence>
+              </motion.div>
+              <MenuButton isActive={menuOpen} toggleMenu={() => setMenuOpen(!menuOpen)} />
+            </div>
+          </div>
+        </div>
       </div>
     </nav>
   );
