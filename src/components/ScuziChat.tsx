@@ -16,68 +16,15 @@ interface Message {
   thinking?: string;
 }
 
-interface ChatHistory {
-  messages: Message[];
-  lastMessageTime: number;
-}
-
-const CHAT_HISTORY_KEY = 'scuzi_chat_history';
-const ONE_HOUR_MS = 60 * 60 * 1000;
-
 export default function ScuziChat() {
-  const loadChatHistory = (): Message[] => {
-    if (typeof window === 'undefined') return [];
-    
-    try {
-      const stored = localStorage.getItem(CHAT_HISTORY_KEY);
-      if (!stored) return [];
-      
-      const history: ChatHistory = JSON.parse(stored);
-      const now = Date.now();
-      
-      if (now - history.lastMessageTime > ONE_HOUR_MS) {
-        localStorage.removeItem(CHAT_HISTORY_KEY);
-        return [];
-      }
-      
-      return history.messages.map(msg => ({
-        ...msg,
-        timestamp: new Date(msg.timestamp)
-      }));
-    } catch (error) {
-      console.error('Error loading chat history:', error);
-      return [];
-    }
-  };
-
-  const saveChatHistory = (messages: Message[]) => {
-    if (typeof window === 'undefined') return;
-    
-    try {
-      const history: ChatHistory = {
-        messages: messages.filter(m => m.id !== 'welcome'),
-        lastMessageTime: Date.now()
-      };
-      localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(history));
-    } catch (error) {
-      console.error('Error saving chat history:', error);
-    }
-  };
-
-  const [messages, setMessages] = useState<Message[]>(() => {
-    const history = loadChatHistory();
-    if (history.length > 0) {
-      return history;
-    }
-    return [
-      {
-        id: "welcome",
-        role: "assistant",
-        content: "👋 Hey there! I'm Scuzi, your AI food and health companion powered by Claude 3.5 Sonnet with vision capabilities.\n\n**I can help you with:**\n\n🥗 Recipe ideas from leftover ingredients\n📊 Nutrition analysis of your meals\n🛒 Meal plans from grocery receipts (1-28 meals, up to 7 days)\n🍳 Cooking tips and health advice\n🏷️ Packaged food health assessments\n\nJust chat with me or upload an image to get started!",
-        timestamp: new Date(),
-      },
-    ];
-  });
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "welcome",
+      role: "assistant",
+      content: "👋 Hey there! I'm Scuzi, your AI food and health companion powered by Claude 3.5 Sonnet V2 with vision capabilities.\n\n**I can help you with:**\n\n🥗 Recipe ideas from leftover ingredients\n📊 Nutrition analysis of your meals\n🛒 Meal plans from grocery receipts (1-28 meals, up to 7 days)\n🍳 Cooking tips and health advice\n🏷️ Packaged food health assessments\n\nJust chat with me or upload an image to get started!",
+      timestamp: new Date(),
+    },
+  ]);
   
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -97,12 +44,6 @@ export default function ScuziChat() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
-
-  useEffect(() => {
-    if (messages.length > 0) {
-      saveChatHistory(messages);
-    }
   }, [messages]);
 
   useEffect(() => {
@@ -340,7 +281,7 @@ export default function ScuziChat() {
                 fontWeight: 400
               }}
             >
-              Claude 3.5 Sonnet • Vision + Text
+              Claude 3.5 Sonnet V2 • Vision + Text
             </p>
           </div>
         </div>
