@@ -79,7 +79,7 @@ export default function Home() {
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-20">
           <div className="flex items-baseline justify-between mb-12">
-            <h2 className="!font-semibold">
+            <h2 className="!font-semibold !text-3xl">
 
 
 
@@ -97,7 +97,7 @@ export default function Home() {
                 lineHeight: '24px',
                 color: 'rgb(39, 39, 42)'
               }}
-              className="hover:underline flex items-center gap-1">
+              className="hover:underline flex items-center gap-1 !font-semibold">
 
               View Next Week Meals
               <ChevronRight className="w-4 h-4" />
