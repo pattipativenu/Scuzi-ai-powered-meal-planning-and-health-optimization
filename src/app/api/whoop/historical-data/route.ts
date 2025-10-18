@@ -42,14 +42,9 @@ export async function GET(request: NextRequest) {
           status: 'success',
           message: '✅ Database connection successful',
           details: {
-            database: 'WHOOPHEALTHDATA',
+            database: process.env.RDS_DATABASE || 'WHOOPHEALTHDATA',
             table: 'physiological_cycles',
-            recordCount: rows[0]?.count || 0,
-            connectionPool: {
-              active: mysqlPool.pool.activeConnections(),
-              idle: mysqlPool.pool.idleConnections(),
-              limit: 10
-            }
+            recordCount: rows[0]?.count || 0
           }
         });
       } catch (error: any) {
