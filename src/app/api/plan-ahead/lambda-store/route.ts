@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { startOfWeek, format, addWeeks } from "date-fns";
 
+// Route segment config - extend API timeout for meal storage
+export const maxDuration = 60; // 60 seconds
+export const dynamic = 'force-dynamic';
+
 const lambdaClient = new LambdaClient({
   region: process.env.AWS_REGION || "us-east-1",
   credentials: {
