@@ -450,42 +450,60 @@ export default function ScuziChat() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0a0a]">
-      {/* Header */}
-      <div className="bg-[#1f2c33] border-b border-[#2a3942]">
-        <div className="px-4 py-3 flex items-center gap-3">
-          <Avatar className="h-10 w-10">
+    <div className="flex flex-col h-screen bg-white">
+      {/* Sticky Header */}
+      <div className="sticky top-0 bg-white z-50 shadow-sm">
+        <div className="px-6 py-6 flex items-center gap-4">
+          <Avatar className="h-12 w-12">
             <AvatarImage src="" />
-            <AvatarFallback className="bg-[#00a884] text-white">
-              <ChefHat className="h-5 w-5" />
+            <AvatarFallback className="bg-[rgb(209,222,38)] text-[rgb(39,39,42)]">
+              <ChefHat className="h-6 w-6" />
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h1 className="text-white font-medium">Scuzi</h1>
-              <span className="text-[#8696a0] text-xs">•</span>
-              <span className="text-[#8696a0] text-xs font-medium">WHOOP</span>
-              {whoopMetrics.connected ? (
+            <h1 
+              className="font-bold text-[rgb(17,24,39)]"
+              style={{
+                fontFamily: '"Right Grotesk Spatial", sans-serif',
+                fontSize: '65px',
+                lineHeight: '58px',
+                fontWeight: 700
+              }}
+            >
+              Scuzi, your AI food and health analyst
+            </h1>
+            {whoopMetrics.connected && (
+              <div className="flex items-center gap-2 mt-2">
                 <Button
                   onClick={handleWhoopDisconnect}
                   size="sm"
                   variant="ghost"
-                  className="h-6 px-2 text-xs text-red-400 hover:text-red-300 hover:bg-[#2a3942]"
+                  className="h-8 px-3 text-sm text-red-500 hover:text-red-600 hover:bg-red-50"
+                  style={{
+                    fontFamily: '"Right Grotesk Wide", sans-serif',
+                    fontSize: '16px',
+                    fontWeight: 500
+                  }}
                 >
-                  Disconnect
+                  Disconnect WHOOP
                 </Button>
-              ) : (
-                <Button
-                  onClick={handleWhoopConnect}
-                  disabled={isConnectingWhoop}
-                  size="sm"
-                  className="h-6 px-2 text-xs bg-[#00a884] hover:bg-[#00a884]/90 text-white"
-                >
-                  {isConnectingWhoop ? "Connecting..." : "Connect"}
-                </Button>
-              )}
-            </div>
-            <p className="text-[#8696a0] text-xs mt-1">Your AI Food & Health Assistant</p>
+              </div>
+            )}
+            {!whoopMetrics.connected && (
+              <Button
+                onClick={handleWhoopConnect}
+                disabled={isConnectingWhoop}
+                size="sm"
+                className="mt-2 h-8 px-3 text-sm bg-[rgb(209,222,38)] hover:bg-[rgb(209,222,38)]/90 text-[rgb(39,39,42)]"
+                style={{
+                  fontFamily: '"Right Grotesk Wide", sans-serif',
+                  fontSize: '16px',
+                  fontWeight: 500
+                }}
+              >
+                {isConnectingWhoop ? "Connecting..." : "Connect WHOOP"}
+              </Button>
+            )}
           </div>
         </div>
         
@@ -505,19 +523,19 @@ export default function ScuziChat() {
             />
             <canvas ref={canvasRef} className="hidden" />
           </div>
-          <div className="bg-[#1f2c33] p-4 flex justify-center gap-4">
+          <div className="bg-white p-4 flex justify-center gap-4">
             <Button
               onClick={closeCamera}
               size="lg"
               variant="ghost"
-              className="text-white hover:bg-[#2a3942]"
+              className="text-[rgb(39,39,42)] hover:bg-gray-100"
             >
               <X className="h-6 w-6" />
             </Button>
             <Button
               onClick={capturePhoto}
               size="lg"
-              className="bg-[#00a884] hover:bg-[#00a884]/90 text-white rounded-full w-16 h-16"
+              className="bg-[rgb(209,222,38)] hover:bg-[rgb(209,222,38)]/90 text-[rgb(39,39,42)] rounded-full w-16 h-16"
             >
               <Camera className="h-8 w-8" />
             </Button>
@@ -525,12 +543,11 @@ export default function ScuziChat() {
         </div>
       )}
 
-      {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-[#0b141a] bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0icGF0dGVybiIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiPjxwYXRoIGQ9Ik0gMCw1MCBMIDUwLDAgTCAxMDAsNTAgTCA1MCwxMDAgWiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWExZTI2IiBzdHJva2Utd2lkdGg9IjAuNSIgb3BhY2l0eT0iMC4xIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI3BhdHRlcm4pIi8+PC9zdmc+')] bg-repeat">
-        
+      {/* Scrollable Messages Container */}
+      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
         {/* WHOOP Data Chart */}
         {whoopMetrics.connected && (
-          <div className="mb-4">
+          <div className="mb-6">
             <WhoopDataChart metrics={whoopMetrics} />
           </div>
         )}
@@ -539,28 +556,36 @@ export default function ScuziChat() {
           <div
             key={message.id}
             className={cn(
-              "flex gap-2 max-w-[85%]",
+              "flex gap-3 max-w-[85%]",
               message.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto"
             )}
           >
             {message.role === "assistant" && (
-              <Avatar className="h-8 w-8 flex-shrink-0">
-                <AvatarFallback className="bg-[#00a884] text-white text-xs">
-                  <ChefHat className="h-4 w-4" />
+              <Avatar className="h-10 w-10 flex-shrink-0">
+                <AvatarFallback className="bg-[rgb(209,222,38)] text-[rgb(39,39,42)]">
+                  <ChefHat className="h-5 w-5" />
                 </AvatarFallback>
               </Avatar>
             )}
             <div
               className={cn(
-                "rounded-lg px-3 py-2 shadow-sm",
+                "rounded-xl px-4 py-3 shadow-sm",
                 message.role === "user"
-                  ? "bg-[#005c4b] text-white"
-                  : "bg-[#1f2c33] text-white"
+                  ? "bg-[rgb(209,222,38)] text-[rgb(39,39,42)]"
+                  : "bg-gray-50 text-[rgb(17,24,39)]"
               )}
             >
               {message.thinking && (
-                <div className="mb-2 pb-2 border-b border-[#2a3942]">
-                  <p className="text-[#8696a0] text-xs italic">
+                <div className="mb-2 pb-2 border-b border-gray-200">
+                  <p 
+                    className="text-gray-500 italic"
+                    style={{
+                      fontFamily: '"General Sans", sans-serif',
+                      fontSize: '15px',
+                      lineHeight: '21px',
+                      fontWeight: 400
+                    }}
+                  >
                     💭 {message.thinking}
                   </p>
                 </div>
@@ -569,13 +594,28 @@ export default function ScuziChat() {
                 <img
                   src={message.image}
                   alt="Uploaded content"
-                  className="rounded-md mb-2 max-w-full h-auto"
+                  className="rounded-lg mb-3 max-w-full h-auto"
                 />
               )}
-              <p className="text-sm whitespace-pre-wrap break-words">
+              <p 
+                className="whitespace-pre-wrap break-words"
+                style={{
+                  fontFamily: '"General Sans", sans-serif',
+                  fontSize: '15px',
+                  lineHeight: '21px',
+                  fontWeight: 400
+                }}
+              >
                 {message.content}
               </p>
-              <p className="text-[#8696a0] text-[10px] mt-1">
+              <p 
+                className="text-gray-400 mt-2"
+                style={{
+                  fontFamily: '"General Sans", sans-serif',
+                  fontSize: '12px',
+                  fontWeight: 400
+                }}
+              >
                 {message.timestamp.toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
@@ -585,17 +625,17 @@ export default function ScuziChat() {
           </div>
         ))}
         {isLoading && (
-          <div className="flex gap-2 max-w-[85%] mr-auto">
-            <Avatar className="h-8 w-8 flex-shrink-0">
-              <AvatarFallback className="bg-[#00a884] text-white text-xs">
-                <ChefHat className="h-4 w-4" />
+          <div className="flex gap-3 max-w-[85%] mr-auto">
+            <Avatar className="h-10 w-10 flex-shrink-0">
+              <AvatarFallback className="bg-[rgb(209,222,38)] text-[rgb(39,39,42)]">
+                <ChefHat className="h-5 w-5" />
               </AvatarFallback>
             </Avatar>
-            <div className="bg-[#1f2c33] rounded-lg px-3 py-2">
+            <div className="bg-gray-50 rounded-xl px-4 py-3">
               <div className="flex gap-1">
-                <div className="w-2 h-2 bg-[#8696a0] rounded-full animate-bounce" />
-                <div className="w-2 h-2 bg-[#8696a0] rounded-full animate-bounce [animation-delay:0.2s]" />
-                <div className="w-2 h-2 bg-[#8696a0] rounded-full animate-bounce [animation-delay:0.4s]" />
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0.2s]" />
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0.4s]" />
               </div>
             </div>
           </div>
@@ -603,24 +643,24 @@ export default function ScuziChat() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
-      <div className="bg-[#1f2c33] px-4 py-3 border-t border-[#2a3942]">
+      {/* Sticky Input Area */}
+      <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 z-50">
         {selectedImage && (
-          <div className="mb-2 relative inline-block">
+          <div className="mb-3 relative inline-block">
             <img
               src={selectedImage}
               alt="Selected"
-              className="h-20 rounded-lg"
+              className="h-24 rounded-lg"
             />
             <button
               onClick={() => setSelectedImage(null)}
-              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
             >
               ×
             </button>
           </div>
         )}
-        <div className="flex items-end gap-2">
+        <div className="flex items-end gap-3">
           <input
             type="file"
             ref={fileInputRef}
@@ -633,7 +673,7 @@ export default function ScuziChat() {
             size="icon"
             onClick={startCamera}
             disabled={isLoading}
-            className="text-[#8696a0] hover:text-white hover:bg-[#2a3942]"
+            className="text-[rgb(39,39,42)] hover:text-[rgb(17,24,39)] hover:bg-gray-100"
           >
             <Camera className="h-5 w-5" />
           </Button>
@@ -642,7 +682,7 @@ export default function ScuziChat() {
             size="icon"
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
-            className="text-[#8696a0] hover:text-white hover:bg-[#2a3942]"
+            className="text-[rgb(39,39,42)] hover:text-[rgb(17,24,39)] hover:bg-gray-100"
           >
             <ImageIcon className="h-5 w-5" />
           </Button>
@@ -653,14 +693,20 @@ export default function ScuziChat() {
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
             disabled={isLoading}
-            className="flex-1 min-h-[40px] max-h-[120px] bg-[#2a3942] border-none text-white placeholder:text-[#8696a0] resize-none"
+            className="flex-1 min-h-[44px] max-h-[120px] bg-white border border-gray-200 text-[rgb(17,24,39)] placeholder:text-gray-400 resize-none rounded-lg focus:border-[rgb(209,222,38)] focus:ring-1 focus:ring-[rgb(209,222,38)]"
+            style={{
+              fontFamily: '"Right Grotesk Wide", sans-serif',
+              fontSize: '16px',
+              lineHeight: '24px',
+              fontWeight: 500
+            }}
             rows={1}
           />
           <Button
             onClick={handleSend}
             disabled={isLoading || (!input.trim() && !selectedImage)}
             size="icon"
-            className="bg-[#00a884] hover:bg-[#00a884]/90 text-white"
+            className="bg-[rgb(209,222,38)] hover:bg-[rgb(209,222,38)]/90 text-[rgb(39,39,42)] h-11 w-11 rounded-lg"
           >
             {isLoading ? (
               <Loader2 className="h-5 w-5 animate-spin" />
