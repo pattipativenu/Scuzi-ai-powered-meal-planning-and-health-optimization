@@ -22,12 +22,16 @@ const getBedrockClient = () => {
   // Inject bearer token in Authorization header
   client.middlewareStack.add(
     (next: any) => async (args: any) => {
-      args.request.headers.Authorization = `Bearer ${bearerToken}`;
+      if (!args.request.headers) {
+        args.request.headers = {};
+      }
+      args.request.headers["Authorization"] = `Bearer ${bearerToken}`;
       return next(args);
     },
     {
-      step: "build",
+      step: "finalizeRequest",
       name: "addBearerToken",
+      priority: "high",
     }
   );
 
@@ -307,14 +311,37 @@ export async function POST(request: NextRequest) {
       // Add image first if present (Claude processes images before text)
       if (msg.image) {
         try {
-          const base64Data = msg.image.split(",")[1] || msg.image;
+          // Extract base64 data and detect format
+          let base64Data: string;
+          let imageFormat: "jpeg" | "png" | "gif" | "webp" = "jpeg";
+          
+          if (msg.image.includes("data:image/")) {
+            // Extract MIME type from data URI
+            const mimeMatch = msg.image.match(/data:image\/(jpeg|jpg|png|gif|webp);base64,/);
+            if (mimeMatch) {
+              const detectedFormat = mimeMatch[1].toLowerCase();
+              imageFormat = detectedFormat === "jpg" ? "jpeg" : detectedFormat as any;
+              base64Data = msg.image.split(",")[1];
+            } else {
+              base64Data = msg.image.split(",")[1] || msg.image;
+            }
+          } else {
+            base64Data = msg.image;
+          }
+          
           const imageBytes = Buffer.from(base64Data, "base64");
           
-          console.log(`[IMAGE] Processing image: ${imageBytes.length} bytes`);
+          // Validate image size
+          if (imageBytes.length < 100) {
+            console.warn("[IMAGE] Image too small, skipping");
+            throw new Error("Image file is too small or corrupted");
+          }
+          
+          console.log(`[IMAGE] Processing ${imageFormat} image: ${imageBytes.length} bytes`);
 
           content.push({
             image: {
-              format: "jpeg",
+              format: imageFormat,
               source: {
                 bytes: imageBytes,
               },
@@ -322,6 +349,7 @@ export async function POST(request: NextRequest) {
           });
         } catch (imageError) {
           console.error("[IMAGE] Error processing image:", imageError);
+          throw new Error("Failed to process image. Please ensure it's a valid JPEG, PNG, GIF, or WebP file.");
         }
       }
 
