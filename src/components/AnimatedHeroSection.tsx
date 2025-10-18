@@ -95,16 +95,16 @@ export function AnimatedHeroSection() {
           </div>
 
           {/* Right Side - Hero Image */}
-          <div className="relative h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden rounded-3xl">
+          <div className="relative h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden">
             {!imageError ?
             <Image
               src="https://scuziassests.s3.us-east-1.amazonaws.com/hero%20image.webp"
               alt="Delicious meal prep"
               fill
-              className="object-cover object-center !w-full !h-[406px] !max-w-full"
+              className="object-contain object-center"
               onError={() => setImageError(true)}
               unoptimized /> :
-            <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-100 rounded-3xl">
+            <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-100">
                 <div className="text-center space-y-2">
                   <p className="font-semibold">Image not accessible</p>
                   <p className="text-sm">Check S3 bucket permissions and CORS</p>
