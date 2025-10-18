@@ -27,7 +27,7 @@ export default function PlanAheadPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[1400px] mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-4">Plan Ahead</h1>
@@ -72,19 +72,32 @@ export default function PlanAheadPage() {
         </div>
 
         {/* Next Week's Meals */}
-        <div className="space-y-8">
+        <div className="space-y-10">
           {/* Desktop: Vertical Days with Horizontal Meals */}
           <div className="hidden md:block">
             {daysOfWeek.map((day) => (
-              <div key={day} className="border-l-4 border-primary pl-6 mb-8">
-                <h3 className="text-xl font-semibold mb-4">{day}</h3>
-                <div className="grid grid-cols-4 gap-4">
+              <div key={day} className="mb-10">
+                <h3 
+                  className="mb-6"
+                  style={{
+                    fontFamily: '"Right Grotesk Wide", sans-serif',
+                    fontWeight: 500,
+                    fontSize: '16px',
+                    color: 'rgb(39, 39, 42)'
+                  }}
+                >
+                  {day}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {mealTypes.map((mealType) => {
                     const meal = nextWeekMeals[day]?.[mealType];
                     return meal ? (
-                      <MealCard key={`${day}-${mealType}`} meal={meal} size="small" />
+                      <MealCard key={`${day}-${mealType}`} meal={meal} size="medium" />
                     ) : (
-                      <div key={`${day}-${mealType}`} className="w-48 h-64 bg-muted rounded-lg flex items-center justify-center text-muted-foreground text-sm">
+                      <div 
+                        key={`${day}-${mealType}`} 
+                        className="h-full min-h-[320px] bg-muted rounded-[20px] flex items-center justify-center text-muted-foreground text-sm"
+                      >
                         No {mealType}
                       </div>
                     );
@@ -103,8 +116,8 @@ export default function PlanAheadPage() {
                   {mealTypes.map((mealType) => {
                     const meal = nextWeekMeals[day]?.[mealType];
                     return meal ? (
-                      <div key={`${day}-${mealType}`} className="snap-start flex-shrink-0">
-                        <MealCard meal={meal} size="small" />
+                      <div key={`${day}-${mealType}`} className="snap-start flex-shrink-0 w-64">
+                        <MealCard meal={meal} size="medium" />
                       </div>
                     ) : null;
                   })}

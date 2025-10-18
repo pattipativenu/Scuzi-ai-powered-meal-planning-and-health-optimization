@@ -6,17 +6,24 @@ import { currentWeekMeals, healthySnacks, breakfastRecipes, freezableDinners } f
 import { ChevronRight, Star } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { addDays, format } from "date-fns";
 
 export default function Home() {
-  const daysOfWeek = [
-  { day: "Monday", date: "21 Oct" },
-  { day: "Tuesday", date: "22 Oct" },
-  { day: "Wednesday", date: "23 Oct" },
-  { day: "Thursday", date: "24 Oct" },
-  { day: "Friday", date: "25 Oct" },
-  { day: "Saturday", date: "26 Oct" },
-  { day: "Sunday", date: "27 Oct" }];
+  // Calculate dates dynamically
+  const getCurrentWeekDates = () => {
+    const today = new Date();
+    return [
+      { day: "Monday", date: format(today, "d MMM"), nextWeekDate: format(addDays(today, 7), "d MMM") },
+      { day: "Tuesday", date: format(addDays(today, 1), "d MMM"), nextWeekDate: format(addDays(today, 8), "d MMM") },
+      { day: "Wednesday", date: format(addDays(today, 2), "d MMM"), nextWeekDate: format(addDays(today, 9), "d MMM") },
+      { day: "Thursday", date: format(addDays(today, 3), "d MMM"), nextWeekDate: format(addDays(today, 10), "d MMM") },
+      { day: "Friday", date: format(addDays(today, 4), "d MMM"), nextWeekDate: format(addDays(today, 11), "d MMM") },
+      { day: "Saturday", date: format(addDays(today, 5), "d MMM"), nextWeekDate: format(addDays(today, 12), "d MMM") },
+      { day: "Sunday", date: format(addDays(today, 6), "d MMM"), nextWeekDate: format(addDays(today, 13), "d MMM") }
+    ];
+  };
 
+  const daysOfWeek = getCurrentWeekDates();
   const mealTypes = ["breakfast", "lunch", "snack", "dinner"] as const;
 
   // Customer reviews data
@@ -77,15 +84,9 @@ export default function Home() {
 
       {/* Current Week's Meals */}
       <section className="py-16" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
-        <div className="max-w-7xl mx-auto px-20">
+        <div className="max-w-[1400px] mx-auto px-6">
           <div className="flex items-baseline justify-between mb-12">
             <h2 className="!font-semibold !text-3xl">
-
-
-
-
-
-
               Current Week's Meals
             </h2>
             <Link
@@ -97,8 +98,8 @@ export default function Home() {
                 lineHeight: '24px',
                 color: 'rgb(39, 39, 42)'
               }}
-              className="hover:underline flex items-center gap-1 !font-semibold">
-
+              className="hover:underline flex items-center gap-1 !font-semibold"
+            >
               View Next Week Meals
               <ChevronRight className="w-4 h-4" />
             </Link>
@@ -106,79 +107,98 @@ export default function Home() {
 
           {/* Desktop & Tablet: Vertical Days with Horizontal Meals */}
           <div className="hidden md:block space-y-10">
-            {daysOfWeek.map(({ day, date }) =>
-            <div key={day}>
-                <h3 className="!font-semibold">
-
-
-
-
-
-
-
-                  {day}, {date}
-                </h3>
-                <div className="grid grid-cols-4 gap-6">
+            {daysOfWeek.map(({ day, date, nextWeekDate }) => (
+              <div key={day}>
+                <div className="flex items-baseline gap-3 mb-6">
+                  <h3 
+                    style={{
+                      fontFamily: '"Right Grotesk Wide", sans-serif',
+                      fontWeight: 500,
+                      fontSize: '16px',
+                      color: 'rgb(39, 39, 42)'
+                    }}
+                  >
+                    {day}, {date}
+                  </h3>
+                  <span 
+                    style={{
+                      fontFamily: '"Right Grotesk Wide", sans-serif',
+                      fontWeight: 500,
+                      fontSize: '16px',
+                      color: 'rgb(39, 39, 42)',
+                      opacity: 0.7
+                    }}
+                  >
+                    | Next Week: {nextWeekDate}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {mealTypes.map((mealType) => {
-                  const meal = currentWeekMeals[day]?.[mealType];
-                  return meal ?
-                  <MealCard key={`${day}-${mealType}`} meal={meal} size="medium" /> :
-
-                  <div key={`${day}-${mealType}`} className="h-80 bg-gray-100 rounded-lg flex items-center justify-center" style={{
-                    fontFamily: '"General Sans", sans-serif',
-                    fontSize: '15px',
-                    lineHeight: '21px',
-                    color: 'rgb(163, 163, 163)'
-                  }}>
+                    const meal = currentWeekMeals[day]?.[mealType];
+                    return meal ? (
+                      <MealCard key={`${day}-${mealType}`} meal={meal} size="medium" />
+                    ) : (
+                      <div 
+                        key={`${day}-${mealType}`} 
+                        className="h-full min-h-[320px] bg-gray-100 rounded-[20px] flex items-center justify-center" 
+                        style={{
+                          fontFamily: '"General Sans", sans-serif',
+                          fontSize: '15px',
+                          lineHeight: '21px',
+                          color: 'rgb(163, 163, 163)'
+                        }}
+                      >
                         No {mealType}
-                      </div>;
-
-                })}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            )}
+            ))}
           </div>
 
           {/* Mobile: Keep existing mobile layout */}
           <div className="md:hidden space-y-6">
-            {daysOfWeek.map(({ day, date }) =>
-            <div key={day}>
+            {daysOfWeek.map(({ day, date }) => (
+              <div key={day}>
                 <h3 className="text-lg font-semibold mb-3 px-2">{day}, {date}</h3>
                 <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
                   {mealTypes.map((mealType) => {
-                  const meal = currentWeekMeals[day]?.[mealType];
-                  return meal ?
-                  <div key={`${day}-${mealType}`} className="snap-start flex-shrink-0">
-                        <MealCard meal={meal} size="small" />
-                      </div> :
-                  null;
-                })}
+                    const meal = currentWeekMeals[day]?.[mealType];
+                    return meal ? (
+                      <div key={`${day}-${mealType}`} className="snap-start flex-shrink-0 w-64">
+                        <MealCard meal={meal} size="medium" />
+                      </div>
+                    ) : null;
+                  })}
                 </div>
               </div>
-            )}
+            ))}
           </div>
         </div>
       </section>
 
       {/* History Section */}
       <section className="py-16" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
-        <div className="max-w-7xl mx-auto px-20">
-          <h2 style={{
-            fontFamily: '"Right Grotesk Spatial", sans-serif',
-            fontWeight: 500,
-            fontSize: '30px',
-            lineHeight: '36px',
-            color: 'rgb(39, 39, 42)',
-            marginBottom: '32px'
-          }}>
+        <div className="max-w-[1400px] mx-auto px-6">
+          <h2 
+            style={{
+              fontFamily: '"Right Grotesk Spatial", sans-serif',
+              fontWeight: 500,
+              fontSize: '30px',
+              lineHeight: '36px',
+              color: 'rgb(39, 39, 42)',
+              marginBottom: '32px'
+            }}
+          >
             History
           </h2>
           <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
-            {historyRecipes.map((recipe) =>
-            <div key={recipe.id} className="flex-shrink-0">
+            {historyRecipes.map((recipe) => (
+              <div key={recipe.id} className="flex-shrink-0 w-64">
                 <MealCard meal={recipe} size="medium" />
               </div>
-            )}
+            ))}
           </div>
         </div>
       </section>
@@ -405,6 +425,6 @@ export default function Home() {
           </div>
         </div>
       </footer>
-    </div>);
-
+    </div>
+  );
 }

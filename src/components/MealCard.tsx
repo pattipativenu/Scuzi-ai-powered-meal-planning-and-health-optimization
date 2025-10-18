@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Clock } from "lucide-react";
 import type { Meal } from "@/types/meal";
+import { motion } from "framer-motion";
 
 interface MealCardProps {
   meal: Meal;
@@ -11,29 +12,19 @@ interface MealCardProps {
 }
 
 export const MealCard = ({ meal, size = "medium" }: MealCardProps) => {
-  const sizeClasses = {
-    small: "w-48 h-64",
-    medium: "w-64 h-80",
-    large: "w-80 h-96",
-  };
-
-  const imageSizes = {
-    small: "h-32",
-    medium: "h-48",
-    large: "h-56",
-  };
-
   return (
     <Link href={`/meal/${meal.id}`}>
-      <div
-        className={`${sizeClasses[size]} bg-card rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 hover:scale-[1.02] border border-border flex flex-col`}
+      <motion.div
+        whileHover={{ scale: 1.02 }}
+        transition={{ type: "spring", stiffness: 200 }}
+        className="bg-card rounded-[20px] overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-border flex flex-col h-full"
       >
-        <div className={`${imageSizes[size]} relative bg-muted`}>
+        <div className="relative bg-muted h-[240px]">
           <Image
             src={meal.image}
             alt={meal.name}
             fill
-            className="object-cover"
+            className="object-cover w-full h-full"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         </div>
@@ -50,7 +41,7 @@ export const MealCard = ({ meal, size = "medium" }: MealCardProps) => {
             </span>
           </div>
         </div>
-      </div>
+      </motion.div>
     </Link>
   );
 };
