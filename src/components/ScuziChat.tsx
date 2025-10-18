@@ -21,7 +21,7 @@ export default function ScuziChat() {
   {
     id: "welcome",
     role: "assistant",
-    content: "",
+    content: "👋 Hey there! I'm Scuzi — your AI food and health companion.\n\nHere's what I can help you with:\n\n🥗 Create recipes from your leftover ingredients\n📊 Analyze your meals with complete nutrition details\n🛒 Build 7-day meal plans straight from your grocery receipts\n🍳 Give cooking tips and practical healthy swaps\n🏷️ Assess packaged foods and reveal hidden additives\n\nJust type, snap, or upload — and I'll handle the rest.\nLet's make every meal smarter and healthier. 🍽️",
     timestamp: new Date()
   }]
   );
