@@ -36,7 +36,7 @@ export default function MealDetailPage({ params }: MealDetailPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-20 py-8">
         {/* Back Button */}
         <Link
@@ -190,7 +190,7 @@ export default function MealDetailPage({ params }: MealDetailPageProps) {
           {/* Right Column - Ingredients + Nutrition with Tabs */}
           <div>
             {/* Toggle Tabs */}
-            <div className="flex gap-2 mb-6 sticky top-0 bg-white py-2 z-10">
+            <div className="flex gap-2 mb-6 sticky top-0 py-2 z-10" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
               <button
                 onClick={() => setActiveTab("ingredients")}
                 className="flex-1 py-3 transition-all"
@@ -391,7 +391,7 @@ export default function MealDetailPage({ params }: MealDetailPageProps) {
             Leave a note
           </h2>
 
-          <div className="mb-12 p-6 bg-white border-2 border-gray-200" style={{ borderRadius: '33px' }}>
+          <div className="mb-12 p-6 border-2 border-gray-200" style={{ backgroundColor: 'rgb(255, 255, 255)', borderRadius: '33px' }}>
             <textarea
               placeholder="Tell us what you think..."
               rows={4}

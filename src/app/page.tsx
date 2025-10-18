@@ -71,12 +71,12 @@ export default function Home() {
 
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
       {/* Hero Section */}
       <AnimatedHeroSection />
 
       {/* Current Week's Meals */}
-      <section className="py-16 bg-white">
+      <section className="py-16" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
         <div className="max-w-7xl mx-auto px-20">
           <div className="flex items-baseline justify-between mb-12">
             <h2 className="!font-semibold !text-3xl">
@@ -161,7 +161,7 @@ export default function Home() {
       </section>
 
       {/* History Section */}
-      <section className="py-16 bg-white">
+      <section className="py-16" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
         <div className="max-w-7xl mx-auto px-20">
           <h2 style={{
             fontFamily: '"Right Grotesk Spatial", sans-serif',
@@ -184,9 +184,9 @@ export default function Home() {
       </section>
 
       {/* Customer Reviews Carousel */}
-      <section className="py-16 bg-white">
+      <section className="py-16" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
         <div className="max-w-4xl mx-auto px-20">
-          <div className="relative bg-white rounded-2xl shadow-lg p-12 text-center min-h-[280px] flex flex-col justify-center">
+          <div className="relative rounded-2xl shadow-lg p-12 text-center min-h-[280px] flex flex-col justify-center" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
             <div className="flex justify-center gap-1 mb-6">
               {[...Array(5)].map((_, i) =>
               <Star key={i} className="w-6 h-6 fill-yellow-400 text-yellow-400" />
