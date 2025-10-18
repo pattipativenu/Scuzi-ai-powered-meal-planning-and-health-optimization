@@ -29,8 +29,20 @@ const nextConfig: NextConfig = {
         loaders: [LOADER]
       }
     }
-  }
+  },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
+  },
+  // Increase API route limits to handle meal storage
+  api: {
+    responseLimit: false,
+    bodyParser: {
+      sizeLimit: "10mb",
+    },
+  },
 };
 
 export default nextConfig;
-// Orchids restart: 1760757398103
+// Orchids restart: 1760801451008
