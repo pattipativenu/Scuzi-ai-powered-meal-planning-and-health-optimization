@@ -101,7 +101,7 @@ export function AnimatedHeroSection() {
               src="https://scuziassests.s3.us-east-1.amazonaws.com/hero%20image.webp"
               alt="Delicious meal prep"
               fill
-              className="object-cover object-center !w-full !h-[603px] !max-w-full"
+              className="object-cover object-center !w-full !h-[521px] !max-w-full"
               onError={() => setImageError(true)}
               unoptimized /> :
             <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-100 rounded-3xl">
