@@ -3,6 +3,8 @@ import {
   BedrockRuntimeClient,
   InvokeModelCommand,
 } from "@aws-sdk/client-bedrock-runtime";
+import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { dynamoDb, HISTORY_TABLE_NAME } from "@/lib/dynamodb-config";
 
 // ============================================
 // AWS BEDROCK CLIENT WITH BEARER TOKEN

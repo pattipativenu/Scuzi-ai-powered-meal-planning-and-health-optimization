@@ -3,6 +3,9 @@ import {
   BedrockRuntimeClient,
   ConverseCommand,
 } from "@aws-sdk/client-bedrock-runtime";
+import { PutCommand } from "@aws-sdk/lib-dynamodb";
+import { dynamoDb, HISTORY_TABLE_NAME } from "@/lib/dynamodb-config";
+import { randomUUID } from "crypto";
 
 // ============================================
 // AWS BEDROCK CLIENT WITH BEARER TOKEN
@@ -255,6 +258,95 @@ function extractImageMetadata(text: string): {
 }
 
 // ============================================
+// STORE AI RESPONSE IN DYNAMODB
+// ============================================
+
+async function storeAIResponse(data: {
+  type: string;
+  title: string;
+  description: string;
+  image_url?: string;
+  ai_response: string;
+}): Promise<string> {
+  try {
+    const itemId = randomUUID();
+    const item = {
+      id: itemId,
+      timestamp: Date.now(),
+      type: data.type,
+      title: data.title || "Untitled",
+      description: data.description || "",
+      image_url: data.image_url || "",
+      ai_response: data.ai_response,
+      created_by: "guest_user",
+    };
+
+    const command = new PutCommand({
+      TableName: HISTORY_TABLE_NAME,
+      Item: item,
+    });
+
+    await dynamoDb.send(command);
+    console.log("[DYNAMODB] Stored AI response successfully:", item.id);
+    return itemId;
+  } catch (error) {
+    console.error("[DYNAMODB] Failed to store AI response:", error);
+    // Don't throw - storage failure shouldn't break the chat
+    return "";
+  }
+}
+
+// ============================================
+// EXTRACT TITLE AND TYPE FROM RESPONSE
+// ============================================
+
+function analyzeResponse(text: string): { type: string; title: string; description: string } {
+  const lowerText = text.toLowerCase();
+  
+  // Check for recipe
+  if (lowerText.includes("ingredients:") || lowerText.includes("step-by-step instructions") || lowerText.includes("🥘")) {
+    const titleMatch = text.match(/🥘\s*\*\*(.+?)\*\*/);
+    const title = titleMatch ? titleMatch[1] : "Recipe";
+    const description = text.substring(0, 150).replace(/[#*🥘⏱️🍽️📊]/g, "").trim();
+    return { type: "recipe", title, description };
+  }
+  
+  // Check for nutrition analysis
+  if (lowerText.includes("nutrition") && (lowerText.includes("calories") || lowerText.includes("protein"))) {
+    return { 
+      type: "nutrition", 
+      title: "Nutrition Analysis",
+      description: text.substring(0, 150).trim()
+    };
+  }
+  
+  // Check for meal plan
+  if (lowerText.includes("meal plan") || lowerText.includes("day 1") || lowerText.includes("monday:")) {
+    return { 
+      type: "meal_plan", 
+      title: "Meal Plan",
+      description: text.substring(0, 150).trim()
+    };
+  }
+  
+  // Check for health risk
+  if (lowerText.includes("health risk") || lowerText.includes("harmful") || lowerText.includes("ingredients:")) {
+    return { 
+      type: "health_risk", 
+      title: "Health Risk Report",
+      description: text.substring(0, 150).trim()
+    };
+  }
+  
+  // General advice
+  return { 
+    type: "general_advice", 
+    title: "Cooking & Health Advice",
+    description: text.substring(0, 150).trim()
+  };
+}
+
+// ============================================
 // MAIN API ROUTE WITH FULL ERROR HANDLING
 // ============================================
 
@@ -415,10 +507,26 @@ export async function POST(request: NextRequest) {
     
     const cleanedResponse = responseText.replace(/\[IMAGE_METADATA\][\s\S]*?\[\/IMAGE_METADATA\]/g, "").trim();
 
+    // ============================================
+    // STEP 6: STORE IN DYNAMODB
+    // ============================================
+
+    const responseAnalysis = analyzeResponse(cleanedResponse);
+    
+    // Store in DynamoDB and get the item ID
+    const historyItemId = await storeAIResponse({
+      type: responseAnalysis.type,
+      title: responseAnalysis.title,
+      description: responseAnalysis.description,
+      image_url: "", // Will be updated later when image is generated
+      ai_response: cleanedResponse,
+    });
+
     return NextResponse.json({
       content: cleanedResponse || "I'm here to help with your food and health questions! 🍳",
       shouldGenerateImage: imageMetadata.shouldGenerate,
       imageMetadata: imageMetadata.shouldGenerate ? imageMetadata : null,
+      historyItemId, // Return the ID so frontend can update it with image
     });
 
   } catch (error) {

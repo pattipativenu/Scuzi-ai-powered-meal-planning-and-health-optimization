@@ -2,25 +2,26 @@
 
 import { MealCard } from "@/components/MealCard";
 import { AnimatedHeroSection } from "@/components/AnimatedHeroSection";
-import { currentWeekMeals, healthySnacks, breakfastRecipes, freezableDinners } from "@/lib/mockMeals";
+import { currentWeekMeals } from "@/lib/mockMeals";
 import { ChevronRight, Star } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { addDays, format } from "date-fns";
+import { useHistoryFeed } from "@/hooks/useHistoryFeed";
 
 export default function Home() {
   // Calculate dates dynamically
   const getCurrentWeekDates = () => {
     const today = new Date();
     return [
-      { day: "Monday", date: format(today, "d MMM") },
-      { day: "Tuesday", date: format(addDays(today, 1), "d MMM") },
-      { day: "Wednesday", date: format(addDays(today, 2), "d MMM") },
-      { day: "Thursday", date: format(addDays(today, 3), "d MMM") },
-      { day: "Friday", date: format(addDays(today, 4), "d MMM") },
-      { day: "Saturday", date: format(addDays(today, 5), "d MMM") },
-      { day: "Sunday", date: format(addDays(today, 6), "d MMM") }
-    ];
+    { day: "Monday", date: format(today, "d MMM") },
+    { day: "Tuesday", date: format(addDays(today, 1), "d MMM") },
+    { day: "Wednesday", date: format(addDays(today, 2), "d MMM") },
+    { day: "Thursday", date: format(addDays(today, 3), "d MMM") },
+    { day: "Friday", date: format(addDays(today, 4), "d MMM") },
+    { day: "Saturday", date: format(addDays(today, 5), "d MMM") },
+    { day: "Sunday", date: format(addDays(today, 6), "d MMM") }];
+
   };
 
   const daysOfWeek = getCurrentWeekDates();
@@ -59,23 +60,18 @@ export default function Home() {
     avatar: "LA"
   }];
 
-
   const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentReviewIndex((prev) => (prev + 1) % reviews.length);
-    }, 5000); // Change review every 5 seconds
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [reviews.length]);
 
-  // Mock history data (would come from API in production)
-  const historyRecipes = [
-  ...healthySnacks,
-  ...breakfastRecipes,
-  ...freezableDinners];
-
+  // Fetch real history data from DynamoDB
+  const { history, isLoading, error } = useHistoryFeed();
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
@@ -98,8 +94,8 @@ export default function Home() {
                 lineHeight: '24px',
                 color: 'rgb(39, 39, 42)'
               }}
-              className="hover:underline flex items-center gap-1 !font-semibold"
-            >
+              className="hover:underline flex items-center gap-1 !font-semibold">
+
               View Next Week Meals
               <ChevronRight className="w-4 h-4" />
             </Link>
@@ -107,87 +103,189 @@ export default function Home() {
 
           {/* Desktop & Tablet: Vertical Days with Horizontal Meals */}
           <div className="hidden md:block space-y-10">
-            {daysOfWeek.map(({ day, date }) => (
-              <div key={day}>
-                <h3 
-                  className="mb-6"
-                  style={{
-                    fontFamily: '"Right Grotesk Wide", sans-serif',
-                    fontWeight: 500,
-                    fontSize: '16px',
-                    color: 'rgb(39, 39, 42)'
-                  }}
-                >
+            {daysOfWeek.map(({ day, date }) =>
+            <div key={day}>
+                <h3
+                className="mb-6"
+                style={{
+                  fontFamily: '"Right Grotesk Wide", sans-serif',
+                  fontWeight: 500,
+                  fontSize: '16px',
+                  color: 'rgb(39, 39, 42)'
+                }}>
+
                   {day}, {date}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {mealTypes.map((mealType) => {
-                    const meal = currentWeekMeals[day]?.[mealType];
-                    return meal ? (
-                      <MealCard key={`${day}-${mealType}`} meal={meal} size="medium" />
-                    ) : (
-                      <div 
-                        key={`${day}-${mealType}`} 
-                        className="h-full min-h-[320px] bg-gray-100 rounded-[20px] flex items-center justify-center" 
-                        style={{
-                          fontFamily: '"General Sans", sans-serif',
-                          fontSize: '15px',
-                          lineHeight: '21px',
-                          color: 'rgb(163, 163, 163)'
-                        }}
-                      >
+                  const meal = currentWeekMeals[day]?.[mealType];
+                  return meal ?
+                  <MealCard key={`${day}-${mealType}`} meal={meal} size="medium" /> :
+
+                  <div
+                    key={`${day}-${mealType}`}
+                    className="h-full min-h-[320px] bg-gray-100 rounded-[20px] flex items-center justify-center"
+                    style={{
+                      fontFamily: '"General Sans", sans-serif',
+                      fontSize: '15px',
+                      lineHeight: '21px',
+                      color: 'rgb(163, 163, 163)'
+                    }}>
+
                         No {mealType}
-                      </div>
-                    );
-                  })}
+                      </div>;
+
+                })}
                 </div>
               </div>
-            ))}
+            )}
           </div>
 
           {/* Mobile: Keep existing mobile layout */}
           <div className="md:hidden space-y-6">
-            {daysOfWeek.map(({ day, date }) => (
-              <div key={day}>
+            {daysOfWeek.map(({ day, date }) =>
+            <div key={day}>
                 <h3 className="text-lg font-semibold mb-3 px-2">{day}, {date}</h3>
                 <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
                   {mealTypes.map((mealType) => {
-                    const meal = currentWeekMeals[day]?.[mealType];
-                    return meal ? (
-                      <div key={`${day}-${mealType}`} className="snap-start flex-shrink-0 w-64">
+                  const meal = currentWeekMeals[day]?.[mealType];
+                  return meal ?
+                  <div key={`${day}-${mealType}`} className="snap-start flex-shrink-0 w-64">
                         <MealCard meal={meal} size="medium" />
-                      </div>
-                    ) : null;
-                  })}
+                      </div> :
+                  null;
+                })}
                 </div>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </section>
 
-      {/* History Section */}
+      {/* History Section - Real AI-Generated Content */}
       <section className="py-16" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
         <div className="max-w-[1400px] mx-auto px-6">
-          <h2 
-            style={{
-              fontFamily: '"Right Grotesk Spatial", sans-serif',
-              fontWeight: 500,
-              fontSize: '30px',
-              lineHeight: '36px',
-              color: 'rgb(39, 39, 42)',
-              marginBottom: '32px'
-            }}
-          >
-            History
+          <h2 className="!font-bold">
+
+
+
+
+
+
+
+
+
+            Recent AI History
           </h2>
-          <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
-            {historyRecipes.map((recipe) => (
-              <div key={recipe.id} className="flex-shrink-0 w-64">
-                <MealCard meal={recipe} size="medium" />
-              </div>
-            ))}
-          </div>
+          
+          {isLoading &&
+          <div className="flex justify-center items-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+            </div>
+          }
+          
+          {error &&
+          <div className="text-center py-20">
+              <p className="!text-black">
+
+
+
+
+                Failed to load history: {error}
+              </p>
+            </div>
+          }
+          
+          {!isLoading && !error && history.length === 0 &&
+          <div className="text-center py-20">
+              <p style={{
+              fontFamily: '"General Sans", sans-serif',
+              fontSize: '15px',
+              color: 'rgb(163, 163, 163)'
+            }}>
+                No AI-generated content yet. Start a conversation in the chat to see your history here!
+              </p>
+            </div>
+          }
+          
+          {!isLoading && !error && history.length > 0 &&
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {history.map((item) =>
+            <div
+              key={item.id}
+              className="bg-white rounded-[20px] shadow-md overflow-hidden hover:scale-[1.02] transition-transform cursor-pointer">
+
+                  {item.image_url &&
+              <img
+                src={item.image_url}
+                alt={item.title}
+                className="object-cover w-full h-[240px]" />
+
+              }
+                  {!item.image_url &&
+              <div className="w-full h-[240px] bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center">
+                      <span style={{
+                  fontFamily: '"Right Grotesk Wide", sans-serif',
+                  fontSize: '48px',
+                  color: 'white',
+                  opacity: 0.8
+                }}>
+                        AI
+                      </span>
+                    </div>
+              }
+                  <div className="p-4 space-y-2">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span
+                    className="px-2 py-1 rounded text-xs"
+                    style={{
+                      fontFamily: '"General Sans", sans-serif',
+                      backgroundColor: 'rgb(254, 243, 199)',
+                      color: 'rgb(146, 64, 14)'
+                    }}>
+
+                        {item.type.replace('_', ' ')}
+                      </span>
+                    </div>
+                    <h3 style={{
+                  fontFamily: '"Right Grotesk Wide", sans-serif',
+                  fontWeight: 600,
+                  fontSize: '18px',
+                  lineHeight: '24px',
+                  color: 'rgb(39, 39, 42)'
+                }}>
+                      {item.title}
+                    </h3>
+                    <p
+                  className="line-clamp-2"
+                  style={{
+                    fontFamily: '"General Sans", sans-serif',
+                    fontSize: '15px',
+                    lineHeight: '21px',
+                    color: 'rgb(107, 114, 128)'
+                  }}>
+
+                      {item.description}
+                    </p>
+                    <p style={{
+                  fontFamily: '"General Sans", sans-serif',
+                  fontSize: '12px',
+                  color: 'rgb(163, 163, 163)'
+                }}>
+                      {new Date(item.timestamp).toLocaleString("en-GB", {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  })}
+                    </p>
+                  </div>
+                </div>
+            )}
+            </div>
+          }
         </div>
       </section>
 
@@ -413,6 +511,6 @@ export default function Home() {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>);
+
 }
