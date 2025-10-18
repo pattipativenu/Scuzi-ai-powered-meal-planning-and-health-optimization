@@ -46,8 +46,8 @@ export default function MealDetailPage({ params }: MealDetailPageProps) {
             fontFamily: '"General Sans", sans-serif',
             fontSize: '15px',
             color: 'rgb(39, 39, 42)'
-          }}
-        >
+          }}>
+
           <ArrowLeft className="w-4 h-4" />
           Back to Week
         </Link>
@@ -56,14 +56,14 @@ export default function MealDetailPage({ params }: MealDetailPageProps) {
         <div className="grid md:grid-cols-2 gap-8 lg:gap-12 mb-16">
           {/* Left Side - Content */}
           <div className="flex flex-col justify-center order-2 md:order-1">
-            <h1 style={{
-              fontFamily: '"Right Grotesk Spatial", sans-serif',
-              fontWeight: 500,
-              fontSize: '48px',
-              lineHeight: '56px',
-              color: 'rgb(39, 39, 42)',
-              marginBottom: '16px'
-            }}>
+            <h1 className="!font-bold !not-italic">
+
+
+
+
+
+
+
               {meal.name}
             </h1>
             
@@ -121,8 +121,8 @@ export default function MealDetailPage({ params }: MealDetailPageProps) {
                   fontSize: '16px',
                   fontWeight: 500,
                   borderRadius: '33px'
-                }}
-              >
+                }}>
+
                 <Bookmark className="w-4 h-4" />
                 Save
               </button>
@@ -137,8 +137,8 @@ export default function MealDetailPage({ params }: MealDetailPageProps) {
                 alt={meal.name}
                 fill
                 className="object-cover"
-                priority
-              />
+                priority />
+
             </div>
           </div>
         </div>
@@ -159,44 +159,44 @@ export default function MealDetailPage({ params }: MealDetailPageProps) {
             </h2>
 
             <div className="space-y-6">
-              {meal.instructions.map((instruction, index) => (
-                <div key={index} className="flex gap-4">
+              {meal.instructions.map((instruction, index) =>
+              <div key={index} className="flex gap-4">
                   <div
-                    className="flex-shrink-0 flex items-center justify-center"
-                    style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '50%',
-                      backgroundColor: 'rgb(39, 39, 42)',
-                      color: 'white',
-                      fontFamily: '"Right Grotesk Wide", sans-serif',
-                      fontSize: '16px',
-                      fontWeight: 500
-                    }}
-                  >
+                  className="flex-shrink-0 flex items-center justify-center"
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgb(39, 39, 42)',
+                    color: 'white',
+                    fontFamily: '"Right Grotesk Wide", sans-serif',
+                    fontSize: '16px',
+                    fontWeight: 500
+                  }}>
+
                     {index + 1}
                   </div>
                   <div className="flex-1 pt-2">
                     <p style={{
-                      fontFamily: '"Right Grotesk Wide", sans-serif',
-                      fontSize: '14px',
-                      fontWeight: 500,
-                      color: 'rgb(82, 82, 91)',
-                      marginBottom: '8px'
-                    }}>
+                    fontFamily: '"Right Grotesk Wide", sans-serif',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    color: 'rgb(82, 82, 91)',
+                    marginBottom: '8px'
+                  }}>
                       Step {index + 1}
                     </p>
                     <p style={{
-                      fontFamily: '"General Sans", sans-serif',
-                      fontSize: '15px',
-                      lineHeight: '21px',
-                      color: 'rgb(39, 39, 42)'
-                    }}>
+                    fontFamily: '"General Sans", sans-serif',
+                    fontSize: '15px',
+                    lineHeight: '21px',
+                    color: 'rgb(39, 39, 42)'
+                  }}>
                       {instruction}
                     </p>
                   </div>
                 </div>
-              ))}
+              )}
             </div>
           </div>
 
@@ -214,8 +214,8 @@ export default function MealDetailPage({ params }: MealDetailPageProps) {
                   borderRadius: '33px',
                   backgroundColor: activeTab === "ingredients" ? 'rgb(39, 39, 42)' : 'rgb(244, 244, 245)',
                   color: activeTab === "ingredients" ? 'white' : 'rgb(82, 82, 91)'
-                }}
-              >
+                }}>
+
                 Ingredients
               </button>
               <button
@@ -228,48 +228,48 @@ export default function MealDetailPage({ params }: MealDetailPageProps) {
                   borderRadius: '33px',
                   backgroundColor: activeTab === "nutrition" ? 'rgb(39, 39, 42)' : 'rgb(244, 244, 245)',
                   color: activeTab === "nutrition" ? 'white' : 'rgb(82, 82, 91)'
-                }}
-              >
+                }}>
+
                 Nutrition
               </button>
             </div>
 
             {/* Ingredients Tab */}
-            {activeTab === "ingredients" && (
-              <div>
+            {activeTab === "ingredients" &&
+            <div>
                 {/* Serving Size Selector */}
                 <div className="mb-6 p-4 bg-gray-50" style={{ borderRadius: '20px' }}>
                   <p style={{
-                    fontFamily: '"General Sans", sans-serif',
-                    fontSize: '15px',
-                    color: 'rgb(82, 82, 91)',
-                    marginBottom: '12px'
-                  }}>
+                  fontFamily: '"General Sans", sans-serif',
+                  fontSize: '15px',
+                  color: 'rgb(82, 82, 91)',
+                  marginBottom: '12px'
+                }}>
                     Serving Size
                   </p>
                   <div className="flex items-center gap-4">
                     <button
-                      onClick={() => setServings(Math.max(1, servings - 1))}
-                      className="w-10 h-10 flex items-center justify-center bg-white border-2 border-gray-300 hover:border-black transition-colors"
-                      style={{ borderRadius: '50%' }}
-                    >
+                    onClick={() => setServings(Math.max(1, servings - 1))}
+                    className="w-10 h-10 flex items-center justify-center bg-white border-2 border-gray-300 hover:border-black transition-colors"
+                    style={{ borderRadius: '50%' }}>
+
                       <Minus className="w-4 h-4" />
                     </button>
                     <span style={{
-                      fontFamily: '"Right Grotesk Wide", sans-serif',
-                      fontSize: '24px',
-                      fontWeight: 500,
-                      color: 'rgb(39, 39, 42)',
-                      minWidth: '60px',
-                      textAlign: 'center'
-                    }}>
+                    fontFamily: '"Right Grotesk Wide", sans-serif',
+                    fontSize: '24px',
+                    fontWeight: 500,
+                    color: 'rgb(39, 39, 42)',
+                    minWidth: '60px',
+                    textAlign: 'center'
+                  }}>
                       {servings}
                     </span>
                     <button
-                      onClick={() => setServings(servings + 1)}
-                      className="w-10 h-10 flex items-center justify-center bg-white border-2 border-gray-300 hover:border-black transition-colors"
-                      style={{ borderRadius: '50%' }}
-                    >
+                    onClick={() => setServings(servings + 1)}
+                    className="w-10 h-10 flex items-center justify-center bg-white border-2 border-gray-300 hover:border-black transition-colors"
+                    style={{ borderRadius: '50%' }}>
+
                       <Plus className="w-4 h-4" />
                     </button>
                   </div>
@@ -277,117 +277,117 @@ export default function MealDetailPage({ params }: MealDetailPageProps) {
 
                 {/* Ingredients List */}
                 <ul className="space-y-4">
-                  {meal.ingredients.map((ingredient, index) => (
-                    <li key={index} className="flex items-start gap-3 pb-4 border-b border-gray-200">
+                  {meal.ingredients.map((ingredient, index) =>
+                <li key={index} className="flex items-start gap-3 pb-4 border-b border-gray-200">
                       <div className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0" />
                       <div className="flex-1">
                         <span style={{
-                          fontFamily: '"Right Grotesk Wide", sans-serif',
-                          fontSize: '15px',
-                          fontWeight: 500,
-                          color: 'rgb(39, 39, 42)'
-                        }}>
+                      fontFamily: '"Right Grotesk Wide", sans-serif',
+                      fontSize: '15px',
+                      fontWeight: 500,
+                      color: 'rgb(39, 39, 42)'
+                    }}>
                           {adjustIngredientAmount(ingredient.amount)}
                         </span>
                         <span style={{
-                          fontFamily: '"General Sans", sans-serif',
-                          fontSize: '15px',
-                          color: 'rgb(82, 82, 91)',
-                          marginLeft: '8px'
-                        }}>
+                      fontFamily: '"General Sans", sans-serif',
+                      fontSize: '15px',
+                      color: 'rgb(82, 82, 91)',
+                      marginLeft: '8px'
+                    }}>
                           {ingredient.name}
                         </span>
                       </div>
                     </li>
-                  ))}
+                )}
                 </ul>
               </div>
-            )}
+            }
 
             {/* Nutrition Tab */}
-            {activeTab === "nutrition" && (
-              <div>
+            {activeTab === "nutrition" &&
+            <div>
                 <p style={{
-                  fontFamily: '"General Sans", sans-serif',
-                  fontSize: '15px',
-                  color: 'rgb(82, 82, 91)',
-                  marginBottom: '16px'
-                }}>
+                fontFamily: '"General Sans", sans-serif',
+                fontSize: '15px',
+                color: 'rgb(82, 82, 91)',
+                marginBottom: '16px'
+              }}>
                   Per serving ({Math.round(meal.nutrition.calories / baseServings)} kcal)
                 </p>
 
                 <div className="space-y-4">
                   <div className="flex justify-between items-center pb-4 border-b border-gray-200">
                     <span style={{
-                      fontFamily: '"General Sans", sans-serif',
-                      fontSize: '15px',
-                      color: 'rgb(39, 39, 42)'
-                    }}>
+                    fontFamily: '"General Sans", sans-serif',
+                    fontSize: '15px',
+                    color: 'rgb(39, 39, 42)'
+                  }}>
                       Calories
                     </span>
                     <span style={{
-                      fontFamily: '"Right Grotesk Wide", sans-serif',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      color: 'rgb(39, 39, 42)'
-                    }}>
+                    fontFamily: '"Right Grotesk Wide", sans-serif',
+                    fontSize: '16px',
+                    fontWeight: 500,
+                    color: 'rgb(39, 39, 42)'
+                  }}>
                       {Math.round(meal.nutrition.calories / baseServings)} kcal
                     </span>
                   </div>
                   <div className="flex justify-between items-center pb-4 border-b border-gray-200">
                     <span style={{
-                      fontFamily: '"General Sans", sans-serif',
-                      fontSize: '15px',
-                      color: 'rgb(39, 39, 42)'
-                    }}>
+                    fontFamily: '"General Sans", sans-serif',
+                    fontSize: '15px',
+                    color: 'rgb(39, 39, 42)'
+                  }}>
                       Protein
                     </span>
                     <span style={{
-                      fontFamily: '"Right Grotesk Wide", sans-serif',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      color: 'rgb(39, 39, 42)'
-                    }}>
+                    fontFamily: '"Right Grotesk Wide", sans-serif',
+                    fontSize: '16px',
+                    fontWeight: 500,
+                    color: 'rgb(39, 39, 42)'
+                  }}>
                       {Math.round(meal.nutrition.protein / baseServings)}g
                     </span>
                   </div>
                   <div className="flex justify-between items-center pb-4 border-b border-gray-200">
                     <span style={{
-                      fontFamily: '"General Sans", sans-serif',
-                      fontSize: '15px',
-                      color: 'rgb(39, 39, 42)'
-                    }}>
+                    fontFamily: '"General Sans", sans-serif',
+                    fontSize: '15px',
+                    color: 'rgb(39, 39, 42)'
+                  }}>
                       Carbohydrates
                     </span>
                     <span style={{
-                      fontFamily: '"Right Grotesk Wide", sans-serif',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      color: 'rgb(39, 39, 42)'
-                    }}>
+                    fontFamily: '"Right Grotesk Wide", sans-serif',
+                    fontSize: '16px',
+                    fontWeight: 500,
+                    color: 'rgb(39, 39, 42)'
+                  }}>
                       {Math.round(meal.nutrition.carbs / baseServings)}g
                     </span>
                   </div>
                   <div className="flex justify-between items-center pb-4 border-b border-gray-200">
                     <span style={{
-                      fontFamily: '"General Sans", sans-serif',
-                      fontSize: '15px',
-                      color: 'rgb(39, 39, 42)'
-                    }}>
+                    fontFamily: '"General Sans", sans-serif',
+                    fontSize: '15px',
+                    color: 'rgb(39, 39, 42)'
+                  }}>
                       Fat
                     </span>
                     <span style={{
-                      fontFamily: '"Right Grotesk Wide", sans-serif',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      color: 'rgb(39, 39, 42)'
-                    }}>
+                    fontFamily: '"Right Grotesk Wide", sans-serif',
+                    fontSize: '16px',
+                    fontWeight: 500,
+                    color: 'rgb(39, 39, 42)'
+                  }}>
                       {Math.round(meal.nutrition.fat / baseServings)}g
                     </span>
                   </div>
                 </div>
               </div>
-            )}
+            }
           </div>
         </div>
 
@@ -415,16 +415,16 @@ export default function MealDetailPage({ params }: MealDetailPageProps) {
                 color: 'rgb(39, 39, 42)',
                 border: 'none',
                 padding: 0
-              }}
-            />
+              }} />
+
             <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
               <button
                 className="flex items-center gap-2 text-gray-400 hover:text-gray-600 transition-colors"
                 style={{
                   fontFamily: '"General Sans", sans-serif',
                   fontSize: '14px'
-                }}
-              >
+                }}>
+
                 <ImageIcon className="w-5 h-5" />
               </button>
             </div>
@@ -465,8 +465,8 @@ export default function MealDetailPage({ params }: MealDetailPageProps) {
                     fontFamily: '"Right Grotesk Wide", sans-serif',
                     fontSize: '18px',
                     fontWeight: 500
-                  }}
-                >
+                  }}>
+
                   R
                 </div>
                 <div className="flex-1">
@@ -535,8 +535,8 @@ export default function MealDetailPage({ params }: MealDetailPageProps) {
                     fontFamily: '"Right Grotesk Wide", sans-serif',
                     fontSize: '18px',
                     fontWeight: 500
-                  }}
-                >
+                  }}>
+
                   D
                 </div>
                 <div className="flex-1">
@@ -595,6 +595,6 @@ export default function MealDetailPage({ params }: MealDetailPageProps) {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>);
+
 }
