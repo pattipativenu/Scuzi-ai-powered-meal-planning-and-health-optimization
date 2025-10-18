@@ -57,7 +57,7 @@ Rules:
 - Return ONLY valid JSON. No markdown, no code blocks, no comments, no trailing commas.`;
 
     const recipeCommand = new InvokeModelCommand({
-      modelId: "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+      modelId: "anthropic.claude-3-haiku-20240307-v1:0",
       contentType: "application/json",
       accept: "application/json",
       body: JSON.stringify({
