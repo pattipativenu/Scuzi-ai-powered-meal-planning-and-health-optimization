@@ -3,7 +3,7 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Star, MessageCircle, Clock, Bookmark, Plus, Minus } from "lucide-react";
+import { ArrowLeft, Star, MessageCircle, Clock, Bookmark, Plus, Minus, Heart, Flag, ImageIcon } from "lucide-react";
 import { mockMeals } from "@/lib/mockMeals";
 import { useState } from "react";
 
@@ -125,17 +125,6 @@ export default function MealDetailPage({ params }: MealDetailPageProps) {
               >
                 <Bookmark className="w-4 h-4" />
                 Save
-              </button>
-              <button
-                className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-black text-black hover:bg-gray-50 transition-colors"
-                style={{
-                  fontFamily: '"Right Grotesk Wide", sans-serif',
-                  fontSize: '16px',
-                  fontWeight: 500,
-                  borderRadius: '33px'
-                }}
-              >
-                Add to Plan
               </button>
             </div>
           </div>
@@ -287,7 +276,7 @@ export default function MealDetailPage({ params }: MealDetailPageProps) {
                 </div>
 
                 {/* Ingredients List */}
-                <ul className="space-y-4 mb-6">
+                <ul className="space-y-4">
                   {meal.ingredients.map((ingredient, index) => (
                     <li key={index} className="flex items-start gap-3 pb-4 border-b border-gray-200">
                       <div className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0" />
@@ -312,32 +301,6 @@ export default function MealDetailPage({ params }: MealDetailPageProps) {
                     </li>
                   ))}
                 </ul>
-
-                {/* Action Buttons */}
-                <div className="space-y-3">
-                  <button
-                    className="w-full py-3 bg-black text-white hover:bg-gray-800 transition-colors"
-                    style={{
-                      fontFamily: '"Right Grotesk Wide", sans-serif',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      borderRadius: '33px'
-                    }}
-                  >
-                    Add to Plan
-                  </button>
-                  <button
-                    className="w-full py-3 bg-white border-2 border-black text-black hover:bg-gray-50 transition-colors"
-                    style={{
-                      fontFamily: '"Right Grotesk Wide", sans-serif',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      borderRadius: '33px'
-                    }}
-                  >
-                    Buy Now
-                  </button>
-                </div>
               </div>
             )}
 
@@ -425,6 +388,210 @@ export default function MealDetailPage({ params }: MealDetailPageProps) {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Leave a Note Section */}
+        <div className="mt-16 max-w-4xl">
+          <h2 style={{
+            fontFamily: '"Right Grotesk Spatial", sans-serif',
+            fontWeight: 500,
+            fontSize: '30px',
+            lineHeight: '36px',
+            color: 'rgb(39, 39, 42)',
+            marginBottom: '24px'
+          }}>
+            Leave a note
+          </h2>
+
+          <div className="mb-12 p-6 bg-white border-2 border-gray-200" style={{ borderRadius: '33px' }}>
+            <textarea
+              placeholder="Tell us what you think..."
+              rows={4}
+              className="w-full resize-none outline-none"
+              style={{
+                fontFamily: '"General Sans", sans-serif',
+                fontSize: '15px',
+                color: 'rgb(39, 39, 42)',
+                border: 'none',
+                padding: 0
+              }}
+            />
+            <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
+              <button
+                className="flex items-center gap-2 text-gray-400 hover:text-gray-600 transition-colors"
+                style={{
+                  fontFamily: '"General Sans", sans-serif',
+                  fontSize: '14px'
+                }}
+              >
+                <ImageIcon className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          <p style={{
+            fontFamily: '"General Sans", sans-serif',
+            fontSize: '15px',
+            color: 'rgb(82, 82, 91)',
+            textAlign: 'center',
+            marginBottom: '32px'
+          }}>
+            You need to be logged in to add a note
+          </p>
+
+          {/* Notes Section */}
+          <h3 style={{
+            fontFamily: '"Right Grotesk Spatial", sans-serif',
+            fontWeight: 500,
+            fontSize: '30px',
+            lineHeight: '36px',
+            color: 'rgb(39, 39, 42)',
+            marginBottom: '24px'
+          }}>
+            Notes (2)
+          </h3>
+
+          <div className="space-y-6">
+            {/* Comment 1 */}
+            <div className="pb-6 border-b border-gray-200">
+              <div className="flex gap-4">
+                <div
+                  className="flex-shrink-0 flex items-center justify-center bg-black text-white"
+                  style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '50%',
+                    fontFamily: '"Right Grotesk Wide", sans-serif',
+                    fontSize: '18px',
+                    fontWeight: 500
+                  }}
+                >
+                  R
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span style={{
+                      fontFamily: '"Right Grotesk Wide", sans-serif',
+                      fontSize: '16px',
+                      fontWeight: 500,
+                      color: 'rgb(39, 39, 42)'
+                    }}>
+                      Ryan J.
+                    </span>
+                    <span style={{
+                      fontFamily: '"General Sans", sans-serif',
+                      fontSize: '14px',
+                      color: 'rgb(120, 120, 120)'
+                    }}>
+                      a month ago
+                    </span>
+                  </div>
+                  <p style={{
+                    fontFamily: '"General Sans", sans-serif',
+                    fontSize: '15px',
+                    lineHeight: '21px',
+                    color: 'rgb(39, 39, 42)',
+                    marginBottom: '12px'
+                  }}>
+                    soo good!!
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <button className="flex items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors">
+                      <Heart className="w-4 h-4" />
+                      <span style={{
+                        fontFamily: '"General Sans", sans-serif',
+                        fontSize: '14px'
+                      }}>
+                        0
+                      </span>
+                    </button>
+                    <button className="flex items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors">
+                      <MessageCircle className="w-4 h-4" />
+                      <span style={{
+                        fontFamily: '"General Sans", sans-serif',
+                        fontSize: '14px'
+                      }}>
+                        Reply
+                      </span>
+                    </button>
+                    <button className="flex items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors">
+                      <Flag className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Comment 2 */}
+            <div className="pb-6 border-b border-gray-200">
+              <div className="flex gap-4">
+                <div
+                  className="flex-shrink-0 flex items-center justify-center bg-black text-white"
+                  style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '50%',
+                    fontFamily: '"Right Grotesk Wide", sans-serif',
+                    fontSize: '18px',
+                    fontWeight: 500
+                  }}
+                >
+                  D
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span style={{
+                      fontFamily: '"Right Grotesk Wide", sans-serif',
+                      fontSize: '16px',
+                      fontWeight: 500,
+                      color: 'rgb(39, 39, 42)'
+                    }}>
+                      Duyen L.
+                    </span>
+                    <span style={{
+                      fontFamily: '"General Sans", sans-serif',
+                      fontSize: '14px',
+                      color: 'rgb(120, 120, 120)'
+                    }}>
+                      2 months ago
+                    </span>
+                  </div>
+                  <p style={{
+                    fontFamily: '"General Sans", sans-serif',
+                    fontSize: '15px',
+                    lineHeight: '21px',
+                    color: 'rgb(39, 39, 42)',
+                    marginBottom: '12px'
+                  }}>
+                    my gf loves this. me too ofc
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <button className="flex items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors">
+                      <Heart className="w-4 h-4" />
+                      <span style={{
+                        fontFamily: '"General Sans", sans-serif',
+                        fontSize: '14px'
+                      }}>
+                        1
+                      </span>
+                    </button>
+                    <button className="flex items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors">
+                      <MessageCircle className="w-4 h-4" />
+                      <span style={{
+                        fontFamily: '"General Sans", sans-serif',
+                        fontSize: '14px'
+                      }}>
+                        Reply
+                      </span>
+                    </button>
+                    <button className="flex items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors">
+                      <Flag className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
