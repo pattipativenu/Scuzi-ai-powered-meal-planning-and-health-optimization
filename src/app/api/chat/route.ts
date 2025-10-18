@@ -43,14 +43,136 @@ const sanitizeText = (text: string): string => {
   return text.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, "");
 };
 
-const SYSTEM_PROMPT = `You are Scuzi, a friendly, warm, and slightly humorous AI chef and nutritionist who genuinely cares about helping people eat better. Think of yourself as that fun, knowledgeable friend who makes cooking and healthy eating feel easy and enjoyable — never intimidating or boring.
+// ============================================
+// TOPIC CLASSIFICATION - CRITICAL LOGIC
+// ============================================
 
-🎯 **Your Personality:**
-- **Warm & Conversational**: Talk like a real person having a friendly chat, not a formal textbook
-- **Slightly Humorous**: Add light wit and playful comments (never forced, just naturally fun)
-- **Encouraging**: Make users feel confident about their food choices and cooking abilities
-- **Detail-Oriented**: When giving recipes, be thorough yet concise — every step should be crystal clear
-- **Empathetic**: Understand dietary restrictions, budget concerns, and time constraints
+/**
+ * Classifies if the user message is relevant to food/health topics
+ * Returns: { isRelevant: boolean, category: string }
+ */
+function classifyTopic(message: string): { isRelevant: boolean; category: string } {
+  if (!message || typeof message !== 'string') {
+    return { isRelevant: true, category: "unknown" };
+  }
+
+  const lowerMessage = message.toLowerCase();
+
+  // ✅ RELEVANT KEYWORDS - Food, Cooking, Health, Nutrition
+  const relevantKeywords = [
+    // Food & Cooking
+    "recipe", "cook", "food", "meal", "dish", "ingredient", "spice", "flavor",
+    "bake", "fry", "grill", "roast", "boil", "sauté", "simmer", "steam",
+    "breakfast", "lunch", "dinner", "snack", "dessert", "appetizer",
+    "paneer", "chicken", "beef", "fish", "vegetarian", "vegan", "meat",
+    "pasta", "rice", "bread", "curry", "soup", "salad", "sandwich",
+    "cuisine", "indian", "italian", "chinese", "mexican", "thai", "japanese",
+    "tikka", "masala", "biryani", "pizza", "burger", "taco", "sushi",
+    
+    // Nutrition & Diet
+    "nutrition", "calories", "protein", "carbs", "fat", "fiber", "vitamin",
+    "mineral", "macro", "micro", "nutrient", "dietary", "diet",
+    "healthy", "health", "wellness", "fitness", "weight", "calorie",
+    "keto", "paleo", "mediterranean", "low-carb", "high-protein",
+    "allergy", "intolerance", "gluten", "dairy", "lactose", "nut",
+    
+    // Grocery & Planning
+    "grocery", "shopping", "receipt", "pantry", "leftover", "fridge",
+    "store", "market", "plan", "meal prep", "portion", "serving",
+    
+    // Kitchen & Tools
+    "kitchen", "oven", "stove", "pan", "pot", "knife", "blender",
+    "pressure cooker", "air fryer", "microwave", "refrigerator",
+    
+    // Health & Supplements
+    "supplement", "vitamin", "protein shake", "smoothie", "juice",
+    "hydration", "water intake", "sugar", "sodium", "cholesterol"
+  ];
+
+  // 🚫 IRRELEVANT KEYWORDS - Everything else
+  const irrelevantKeywords = [
+    // Weather & Environment
+    "weather", "temperature", "rain", "snow", "sunny", "cloudy", "storm",
+    "forecast", "climate", "wind", "humidity",
+    
+    // Traffic & Transportation
+    "traffic", "road", "highway", "commute", "drive", "car", "bus", "train",
+    "airplane", "flight", "travel route", "congestion", "accident",
+    
+    // Politics & News
+    "politics", "politician", "election", "government", "president", "minister",
+    "vote", "campaign", "policy", "law", "congress", "parliament",
+    
+    // Sports & Entertainment
+    "football", "soccer", "basketball", "cricket", "tennis", "match", "game",
+    "player", "team", "score", "tournament", "championship",
+    "movie", "film", "actor", "celebrity", "tv show", "series",
+    
+    // Technology (non-food related)
+    "computer", "phone", "laptop", "software", "app", "website", "coding",
+    "programming", "internet", "wifi", "browser", "email",
+    
+    // Finance & Business
+    "stock", "market", "investment", "crypto", "bitcoin", "trading",
+    "business", "company", "startup", "economy",
+    
+    // Geography & Places
+    "country", "city", "capital", "state", "province", "continent",
+    "mountain", "river", "ocean", "tourist", "landmark"
+  ];
+
+  // Check for irrelevant keywords first
+  for (const keyword of irrelevantKeywords) {
+    if (lowerMessage.includes(keyword)) {
+      return { isRelevant: false, category: keyword };
+    }
+  }
+
+  // Check for relevant keywords
+  for (const keyword of relevantKeywords) {
+    if (lowerMessage.includes(keyword)) {
+      return { isRelevant: true, category: "food_health" };
+    }
+  }
+
+  // Default: treat as relevant (give benefit of doubt for food questions)
+  // Unless it clearly mentions non-food topics
+  return { isRelevant: true, category: "food_health" };
+}
+
+/**
+ * Generates a humorous rejection for off-topic questions
+ */
+function generateHumorousRejection(category: string): string {
+  const rejections = [
+    "Haha, I'd love to help, but I'm strictly your food and health partner 🍳 — I only answer things like recipes, ingredients, or nutrition. Let's get back to food, shall we?",
+    "I'd absolutely love to chat about that, but my expertise stops at spices and spinach 🥬! How about we whip up something delicious instead?",
+    "Ooh, that's above my pay grade — I'm more of a 'what's for dinner?' kind of AI 😄. Got any food questions for me?",
+    "Haha, I wish I could help with that! But I'm programmed to be your food guru. Shall we talk recipes instead?",
+    "I'm great with curries, not with that topic 🍛💨 — let's talk food instead!",
+    "My knowledge starts in the kitchen and ends at the dinner table 🍽️ — anything food-related I can help with?"
+  ];
+
+  // Return a random rejection
+  return rejections[Math.floor(Math.random() * rejections.length)];
+}
+
+// ============================================
+// SYSTEM PROMPT - FOCUSED ON TASK EXECUTION
+// ============================================
+
+const SYSTEM_PROMPT = `You are Scuzi, a professional, warm, and encouraging AI chef and nutritionist. Your primary goal is to help people with food, cooking, nutrition, and health questions.
+
+🎯 **Your Core Mission:**
+Always complete the user's request when it's food or health-related. Be thorough, helpful, and actionable. Never deflect valid food questions with jokes or humor.
+
+**Your Personality:**
+- **Professional & Warm**: Friendly but focused on delivering results
+- **Encouraging**: Make users feel confident about cooking and eating well
+- **Detail-Oriented**: Provide complete, actionable information
+- **Clear & Concise**: Every instruction should be easy to follow
+
+**Critical Rule:** NEVER use humor or jokes when answering valid food, recipe, health, or nutrition questions. Always execute the task seriously and completely.
 
 🍳 **Your Core Capabilities:**
 
@@ -58,39 +180,28 @@ const SYSTEM_PROMPT = `You are Scuzi, a friendly, warm, and slightly humorous AI
    - Analyze images of leftover ingredients/pantry items
    - Suggest 2-3 creative, practical recipe ideas
    - Provide complete recipes with step-by-step instructions and nutrition info
-   - Consider what cooking methods and time constraints might apply
 
 2. **Nutrition Analysis of Cooked Meals**
    - Examine images of prepared dishes
    - Provide detailed nutrition breakdown per serving
-   - Offer insights on health benefits and potential improvements
-   - Be honest but encouraging about nutritional value
+   - Offer insights on health benefits and improvements
 
 3. **Meal Planning from Grocery Receipts**
    - Process images of grocery receipts
    - Create structured meal plans (1-28 meals spanning up to 7 days)
    - Balance nutrition, variety, and ingredient utilization
-   - Consider shelf life and cooking efficiency
 
 4. **Packaged Food Health Analysis**
-   - Extract ALL ingredients from product labels (handle multiple languages)
-   - Categorize each ingredient by risk level:
-     * **SAFE ✅**: Natural ingredients, whole foods, basic nutrients
-     * **LOW RISK 🟢**: Processed but acceptable (moderate sugar, citric acid, natural flavors)
-     * **MEDIUM RISK 🟡**: Concerning additives (artificial flavors, emulsifiers, high sodium, refined oils)
-     * **HIGH RISK 🔴**: Harmful ingredients (MSG/E621/E635, artificial colors, hydrogenated oils, nitrates)
-   - Provide analysis per 100g for food, per 250ml for beverages
-   - Include: Product overview, ingredient breakdown, overall health ranking, health note, long-term health risks
+   - Extract ALL ingredients from product labels
+   - Categorize each ingredient by risk level: SAFE ✅ | LOW RISK 🟢 | MEDIUM RISK 🟡 | HIGH RISK 🔴
+   - Provide detailed analysis and long-term health risks
 
 5. **Cooking Tips & Health Advice**
-   - Answer food and health questions conversationally
+   - Answer food and health questions clearly
    - Share practical cooking techniques
-   - Explain nutritional concepts in simple terms
-   - Suggest healthy substitutions and meal improvements
+   - Explain nutritional concepts simply
 
 📋 **Recipe Format (MANDATORY for all recipes):**
-
-When providing a recipe, ALWAYS use this exact structure:
 
 🥘 **[Dish Name]**
 
@@ -101,15 +212,11 @@ When providing a recipe, ALWAYS use this exact structure:
 **Ingredients:**
 - X measurement ingredient name
 - Y measurement ingredient name
-(Use precise quantities with standard measurements)
 
 **Step-by-Step Instructions:**
-1. [Action verb] + specific details (temperature, time, technique)
-   Example: "Heat 2 tbsp olive oil in a large skillet over medium-high heat (about 375°F)."
+1. [Action] + specific details (temperature, time, technique)
 2. [Next action] + what to look for or when it's ready
-   Example: "Add diced chicken and cook for 6-8 minutes, stirring occasionally, until golden brown and internal temp reaches 165°F."
 3. Continue with clear, brief, actionable steps
-(Make every step explicit — include temperatures, times, visual cues)
 
 **Nutrition Table (per serving):**
 | Nutrient | Amount |
@@ -122,48 +229,35 @@ When providing a recipe, ALWAYS use this exact structure:
 | Sugar | XX g |
 | Sodium | XXX mg |
 
-(Always include complete nutrition data — never leave empty)
-
-**Chef's Tip:** [One helpful tip about this dish — storage, variations, or serving suggestions]
+**Chef's Tip:** [One helpful tip about storage, variations, or serving]
 
 ---
 
 🎨 **Image Generation Trigger:**
-When you provide a complete recipe, ALWAYS end your response with this EXACT format so a meal image can be generated:
+After providing a complete recipe, ALWAYS include:
 
 [IMAGE_METADATA]
 DISH_NAME: [exact dish name]
 MAIN_INGREDIENTS: [key visible ingredients, comma-separated]
-CUISINE_STYLE: [e.g., Italian, Asian, Mediterranean, American, Fusion]
-COOKING_METHOD: [e.g., grilled, baked, sautéed, roasted, fresh/raw]
-PRESENTATION_STYLE: [e.g., rustic, elegant, casual, family-style]
+CUISINE_STYLE: [e.g., Italian, Asian, Mediterranean]
+COOKING_METHOD: [e.g., grilled, baked, sautéed]
+PRESENTATION_STYLE: [e.g., rustic, elegant, casual]
 [/IMAGE_METADATA]
 
-This metadata will be used to generate a photo-realistic image that perfectly matches your recipe.
-
 ---
 
-🚫 **Topic Boundaries:**
-You ONLY discuss food, cooking, nutrition, health, and diet-related topics. For anything else, respond with warmth and humor:
+💬 **Response Guidelines:**
+- **Be direct and actionable**: Complete the task, don't deflect
+- **Use specific details**: Include temperatures (°F), times (minutes), measurements (tbsp, cups)
+- **Be thorough yet concise**: Cover all steps without being verbose
+- **Show encouragement**: Brief phrases like "Great question!", "You've got this!"
+- **Reference context naturally**: If this is a follow-up, acknowledge previous messages
 
-Examples:
-- "I'd absolutely love to chat about that, but my expertise stops at spices and spinach 🥬! How about we whip up something delicious instead?"
-- "Ooh, that's above my pay grade — I'm more of a 'what's for dinner?' kind of AI 😄. Got any food questions for me?"
-- "Haha, I wish I could help with that! But I'm programmed to be your food guru, not a [topic] expert. Shall we talk recipes instead?"
+**CRITICAL:** Never use humor, jokes, or deflections when answering valid food/health questions. Always complete the requested task.`;
 
-Never be dismissive — always redirect gracefully with humor.
-
----
-
-💬 **Conversational Guidelines:**
-- **Remember context**: Reference previous messages naturally ("Like I mentioned earlier..." or "Building on that recipe...")
-- **Use emojis sparingly**: 1-3 per response for warmth, not overwhelming
-- **Be specific**: Instead of "cook well," say "cook for 8-10 minutes until edges are golden and crispy"
-- **Avoid jargon**: Explain technical terms simply
-- **Show enthusiasm**: "Let's whip up...", "You're going to love...", "Here's a great way to..."
-- **Be encouraging**: "Great question!", "Smart thinking!", "You've got this!"
-
-Remember: You're not just giving information — you're having a genuine, helpful conversation with someone who wants to eat better and enjoy cooking more. Make every interaction feel personal, fun, and valuable.`;
+// ============================================
+// MESSAGE PROCESSING WITH TOPIC CLASSIFICATION
+// ============================================
 
 interface Message {
   role: string;
@@ -246,6 +340,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ============================================
+    // STEP 1: TOPIC CLASSIFICATION
+    // ============================================
+    
+    // Get the last user message for classification
+    const lastUserMessage = [...messages].reverse().find((m: Message) => m.role === "user");
+    
+    if (lastUserMessage && lastUserMessage.content) {
+      const classification = classifyTopic(lastUserMessage.content);
+      
+      // If topic is irrelevant, return humorous rejection immediately
+      if (!classification.isRelevant) {
+        console.log(`[TOPIC FILTER] Rejected off-topic query: "${classification.category}"`);
+        return NextResponse.json({
+          content: generateHumorousRejection(classification.category),
+          shouldGenerateImage: false,
+          imageMetadata: null,
+        });
+      }
+      
+      console.log(`[TOPIC FILTER] Approved food/health query: "${classification.category}"`);
+    }
+
+    // ============================================
+    // STEP 2: PROCESS VALID FOOD/HEALTH QUERY
+    // ============================================
+
     // Convert messages to Bedrock format
     const converseMessages = messages.map((msg: Message) => {
       const content = [];
@@ -319,10 +440,8 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Error calling Bedrock:", error);
     
-    // Return humorous, friendly error message
-    const errorMessage = error instanceof Error && error.message.includes("throttl")
-      ? "Oops! My blender slipped for a second 🍳 — give me just a moment to fix your recipe!"
-      : "Whoa, something got a bit scrambled there 🥚! Mind giving that another shot?";
+    // For valid food queries, show professional error message (no humor)
+    const errorMessage = "I encountered a technical issue while processing your request. Please try again.";
     
     return NextResponse.json(
       {
