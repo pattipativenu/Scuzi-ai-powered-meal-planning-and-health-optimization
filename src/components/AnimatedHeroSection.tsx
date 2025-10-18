@@ -95,23 +95,32 @@ export function AnimatedHeroSection() {
           </div>
 
           {/* Right Side - Hero Image */}
-          <div className="relative h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden rounded-[33px] -mr-8 md:-mr-12 lg:-mr-16 -mt-8 md:-mt-12 lg:-mt-16 -mb-8 md:-mb-12 lg:-mb-16">
-            {!imageError ?
-            <Image
-              src="https://scuziassests.s3.us-east-1.amazonaws.com/hero%20image.webp"
-              alt="Delicious meal prep"
-              fill
-              className="object-contain object-right rounded-[33px]"
-              onError={() => setImageError(true)}
-              unoptimized /> :
-            <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-100 rounded-[33px]">
-                <div className="text-center space-y-2">
-                  <p className="font-semibold">Image not accessible</p>
-                  <p className="text-sm">Check S3 bucket permissions and CORS</p>
-                </div>
-              </div>
-            }
-          </div>
+<div
+  className="relative w-full h-[600px] md:h-[700px] lg:h-[750px] overflow-hidden rounded-[33px]"
+  style={{
+    borderRadius: "33px",
+    backgroundColor: "transparent",
+  }}
+>
+  {!imageError ? (
+    <Image
+      src="https://scuziassests.s3.us-east-1.amazonaws.com/hero%20image.webp"
+      alt="Delicious meal prep"
+      fill
+      priority
+      unoptimized
+      className="object-contain object-right-top rounded-[33px] absolute top-0 right-0 bottom-0"
+      onError={() => setImageError(true)}
+    />
+  ) : (
+    <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-100 rounded-[33px]">
+      <div className="text-center space-y-2">
+        <p className="font-semibold">Image not accessible</p>
+        <p className="text-sm">Check S3 bucket permissions and CORS</p>
+      </div>
+    </div>
+  )}
+</div>
         </div>
       </div>
     </section>);
