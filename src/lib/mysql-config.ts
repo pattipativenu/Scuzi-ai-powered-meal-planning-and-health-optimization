@@ -5,7 +5,7 @@ export const mysqlPool = mysql.createPool({
   port: parseInt(process.env.RDS_PORT || '3306'),
   user: process.env.RDS_USERNAME,
   password: process.env.RDS_PASSWORD,
-  database: 'WHOOPHEALTHDATA',
+  database: process.env.RDS_DATABASE || 'whoophealthdata',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
