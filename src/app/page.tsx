@@ -108,14 +108,14 @@ export default function Home() {
           <div className="hidden md:block space-y-10">
             {daysOfWeek.map(({ day, date }) =>
             <div key={day}>
-                <h3 style={{
-                fontFamily: '"Right Grotesk Wide", sans-serif',
-                fontWeight: 500,
-                fontSize: '16px',
-                lineHeight: '24px',
-                color: 'rgb(39, 39, 42)',
-                marginBottom: '16px'
-              }}>
+                <h3 className="!font-semibold">
+
+
+
+
+
+
+
                   {day}, {date}
                 </h3>
                 <div className="grid grid-cols-4 gap-6">
