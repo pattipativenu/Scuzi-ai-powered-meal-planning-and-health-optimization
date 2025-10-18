@@ -1,7 +1,9 @@
 "use client";
 
 import { MealCard } from "@/components/MealCard";
-import { Calendar, Clock, Flame, Loader2, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import { HealthInsightsLoader } from "@/components/HealthInsightsLoader";
+import { useWhoopInsights } from "@/hooks/useWhoopInsights";
+import { Calendar, Clock, Flame, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import type { Meal } from "@/types/meal";
@@ -31,9 +33,12 @@ export default function PlanAheadPage() {
   const [generationStep, setGenerationStep] = useState("");
   const [error, setError] = useState("");
   const [expandedDays, setExpandedDays] = useState<string[]>(["Monday"]);
+  const [mealProgress, setMealProgress] = useState(0);
+  const { insights } = useWhoopInsights();
 
   const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   const mealTypes = ["Breakfast", "Lunch", "Snack", "Dinner"];
+  const MAX_MEALS = 28;
 
   // Load existing meal plan on mount
   useEffect(() => {
@@ -56,11 +61,14 @@ export default function PlanAheadPage() {
   const handleGenerateMeals = async () => {
     setIsGenerating(true);
     setError("");
+    setMealProgress(0);
     setGenerationStep("Analyzing your WHOOP data...");
 
     try {
       // Step 1: Generate meals with Claude
       setGenerationStep("Creating personalized meal plan with AI...");
+      setMealProgress(5);
+      
       const generateResponse = await fetch("/api/plan-ahead/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -77,13 +85,22 @@ export default function PlanAheadPage() {
         throw new Error(generateData.message || "Failed to generate meals");
       }
 
-      // Step 2: Generate images with Titan (returns base64)
+      setMealProgress(10);
+
+      // Step 2: Generate images with Titan
       setGenerationStep(`Generating ${generateData.meals.length} meal images...`);
+      
+      const imageProgressInterval = setInterval(() => {
+        setMealProgress((prev) => Math.min(prev + 1, 20));
+      }, 300);
+      
       const imageResponse = await fetch("/api/plan-ahead/generate-images", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ meals: generateData.meals }),
       });
+
+      clearInterval(imageProgressInterval);
 
       if (!imageResponse.ok) {
         throw new Error("Failed to generate images");
@@ -95,8 +112,11 @@ export default function PlanAheadPage() {
         throw new Error(imageData.message || "Failed to generate images");
       }
 
-      // Step 3: Store via Lambda (DynamoDB + S3)
+      setMealProgress(22);
+
+      // Step 3: Store via Lambda
       setGenerationStep("Storing your meal plan to AWS...");
+      
       const lambdaResponse = await fetch("/api/plan-ahead/lambda-store", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -113,7 +133,9 @@ export default function PlanAheadPage() {
         throw new Error(lambdaData.message || "Failed to store meals");
       }
 
-      // Step 4: Save reference to DynamoDB for retrieval
+      setMealProgress(26);
+
+      // Step 4: Save reference
       setGenerationStep("Finalizing your meal plan...");
       const saveResponse = await fetch("/api/plan-ahead/save", {
         method: "POST",
@@ -129,8 +151,11 @@ export default function PlanAheadPage() {
         console.warn("Failed to save meal plan reference, but meals are stored");
       }
 
-      // Success! Display meals with S3 image URLs from Lambda
+      setMealProgress(MAX_MEALS);
       setMeals(lambdaData.meals);
+      
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
       setGenerationStep("");
       setIsGenerating(false);
     } catch (error) {
@@ -138,6 +163,7 @@ export default function PlanAheadPage() {
       setError(error instanceof Error ? error.message : "Failed to generate meals");
       setIsGenerating(false);
       setGenerationStep("");
+      setMealProgress(0);
     }
   };
 
@@ -153,7 +179,6 @@ export default function PlanAheadPage() {
     meals: meals.filter((m) => m.day === day),
   }));
 
-  // Calculate stats
   const totalMeals = meals.length;
   const totalPrepTime = meals.reduce((sum, m) => sum + (m.prep_time || 0) + (m.cook_time || 0), 0);
   const totalCalories = meals.reduce((sum, m) => sum + (m.nutrition?.calories || 0), 0);
@@ -207,7 +232,7 @@ export default function PlanAheadPage() {
           >
             {isGenerating ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Sparkles className="w-5 h-5 animate-pulse" />
                 Generating...
               </>
             ) : (
@@ -219,19 +244,14 @@ export default function PlanAheadPage() {
           </button>
         </div>
 
-        {/* Loading State */}
+        {/* Loading State with WHOOP Insights */}
         {isGenerating && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-card border border-border rounded-lg p-8 mb-8 text-center"
-          >
-            <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-primary" />
-            <p className="text-lg font-medium mb-2">{generationStep}</p>
-            <p className="text-sm text-muted-foreground">
-              This may take a few minutes as we create your personalized meal plan...
-            </p>
-          </motion.div>
+          <HealthInsightsLoader
+            insights={insights}
+            progress={mealProgress}
+            totalMeals={MAX_MEALS}
+            isComplete={mealProgress >= MAX_MEALS}
+          />
         )}
 
         {/* Error State */}

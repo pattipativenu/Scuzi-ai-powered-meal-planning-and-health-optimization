@@ -41,8 +41,8 @@ export async function POST(request: NextRequest) {
         prep_time: meal.prep_time,
         cook_time: meal.cook_time,
         servings: meal.servings,
-        image_bytes: meal.image, // base64
-        week_id: `next_${nextWeekId}`, // Store as next week
+        image_bytes: meal.image_base64 || meal.image, // Fix: use image_base64 from generate-images
+        week_id: `next_${nextWeekId}`,
       };
 
       const command = new InvokeCommand({
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       const body = JSON.parse(result.body);
       storedMeals.push({
         ...meal,
-        image: body.image_url, // Replace base64 with S3 URL
+        image: body.image_url,
         id: body.id,
       });
     }
