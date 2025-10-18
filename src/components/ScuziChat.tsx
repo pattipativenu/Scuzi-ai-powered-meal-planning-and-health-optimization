@@ -32,15 +32,72 @@ interface WhoopMetrics {
   respiratoryRate?: string;
 }
 
+interface ChatHistory {
+  messages: Message[];
+  lastMessageTime: number;
+}
+
+const CHAT_HISTORY_KEY = 'scuzi_chat_history';
+const ONE_HOUR_MS = 60 * 60 * 1000;
+
 export default function ScuziChat() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content: "👋 Hey there! I'm Scuzi, your AI food and health companion. I can help you with:\n\n🥗 Recipe ideas from leftover ingredients\n📊 Nutrition analysis of your meals\n🛒 Meal plans from grocery receipts\n🍳 Cooking tips and health advice\n\nJust chat with me or upload an image to get started!",
-      timestamp: new Date(),
-    },
-  ]);
+  // Load chat history from localStorage
+  const loadChatHistory = (): Message[] => {
+    if (typeof window === 'undefined') return [];
+    
+    try {
+      const stored = localStorage.getItem(CHAT_HISTORY_KEY);
+      if (!stored) return [];
+      
+      const history: ChatHistory = JSON.parse(stored);
+      const now = Date.now();
+      
+      // Check if history is expired (more than 1 hour old)
+      if (now - history.lastMessageTime > ONE_HOUR_MS) {
+        localStorage.removeItem(CHAT_HISTORY_KEY);
+        return [];
+      }
+      
+      // Restore Date objects
+      return history.messages.map(msg => ({
+        ...msg,
+        timestamp: new Date(msg.timestamp)
+      }));
+    } catch (error) {
+      console.error('Error loading chat history:', error);
+      return [];
+    }
+  };
+
+  const saveChatHistory = (messages: Message[]) => {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      const history: ChatHistory = {
+        messages: messages.filter(m => m.id !== 'welcome'), // Don't save welcome message
+        lastMessageTime: Date.now()
+      };
+      localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(history));
+    } catch (error) {
+      console.error('Error saving chat history:', error);
+    }
+  };
+
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const history = loadChatHistory();
+    if (history.length > 0) {
+      return history;
+    }
+    return [
+      {
+        id: "welcome",
+        role: "assistant",
+        content: "👋 Hey there! I'm Scuzi, your AI food and health companion. I can help you with:\n\n🥗 Recipe ideas from leftover ingredients\n📊 Nutrition analysis of your meals\n🛒 Meal plans from grocery receipts\n🍳 Cooking tips and health advice\n\nJust chat with me or upload an image to get started!",
+        timestamp: new Date(),
+      },
+    ];
+  });
+  
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -75,10 +132,31 @@ export default function ScuziChat() {
     scrollToBottom();
   }, [messages]);
 
+  // Save chat history whenever messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveChatHistory(messages);
+    }
+  }, [messages]);
+
+  // Check for initial query from navigation search
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const initialQuery = sessionStorage.getItem('chatInitialQuery');
+    if (initialQuery) {
+      setInput(initialQuery);
+      sessionStorage.removeItem('chatInitialQuery');
+      // Auto-focus the textarea
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 100);
+    }
+  }, []);
+
   // Listen for postMessage from OAuth popup window
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      // Verify origin for security
       if (event.origin !== window.location.origin) {
         console.warn('Ignoring message from unknown origin:', event.origin);
         return;
@@ -87,10 +165,8 @@ export default function ScuziChat() {
       if (event.data.type === 'WHOOP_AUTH_SUCCESS') {
         console.log('✅ Received WHOOP auth success from popup');
         
-        // Fetch updated metrics
         fetchWhoopMetrics();
         
-        // Show success message
         const successMessage: Message = {
           id: Date.now().toString(),
           role: "assistant",
@@ -149,7 +225,6 @@ export default function ScuziChat() {
       if (response.ok) {
         const data = await response.json();
         
-        // Show the exact redirect URI to the user for verification
         const infoMessage: Message = {
           id: Date.now().toString(),
           role: "assistant",
@@ -158,8 +233,6 @@ export default function ScuziChat() {
         };
         setMessages((prev) => [...prev, infoMessage]);
         
-        // Open WHOOP OAuth in a NEW tab/window (desktop & mobile)
-        // This keeps the main app intact and prevents session breakage
         const authWindow = window.open(
           data.authUrl,
           "_blank",
@@ -167,7 +240,6 @@ export default function ScuziChat() {
         );
         
         if (!authWindow) {
-          // Popup blocked - show message
           const errorMessage: Message = {
             id: Date.now().toString(),
             role: "assistant",
@@ -230,7 +302,6 @@ export default function ScuziChat() {
       }
     } catch (error) {
       console.error("Camera not available:", error);
-      // Fallback to file upload
       fileInputRef.current?.click();
     }
   };
@@ -288,7 +359,6 @@ export default function ScuziChat() {
     setIsLoading(true);
 
     try {
-      // Filter out welcome message and only send actual conversation
       const conversationMessages = messages.filter((m) => m.id !== "welcome");
       
       const response = await fetch("/api/chat", {
@@ -329,7 +399,6 @@ export default function ScuziChat() {
 
       setMessages((prev) => [...prev, assistantMessage]);
 
-      // If the response suggests generating a meal image, trigger image generation
       if (data.shouldGenerateImage && data.mealDescription) {
         const imageResponse = await fetch("/api/generate-meal-image", {
           method: "POST",
@@ -356,7 +425,6 @@ export default function ScuziChat() {
     } catch (error) {
       console.error("Error sending message:", error);
       
-      // Log more details for debugging
       if (error instanceof Error) {
         console.error("Error message:", error.message);
         console.error("Error stack:", error.stack);
@@ -382,7 +450,7 @@ export default function ScuziChat() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#0a0a0a]">
+    <div className="flex flex-col h-full bg-[#0a0a0a]">
       {/* Header */}
       <div className="bg-[#1f2c33] border-b border-[#2a3942]">
         <div className="px-4 py-3 flex items-center gap-3">
@@ -460,7 +528,7 @@ export default function ScuziChat() {
       {/* Messages Container */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-[#0b141a] bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0icGF0dGVybiIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiPjxwYXRoIGQ9Ik0gMCw1MCBMIDUwLDAgTCAxMDAsNTAgTCA1MCwxMDAgWiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWExZTI2IiBzdHJva2Utd2lkdGg9IjAuNSIgb3BhY2l0eT0iMC4xIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI3BhdHRlcm4pIi8+PC9zdmc+')] bg-repeat">
         
-        {/* WHOOP Data Chart - Show at top if connected */}
+        {/* WHOOP Data Chart */}
         {whoopMetrics.connected && (
           <div className="mb-4">
             <WhoopDataChart metrics={whoopMetrics} />

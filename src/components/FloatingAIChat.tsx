@@ -9,20 +9,20 @@ export const FloatingAIChat = () => {
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Floating Button - Mobile Only */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-110 flex items-center justify-center"
+          className="md:hidden fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-110 flex items-center justify-center"
           aria-label="Open AI Chat"
         >
           <MessageCircle className="w-6 h-6" />
         </button>
       )}
 
-      {/* Chat Overlay */}
+      {/* Chat Overlay - Mobile Only */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-end p-4 md:p-6">
+        <div className="md:hidden fixed inset-0 z-50 flex items-end justify-end p-4">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/20 backdrop-blur-sm"
@@ -30,7 +30,7 @@ export const FloatingAIChat = () => {
           />
 
           {/* Chat Window */}
-          <div className="relative w-full h-[85vh] md:w-[440px] md:h-[650px] bg-background rounded-lg shadow-2xl border border-border overflow-hidden flex flex-col">
+          <div className="relative w-full h-[85vh] bg-background rounded-lg shadow-2xl border border-border overflow-hidden flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border bg-card">
               <div className="flex items-center gap-3">

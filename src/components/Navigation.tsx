@@ -16,7 +16,6 @@ export function Navigation() {
   const pathname = usePathname();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -55,18 +54,22 @@ export function Navigation() {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim() && !isGenerating) {
-      setIsGenerating(true);
-      const encodedQuery = encodeURIComponent(searchQuery.trim());
-      router.push(`/generate/${encodedQuery}`);
-      
-      setSearchQuery("");
-      setIsGenerating(false);
+    // Store the search query in sessionStorage for the chat page
+    if (searchQuery.trim()) {
+      sessionStorage.setItem('chatInitialQuery', searchQuery.trim());
     }
+    // Navigate to chat page
+    router.push('/chat');
+    setSearchQuery("");
   };
 
   const handleSearchIconClick = () => {
-    searchInputRef.current?.focus();
+    // Navigate to chat page when search icon is clicked
+    if (searchQuery.trim()) {
+      sessionStorage.setItem('chatInitialQuery', searchQuery.trim());
+    }
+    router.push('/chat');
+    setSearchQuery("");
   };
 
   return (
@@ -86,7 +89,7 @@ export function Navigation() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={isGenerating ? "Generating your recipe…" : placeholders[placeholderIndex]}
+                placeholder={placeholders[placeholderIndex]}
                 className="w-full h-11 pl-4 pr-28 rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-black/10 transition-all shimmer-placeholder"
                 style={{
                   backgroundColor: "rgb(209, 222, 38)",
@@ -97,7 +100,6 @@ export function Navigation() {
                   color: "rgb(39, 39, 42)",
                   boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.05)"
                 }}
-                disabled={isGenerating}
               />
               
               {/* Icons Container */}
@@ -106,6 +108,7 @@ export function Navigation() {
                   type="button"
                   className="p-2 hover:bg-black/5 rounded-lg transition-colors icon-glow"
                   title="Take photo"
+                  onClick={handleSearchIconClick}
                 >
                   <Camera className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
                 </button>
@@ -113,6 +116,7 @@ export function Navigation() {
                   type="button"
                   className="p-2 hover:bg-black/5 rounded-lg transition-colors icon-glow"
                   title="Upload photo"
+                  onClick={handleSearchIconClick}
                 >
                   <Upload className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
                 </button>
