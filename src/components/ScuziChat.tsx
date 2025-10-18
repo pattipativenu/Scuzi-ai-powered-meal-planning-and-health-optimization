@@ -93,7 +93,6 @@ export default function ScuziChat() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const hasProcessedInitialData = useRef(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -110,33 +109,17 @@ export default function ScuziChat() {
     }
   }, [messages]);
 
-  // Check for initial query/image from navigation search and auto-send
+  // Check for initial query from navigation search
   useEffect(() => {
-    if (typeof window === 'undefined' || hasProcessedInitialData.current) return;
+    if (typeof window === 'undefined') return;
     
     const initialQuery = sessionStorage.getItem('chatInitialQuery');
-    const initialImage = sessionStorage.getItem('chatInitialImage');
-    const autoSend = sessionStorage.getItem('chatAutoSend');
-    
-    if ((initialQuery || initialImage) && autoSend === 'true') {
-      hasProcessedInitialData.current = true;
-      
-      // Set the input and image
-      if (initialQuery) {
-        setInput(initialQuery);
-      }
-      if (initialImage) {
-        setSelectedImage(initialImage);
-      }
-      
-      // Clear sessionStorage
+    if (initialQuery) {
+      setInput(initialQuery);
       sessionStorage.removeItem('chatInitialQuery');
-      sessionStorage.removeItem('chatInitialImage');
-      sessionStorage.removeItem('chatAutoSend');
-      
-      // Auto-send the message after a brief delay to ensure state is updated
+      // Auto-focus the textarea
       setTimeout(() => {
-        handleSendWithData(initialQuery || "", initialImage || null);
+        textareaRef.current?.focus();
       }, 100);
     }
   }, []);
@@ -150,19 +133,71 @@ export default function ScuziChat() {
     };
   }, [stream]);
 
-  const handleSendWithData = async (textContent: string, imageData: string | null) => {
-    if (!textContent.trim() && !imageData) return;
+  const startCamera = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+      });
+      setStream(mediaStream);
+      setShowCamera(true);
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+    } catch (error) {
+      console.error("Camera not available:", error);
+      fileInputRef.current?.click();
+    }
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(video, 0, 0);
+        const imageData = canvas.toDataURL("image/jpeg");
+        setSelectedImage(imageData);
+        closeCamera();
+      }
+    }
+  };
+
+  const closeCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStream(null);
+    }
+    setShowCamera(false);
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSend = async () => {
+    if (!input.trim() && !selectedImage) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: textContent,
-      image: imageData || undefined,
+      content: input,
+      image: selectedImage || undefined,
       timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
+    const imageToSend = selectedImage;
     setSelectedImage(null);
     setIsLoading(true);
 
@@ -183,8 +218,8 @@ export default function ScuziChat() {
             })),
             {
               role: "user",
-              content: textContent,
-              image: imageData,
+              content: input,
+              image: imageToSend,
             },
           ],
         }),
@@ -247,62 +282,6 @@ export default function ScuziChat() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const startCamera = async () => {
-    try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-      });
-      setStream(mediaStream);
-      setShowCamera(true);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
-    } catch (error) {
-      console.error("Camera not available:", error);
-      fileInputRef.current?.click();
-    }
-  };
-
-  const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.drawImage(video, 0, 0);
-        const imageData = canvas.toDataURL("image/jpeg");
-        setSelectedImage(imageData);
-        closeCamera();
-      }
-    }
-  };
-
-  const closeCamera = () => {
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-      setStream(null);
-    }
-    setShowCamera(false);
-  };
-
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSend = async () => {
-    if (!input.trim() && !selectedImage) return;
-    await handleSendWithData(input, selectedImage);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -475,8 +454,8 @@ export default function ScuziChat() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Sticky Input Area - Hidden on Desktop/Tablet, Visible on Mobile */}
-      <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 z-50 md:hidden">
+      {/* Sticky Input Area */}
+      <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 z-50">
         {selectedImage && (
           <div className="mb-3 relative inline-block">
             <img
