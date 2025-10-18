@@ -103,7 +103,7 @@ export function AnimatedHeroSection() {
               fill
               priority
               unoptimized
-              className="object-cover object-right rounded-[0px_33px_33px_0px] !w-full !h-[432px] !max-w-full !my-0 !p-0"
+              className="object-cover object-right !w-full !h-[432px] !max-w-full !my-0 !p-0 !text-[15px] !block !flex-col !gap-4 !mx-0 !rounded-none !border-0"
               onError={() => setImageError(true)} /> :
 
 
