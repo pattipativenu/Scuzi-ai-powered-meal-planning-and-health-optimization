@@ -1,3 +1,4 @@
+/* Updated: 2025-10-18T12:52:37.055Z */
 /* Updated: 2025-10-18T11:21:40.105Z */
 /* Updated: 2025-10-18T02:14:40.105Z */
 /* Updated: 2025-10-18T02:14:37.816Z */
@@ -256,6 +257,25 @@
   
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+  
+  /* Shimmer effect for search placeholder */
+  @keyframes shimmer {
+    0% {
+      background-position: 200% center;
+    }
+    100% {
+      background-position: -200% center;
+    }
+  }
+  
+  .shimmer-placeholder::placeholder {
+    background: linear-gradient(90deg, rgb(39, 39, 42) 0%, rgb(120, 120, 120) 50%, rgb(39, 39, 42) 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 3s linear infinite;
   }
 }
 
