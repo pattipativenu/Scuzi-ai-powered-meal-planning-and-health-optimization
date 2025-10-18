@@ -76,7 +76,7 @@ export function AnimatedHeroSection() {
           </div>
         }
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center !w-full !h-full rounded-[2rem] p-8 md:p-12 lg:p-16" style={{ backgroundColor: "rgb(247, 248, 212)" }}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center !w-full !h-full p-8 md:p-12 lg:p-16 !px-[65px] !py-[110px] !rounded-[25px]" style={{ backgroundColor: "rgb(247, 248, 212)" }}>
           {/* Left Side - Text Content */}
           <div className="z-10 space-y-6">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
