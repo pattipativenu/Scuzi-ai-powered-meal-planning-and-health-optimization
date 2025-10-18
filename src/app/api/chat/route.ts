@@ -9,12 +9,10 @@ const getBedrockClient = () => {
   const bearerToken = process.env.AWS_BEARER_TOKEN_BEDROCK;
   
   if (bearerToken) {
-    // Use bearer token authentication for AWS Bedrock serverless
     const client = new BedrockRuntimeClient({
       region: process.env.AWS_REGION || "us-east-1",
     });
 
-    // Add middleware to inject bearer token in Authorization header
     client.middlewareStack.add(
       (next: any) => async (args: any) => {
         args.request.headers.Authorization = `Bearer ${bearerToken}`;
@@ -28,7 +26,6 @@ const getBedrockClient = () => {
 
     return client;
   } else {
-    // Fallback to standard AWS credentials
     return new BedrockRuntimeClient({
       region: process.env.AWS_REGION || "us-east-1",
       credentials: {
@@ -41,96 +38,132 @@ const getBedrockClient = () => {
 
 const client = getBedrockClient();
 
-// Sanitize text to remove/escape control characters that break JSON
 const sanitizeText = (text: string): string => {
   if (!text) return "";
-  
-  // Replace control characters except newline and tab
   return text.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, "");
 };
 
-const SYSTEM_PROMPT = `You are Scuzi, a friendly and knowledgeable AI assistant specializing in food and health. Your personality is warm, conversational, and helpful.
+const SYSTEM_PROMPT = `You are Scuzi, a friendly, warm, and slightly humorous AI chef and nutritionist who genuinely cares about helping people eat better. Think of yourself as that fun, knowledgeable friend who makes cooking and healthy eating feel easy and enjoyable — never intimidating or boring.
 
-Your capabilities:
-1. **Recipe Generation**: Analyze images of leftover ingredients and suggest creative, delicious recipes
-2. **Nutrition Analysis**: Examine images of cooked meals and provide detailed nutrition tables (calories, protein, carbs, fats, vitamins, etc.)
-3. **Meal Planning**: Process grocery receipt images and create meal plans (1-28 meals for up to 7 days)
-4. **Food & Health Advice**: Answer questions about cooking, nutrition, diet, and healthy eating
-5. **Ingredient Analysis**: Analyze packaged food ingredients and provide comprehensive health assessments
+🎯 **Your Personality:**
+- **Warm & Conversational**: Talk like a real person having a friendly chat, not a formal textbook
+- **Slightly Humorous**: Add light wit and playful comments (never forced, just naturally fun)
+- **Encouraging**: Make users feel confident about their food choices and cooking abilities
+- **Detail-Oriented**: When giving recipes, be thorough yet concise — every step should be crystal clear
+- **Empathetic**: Understand dietary restrictions, budget concerns, and time constraints
 
-When analyzing packaged food images:
-- Extract ALL ingredients from the product label (handle multiple languages if present)
-- Categorize each ingredient into risk levels:
-  * **SAFE** ✅: Natural ingredients, whole foods, basic nutrients (water, salt in moderation, natural oils, whole grains, real spices)
-  * **LOW RISK** 🟢: Processed but generally acceptable (sugar in moderation, common preservatives like citric acid, natural flavors)
-  * **MEDIUM RISK** 🟡: Concerning additives (artificial flavors, certain emulsifiers, high sodium, refined oils, modified starch, excessive sugar)
-  * **HIGH RISK** 🔴: Harmful ingredients (MSG/flavor enhancers E621/E635, artificial colors, hydrogenated oils, excessive preservatives, nitrates/nitrites)
+🍳 **Your Core Capabilities:**
 
-- For **FOOD ITEMS**: Provide analysis per 100g serving
-- For **BEVERAGES**: Provide analysis per 250ml serving
+1. **Recipe Generation from Leftover Ingredients**
+   - Analyze images of leftover ingredients/pantry items
+   - Suggest 2-3 creative, practical recipe ideas
+   - Provide complete recipes with step-by-step instructions and nutrition info
+   - Consider what cooking methods and time constraints might apply
 
-- Create a structured health assessment including:
-  1. **Product Overview**: Name and type of product
-  2. **Ingredient Breakdown**: List all ingredients with their risk category and explanation
-  3. **Overall Health Ranking**: Assign overall rating (Safe, Low Risk, Medium Risk, High Risk) based on ingredient composition
-  4. **Health Note**: Clear explanation of why this product is/isn't safe, mentioning specific concerning ingredients
-  5. **Long-term Health Risks**: Describe potential health issues from frequent consumption:
-     - Cardiovascular effects (high sodium, trans fats)
-     - Metabolic issues (excess sugar, refined carbs)
-     - Digestive problems (artificial additives, preservatives)
-     - Neurological concerns (MSG, artificial colors)
-     - Cancer risk (nitrates, certain preservatives)
-     - Nutritional deficiencies (lack of whole foods)
+2. **Nutrition Analysis of Cooked Meals**
+   - Examine images of prepared dishes
+   - Provide detailed nutrition breakdown per serving
+   - Offer insights on health benefits and potential improvements
+   - Be honest but encouraging about nutritional value
 
-Format your ingredient analysis response clearly with sections and emojis for visual clarity.
+3. **Meal Planning from Grocery Receipts**
+   - Process images of grocery receipts
+   - Create structured meal plans (1-28 meals spanning up to 7 days)
+   - Balance nutrition, variety, and ingredient utilization
+   - Consider shelf life and cooking efficiency
 
-When analyzing images:
-- For ingredient images: Identify all visible ingredients and suggest 2-3 recipe ideas with brief instructions
-- For meal images: Provide a nutrition table with estimated values per serving
-- For receipt images: Create a structured meal plan based on purchased items, considering variety and nutrition
-- For packaged food labels: Perform comprehensive ingredient analysis with health rankings
+4. **Packaged Food Health Analysis**
+   - Extract ALL ingredients from product labels (handle multiple languages)
+   - Categorize each ingredient by risk level:
+     * **SAFE ✅**: Natural ingredients, whole foods, basic nutrients
+     * **LOW RISK 🟢**: Processed but acceptable (moderate sugar, citric acid, natural flavors)
+     * **MEDIUM RISK 🟡**: Concerning additives (artificial flavors, emulsifiers, high sodium, refined oils)
+     * **HIGH RISK 🔴**: Harmful ingredients (MSG/E621/E635, artificial colors, hydrogenated oils, nitrates)
+   - Provide analysis per 100g for food, per 250ml for beverages
+   - Include: Product overview, ingredient breakdown, overall health ranking, health note, long-term health risks
 
-Always be conversational, use emojis sparingly but effectively, and provide actionable advice. If you suggest a recipe that would benefit from visualization, mention "meal image" in your response and I'll generate it for you.
+5. **Cooking Tips & Health Advice**
+   - Answer food and health questions conversationally
+   - Share practical cooking techniques
+   - Explain nutritional concepts in simple terms
+   - Suggest healthy substitutions and meal improvements
 
-You have web access for looking up current nutritional information, food trends, health guidelines, and ingredient safety data when needed.`;
+📋 **Recipe Format (MANDATORY for all recipes):**
 
-const getWhoopEnhancedPrompt = (whoopMetrics: any) => {
-  if (!whoopMetrics?.connected) {
-    return SYSTEM_PROMPT;
-  }
+When providing a recipe, ALWAYS use this exact structure:
 
-  const sleepHours = parseFloat(whoopMetrics.sleep || "0");
-  const strainScore = parseFloat(whoopMetrics.strain || "0");
-  const calories = whoopMetrics.calories || 0;
+🥘 **[Dish Name]**
 
-  let whoopContext = "\n\n**PERSONALIZATION (WHOOP Data):**\n";
-  whoopContext += `The user's today's biometric data:\n`;
-  whoopContext += `- Sleep: ${whoopMetrics.sleep} hours${sleepHours < 6 ? " (LOW - needs recovery)" : sleepHours < 7.5 ? " (MODERATE)" : " (GOOD)"}\n`;
-  whoopContext += `- Strain: ${whoopMetrics.strain}${strainScore > 15 ? " (HIGH - intense activity)" : strainScore > 10 ? " (MODERATE)" : " (LOW)"}\n`;
-  whoopContext += `- Calories burned: ${calories} kcal\n\n`;
+⏱️ **Time:** Prep: X min | Cook: Y min | Total: Z min
+🍽️ **Servings:** 1 (or specify)
+📊 **Meal Type:** Breakfast/Lunch/Dinner/Snack
 
-  whoopContext += "**Meal Personalization Rules:**\n";
-  
-  if (sleepHours < 6) {
-    whoopContext += "- Sleep is LOW: Recommend lighter, easily digestible meals. Avoid heavy, high-fat foods. Focus on recovery nutrients (magnesium, vitamin B6, tryptophan). Suggest foods that promote better sleep.\n";
-  }
-  
-  if (strainScore > 15) {
-    whoopContext += "- Strain is HIGH: Prioritize high-protein meals (1.6-2.2g per kg body weight). Include complex carbs for glycogen replenishment. Add anti-inflammatory foods (omega-3, turmeric, berries). Emphasize hydration.\n";
-  } else if (strainScore < 8) {
-    whoopContext += "- Strain is LOW: Suggest moderate caloric intake. Avoid oversized portions. Focus on nutrient density over quantity.\n";
-  }
-  
-  if (calories > 3000) {
-    whoopContext += "- High calorie burn: Recommend calorie-dense, nutrient-rich meals to match energy expenditure. Include healthy fats and complex carbohydrates.\n";
-  } else if (calories < 2000) {
-    whoopContext += "- Lower calorie burn: Suggest lighter meals with appropriate portions. Focus on nutrient density without excess calories.\n";
-  }
+**Ingredients:**
+- X measurement ingredient name
+- Y measurement ingredient name
+(Use precise quantities with standard measurements)
 
-  whoopContext += "\nAlways incorporate these biometric insights naturally into your recommendations without being overly technical. Make suggestions feel personalized and caring.";
+**Step-by-Step Instructions:**
+1. [Action verb] + specific details (temperature, time, technique)
+   Example: "Heat 2 tbsp olive oil in a large skillet over medium-high heat (about 375°F)."
+2. [Next action] + what to look for or when it's ready
+   Example: "Add diced chicken and cook for 6-8 minutes, stirring occasionally, until golden brown and internal temp reaches 165°F."
+3. Continue with clear, brief, actionable steps
+(Make every step explicit — include temperatures, times, visual cues)
 
-  return SYSTEM_PROMPT + whoopContext;
-};
+**Nutrition Table (per serving):**
+| Nutrient | Amount |
+|----------|--------|
+| Calories | XXX kcal |
+| Protein | XX g |
+| Carbohydrates | XX g |
+| Fat | XX g |
+| Fiber | XX g |
+| Sugar | XX g |
+| Sodium | XXX mg |
+
+(Always include complete nutrition data — never leave empty)
+
+**Chef's Tip:** [One helpful tip about this dish — storage, variations, or serving suggestions]
+
+---
+
+🎨 **Image Generation Trigger:**
+When you provide a complete recipe, ALWAYS end your response with this EXACT format so a meal image can be generated:
+
+[IMAGE_METADATA]
+DISH_NAME: [exact dish name]
+MAIN_INGREDIENTS: [key visible ingredients, comma-separated]
+CUISINE_STYLE: [e.g., Italian, Asian, Mediterranean, American, Fusion]
+COOKING_METHOD: [e.g., grilled, baked, sautéed, roasted, fresh/raw]
+PRESENTATION_STYLE: [e.g., rustic, elegant, casual, family-style]
+[/IMAGE_METADATA]
+
+This metadata will be used to generate a photo-realistic image that perfectly matches your recipe.
+
+---
+
+🚫 **Topic Boundaries:**
+You ONLY discuss food, cooking, nutrition, health, and diet-related topics. For anything else, respond with warmth and humor:
+
+Examples:
+- "I'd absolutely love to chat about that, but my expertise stops at spices and spinach 🥬! How about we whip up something delicious instead?"
+- "Ooh, that's above my pay grade — I'm more of a 'what's for dinner?' kind of AI 😄. Got any food questions for me?"
+- "Haha, I wish I could help with that! But I'm programmed to be your food guru, not a [topic] expert. Shall we talk recipes instead?"
+
+Never be dismissive — always redirect gracefully with humor.
+
+---
+
+💬 **Conversational Guidelines:**
+- **Remember context**: Reference previous messages naturally ("Like I mentioned earlier..." or "Building on that recipe...")
+- **Use emojis sparingly**: 1-3 per response for warmth, not overwhelming
+- **Be specific**: Instead of "cook well," say "cook for 8-10 minutes until edges are golden and crispy"
+- **Avoid jargon**: Explain technical terms simply
+- **Show enthusiasm**: "Let's whip up...", "You're going to love...", "Here's a great way to..."
+- **Be encouraging**: "Great question!", "Smart thinking!", "You've got this!"
+
+Remember: You're not just giving information — you're having a genuine, helpful conversation with someone who wants to eat better and enjoy cooking more. Make every interaction feel personal, fun, and valuable.`;
 
 interface Message {
   role: string;
@@ -138,9 +171,73 @@ interface Message {
   image?: string;
 }
 
+// Retry logic helper
+async function retryOperation<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  delay: number = 1000
+): Promise<T> {
+  let lastError: Error | undefined;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error as Error;
+      console.error(`Attempt ${attempt} failed:`, error);
+      
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, delay * attempt));
+      }
+    }
+  }
+  
+  throw lastError || new Error("Operation failed after retries");
+}
+
+// Extract structured image metadata from response
+function extractImageMetadata(text: string): {
+  shouldGenerate: boolean;
+  dishName: string;
+  mainIngredients: string;
+  cuisineStyle: string;
+  cookingMethod: string;
+  presentationStyle: string;
+} {
+  const metadataRegex = /\[IMAGE_METADATA\]([\s\S]*?)\[\/IMAGE_METADATA\]/;
+  const match = text.match(metadataRegex);
+  
+  if (!match) {
+    return {
+      shouldGenerate: false,
+      dishName: "",
+      mainIngredients: "",
+      cuisineStyle: "",
+      cookingMethod: "",
+      presentationStyle: ""
+    };
+  }
+  
+  const metadata = match[1];
+  const extractField = (field: string): string => {
+    const fieldRegex = new RegExp(`${field}:\\s*(.+?)(?=\\n|$)`, 'i');
+    const fieldMatch = metadata.match(fieldRegex);
+    return fieldMatch ? fieldMatch[1].trim() : "";
+  };
+  
+  return {
+    shouldGenerate: true,
+    dishName: extractField("DISH_NAME"),
+    mainIngredients: extractField("MAIN_INGREDIENTS"),
+    cuisineStyle: extractField("CUISINE_STYLE"),
+    cookingMethod: extractField("COOKING_METHOD"),
+    presentationStyle: extractField("PRESENTATION_STYLE")
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { messages, whoopMetrics } = await request.json();
+    const { messages } = await request.json();
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json(
@@ -149,22 +246,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get system prompt with WHOOP data if available
-    const systemPrompt = getWhoopEnhancedPrompt(whoopMetrics);
-
     // Convert messages to Bedrock format
     const converseMessages = messages.map((msg: Message) => {
       const content = [];
 
-      // Add image if present
       if (msg.image) {
-        // Extract base64 data
         const base64Data = msg.image.split(",")[1] || msg.image;
         const imageBytes = Buffer.from(base64Data, "base64");
 
         content.push({
           image: {
-            format: "jpeg", // Adjust based on actual format
+            format: "jpeg",
             source: {
               bytes: imageBytes,
             },
@@ -172,7 +264,6 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      // Add text content
       if (msg.content) {
         content.push({
           text: msg.content,
@@ -185,19 +276,21 @@ export async function POST(request: NextRequest) {
       };
     });
 
-    // Call Bedrock Claude 3.5 Sonnet
-    const command = new ConverseCommand({
-      modelId: "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
-      messages: converseMessages,
-      system: [{ text: systemPrompt }],
-      inferenceConfig: {
-        maxTokens: 8192,
-        temperature: 0.7,
-        topP: 0.9,
-      },
-    });
+    // Call Bedrock with retry logic
+    const response = await retryOperation(async () => {
+      const command = new ConverseCommand({
+        modelId: "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+        messages: converseMessages,
+        system: [{ text: SYSTEM_PROMPT }],
+        inferenceConfig: {
+          maxTokens: 8192,
+          temperature: 0.7,
+          topP: 0.9,
+        },
+      });
 
-    const response = await client.send(command);
+      return await client.send(command);
+    }, 3, 1000);
 
     // Extract response content
     let responseText = "";
@@ -210,35 +303,30 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Sanitize response text to prevent JSON parsing errors
     responseText = sanitizeText(responseText);
 
-    // Check if we should generate a meal image
-    const shouldGenerateImage =
-      responseText.toLowerCase().includes("meal image") ||
-      responseText.toLowerCase().includes("here's what") ||
-      responseText.toLowerCase().includes("recipe:");
-
-    // Extract meal description for image generation
-    let mealDescription = "";
-    if (shouldGenerateImage) {
-      // Try to extract recipe name or meal description
-      const recipeMatch = responseText.match(/(?:recipe|meal|dish)[:\s]+([^\n.]+)/i);
-      if (recipeMatch) {
-        mealDescription = sanitizeText(recipeMatch[1].trim());
-      }
-    }
+    // Extract image metadata for generation
+    const imageMetadata = extractImageMetadata(responseText);
+    
+    // Remove metadata tags from user-facing response
+    const cleanedResponse = responseText.replace(/\[IMAGE_METADATA\][\s\S]*?\[\/IMAGE_METADATA\]/g, "").trim();
 
     return NextResponse.json({
-      content: responseText || "I'm here to help with your food and health questions!",
-      shouldGenerateImage: shouldGenerateImage && mealDescription,
-      mealDescription,
+      content: cleanedResponse || "I'm here to help with your food and health questions! 🍳",
+      shouldGenerateImage: imageMetadata.shouldGenerate,
+      imageMetadata: imageMetadata.shouldGenerate ? imageMetadata : null,
     });
   } catch (error) {
     console.error("Error calling Bedrock:", error);
+    
+    // Return humorous, friendly error message
+    const errorMessage = error instanceof Error && error.message.includes("throttl")
+      ? "Oops! My blender slipped for a second 🍳 — give me just a moment to fix your recipe!"
+      : "Whoa, something got a bit scrambled there 🥚! Mind giving that another shot?";
+    
     return NextResponse.json(
       {
-        error: "Failed to process request",
+        error: errorMessage,
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }

@@ -25,7 +25,6 @@ const CHAT_HISTORY_KEY = 'scuzi_chat_history';
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
 export default function ScuziChat() {
-  // Load chat history from localStorage
   const loadChatHistory = (): Message[] => {
     if (typeof window === 'undefined') return [];
     
@@ -36,13 +35,11 @@ export default function ScuziChat() {
       const history: ChatHistory = JSON.parse(stored);
       const now = Date.now();
       
-      // Check if history is expired (more than 1 hour old)
       if (now - history.lastMessageTime > ONE_HOUR_MS) {
         localStorage.removeItem(CHAT_HISTORY_KEY);
         return [];
       }
       
-      // Restore Date objects
       return history.messages.map(msg => ({
         ...msg,
         timestamp: new Date(msg.timestamp)
@@ -58,7 +55,7 @@ export default function ScuziChat() {
     
     try {
       const history: ChatHistory = {
-        messages: messages.filter(m => m.id !== 'welcome'), // Don't save welcome message
+        messages: messages.filter(m => m.id !== 'welcome'),
         lastMessageTime: Date.now()
       };
       localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(history));
@@ -76,7 +73,7 @@ export default function ScuziChat() {
       {
         id: "welcome",
         role: "assistant",
-        content: "👋 Hey there! I'm Scuzi, your AI food and health companion. I can help you with:\n\n🥗 Recipe ideas from leftover ingredients\n📊 Nutrition analysis of your meals\n🛒 Meal plans from grocery receipts\n🍳 Cooking tips and health advice\n\nJust chat with me or upload an image to get started!",
+        content: "👋 Hey there! I'm Scuzi, your AI food and health companion. I can help you with:\n\n🥗 Recipe ideas from leftover ingredients\n📊 Nutrition analysis of your meals\n🛒 Meal plans from grocery receipts\n🍳 Cooking tips and health advice\n🏷️ Packaged food health assessments\n\nJust chat with me or upload an image to get started!",
         timestamp: new Date(),
       },
     ];
@@ -87,6 +84,7 @@ export default function ScuziChat() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showCamera, setShowCamera] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -102,14 +100,12 @@ export default function ScuziChat() {
     scrollToBottom();
   }, [messages]);
 
-  // Save chat history whenever messages change
   useEffect(() => {
     if (messages.length > 0) {
       saveChatHistory(messages);
     }
   }, [messages]);
 
-  // Check for initial query from navigation search
   useEffect(() => {
     if (typeof window === 'undefined') return;
     
@@ -117,14 +113,12 @@ export default function ScuziChat() {
     if (initialQuery) {
       setInput(initialQuery);
       sessionStorage.removeItem('chatInitialQuery');
-      // Auto-focus the textarea
       setTimeout(() => {
         textareaRef.current?.focus();
       }, 100);
     }
   }, []);
 
-  // Cleanup camera stream on unmount
   useEffect(() => {
     return () => {
       if (stream) {
@@ -200,6 +194,7 @@ export default function ScuziChat() {
     const imageToSend = selectedImage;
     setSelectedImage(null);
     setIsLoading(true);
+    setRetryCount(0);
 
     try {
       const conversationMessages = messages.filter((m) => m.id !== "welcome");
@@ -226,7 +221,8 @@ export default function ScuziChat() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to get response");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to get response");
       }
 
       const data = await response.json();
@@ -235,47 +231,49 @@ export default function ScuziChat() {
         id: (Date.now() + 1).toString(),
         role: "assistant",
         content: data.content,
-        thinking: data.thinking,
         timestamp: new Date(),
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
 
-      if (data.shouldGenerateImage && data.mealDescription) {
-        const imageResponse = await fetch("/api/generate-meal-image", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            mealDescription: data.mealDescription,
-          }),
-        });
+      // Generate meal image if metadata is provided
+      if (data.shouldGenerateImage && data.imageMetadata) {
+        try {
+          const imageResponse = await fetch("/api/generate-meal-image", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              imageMetadata: data.imageMetadata,
+            }),
+          });
 
-        if (imageResponse.ok) {
-          const imageData = await imageResponse.json();
-          const imageMessage: Message = {
-            id: (Date.now() + 2).toString(),
-            role: "assistant",
-            content: "Here's what that meal might look like:",
-            image: imageData.imageUrl,
-            timestamp: new Date(),
-          };
-          setMessages((prev) => [...prev, imageMessage]);
+          if (imageResponse.ok) {
+            const imageData = await imageResponse.json();
+            const imageMessage: Message = {
+              id: (Date.now() + 2).toString(),
+              role: "assistant",
+              content: `Here's what ${imageData.mealDescription} looks like:`,
+              image: imageData.imageUrl,
+              timestamp: new Date(),
+            };
+            setMessages((prev) => [...prev, imageMessage]);
+          }
+        } catch (imageError) {
+          console.error("Image generation failed:", imageError);
+          // Don't show error to user - image generation is non-critical
         }
       }
     } catch (error) {
       console.error("Error sending message:", error);
       
-      if (error instanceof Error) {
-        console.error("Error message:", error.message);
-        console.error("Error stack:", error.stack);
-      }
-      
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : "Unknown error"}. Please try again or check the console for details.`,
+        content: error instanceof Error && error.message 
+          ? error.message 
+          : "Oops! Something got a bit scrambled there 🥚! Mind giving that another shot?",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -386,21 +384,6 @@ export default function ScuziChat() {
                   : "bg-gray-50 text-[rgb(17,24,39)]"
               )}
             >
-              {message.thinking && (
-                <div className="mb-2 pb-2 border-b border-gray-200">
-                  <p 
-                    className="text-gray-500 italic"
-                    style={{
-                      fontFamily: '"General Sans", sans-serif',
-                      fontSize: '15px',
-                      lineHeight: '21px',
-                      fontWeight: 400
-                    }}
-                  >
-                    💭 {message.thinking}
-                  </p>
-                </div>
-              )}
               {message.image && (
                 <img
                   src={message.image}
