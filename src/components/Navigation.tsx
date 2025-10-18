@@ -207,17 +207,18 @@ export function Navigation() {
   };
 
   const isOnChatPage = pathname === '/chat';
+  const hasSearchQuery = searchQuery.length > 0;
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border">
       {/* Top Bar - Yellow Background */}
       <div style={{ backgroundColor: "rgb(209, 222, 38)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between gap-6 h-20">
+          <div className="flex items-center justify-center gap-6 h-20">
             {/* Chat Page Layout */}
             {isOnChatPage && (
               <>
-                <div className="hidden md:flex items-center gap-4 flex-1">
+                <div className="hidden md:flex items-center gap-4 absolute left-8">
                   <button
                     onClick={handleGoBack}
                     className="p-2 hover:bg-black/5 rounded-lg transition-colors"
@@ -258,7 +259,8 @@ export function Navigation() {
                       <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                         <button
                           type="button"
-                          className="p-2 hover:bg-black/5 rounded-lg transition-colors icon-glow"
+                          className="p-2 hover:bg-black/5 rounded-lg transition-all"
+                          style={{ opacity: hasSearchQuery ? 1 : 0.4 }}
                           title="Take photo"
                           onClick={handleSearchIconClick}
                         >
@@ -266,7 +268,8 @@ export function Navigation() {
                         </button>
                         <button
                           type="button"
-                          className="p-2 hover:bg-black/5 rounded-lg transition-colors icon-glow"
+                          className="p-2 hover:bg-black/5 rounded-lg transition-all"
+                          style={{ opacity: hasSearchQuery ? 1 : 0.4 }}
                           title="Upload photo"
                           onClick={handleSearchIconClick}
                         >
@@ -275,7 +278,8 @@ export function Navigation() {
                         <button
                           type="button"
                           onClick={handleSearchIconClick}
-                          className="p-2 hover:bg-black/5 rounded-lg transition-colors"
+                          className="p-2 hover:bg-black/5 rounded-lg transition-all"
+                          style={{ opacity: hasSearchQuery ? 1 : 0.4 }}
                           title="Search"
                         >
                           <Search className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
@@ -290,11 +294,11 @@ export function Navigation() {
             {/* Default Layout */}
             {!isOnChatPage && (
               <>
-                <Link href="/" className="flex items-center gap-2 font-semibold text-lg flex-shrink-0" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
+                <Link href="/" className="flex items-center gap-2 font-semibold text-lg flex-shrink-0 absolute left-8" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
                   <span>SCUZI</span>
                 </Link>
 
-                <div className="flex-1 max-w-2xl">
+                <div className="flex-1 max-w-2xl mx-auto">
                   <form onSubmit={handleSearch} className="relative w-full">
                     <input
                       ref={searchInputRef}
@@ -317,7 +321,8 @@ export function Navigation() {
                     <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                       <button
                         type="button"
-                        className="p-2 hover:bg-black/5 rounded-lg transition-colors icon-glow"
+                        className="p-2 hover:bg-black/5 rounded-lg transition-all"
+                        style={{ opacity: hasSearchQuery ? 1 : 0.4 }}
                         title="Take photo"
                         onClick={handleSearchIconClick}
                       >
@@ -325,7 +330,8 @@ export function Navigation() {
                       </button>
                       <button
                         type="button"
-                        className="p-2 hover:bg-black/5 rounded-lg transition-colors icon-glow"
+                        className="p-2 hover:bg-black/5 rounded-lg transition-all"
+                        style={{ opacity: hasSearchQuery ? 1 : 0.4 }}
                         title="Upload photo"
                         onClick={handleSearchIconClick}
                       >
@@ -334,7 +340,8 @@ export function Navigation() {
                       <button
                         type="button"
                         onClick={handleSearchIconClick}
-                        className="p-2 hover:bg-black/5 rounded-lg transition-colors"
+                        className="p-2 hover:bg-black/5 rounded-lg transition-all"
+                        style={{ opacity: hasSearchQuery ? 1 : 0.4 }}
                         title="Search"
                       >
                         <Search className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
@@ -353,7 +360,7 @@ export function Navigation() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-24">
             {/* WHOOP Connect Button */}
-            <Link href="/connect" className="flex items-center gap-2 px-6 py-2 rounded-full bg-black text-white hover:bg-gray-800 transition-colors">
+            <Link href="/connect" className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-black text-white hover:bg-gray-800 transition-colors">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
               </svg>
@@ -363,10 +370,10 @@ export function Navigation() {
             </Link>
 
             {/* Menu Button with Animation */}
-            <div className="relative">
+            <div className="relative h-[40px] flex items-center">
               <motion.div
                 className="rounded-[25px] absolute overflow-hidden"
-                style={{ backgroundColor: menuOpen ? "rgb(209, 222, 38)" : "rgb(209, 222, 38)" }}
+                style={{ backgroundColor: "rgb(209, 222, 38)" }}
                 variants={menuVariants}
                 animate={menuOpen ? "open" : "closed"}
                 initial="closed"

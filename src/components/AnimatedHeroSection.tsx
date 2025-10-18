@@ -28,39 +28,24 @@ export function AnimatedHeroSection() {
   return (
     <section className="relative py-12 md:py-16 overflow-hidden bg-white">
       <div className="mx-auto px-2 md:px-4 lg:px-6">
-        {/* WHOOP Connect Section */}
-        {!isConnected ?
-        <div className="mb-8 flex justify-start">
-            <button
-            onClick={connect}
-            disabled={isLoading}
-            className="inline-flex items-center gap-2 bg-black text-white py-3 rounded-full font-semibold hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed !px-[15px]"
-            style={{
-              fontFamily: '"Right Grotesk Wide", sans-serif',
-              fontSize: '14px'
-            }}>
-
-              <Activity className="w-5 h-5" />
-              {isLoading ? "Connecting..." : "WHOOP CONNECT"}
-            </button>
-          </div> :
-
-        <div className="mb-8 relative overflow-hidden bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-1">
+        {/* WHOOP Metrics Ticker - Only show when connected */}
+        {isConnected && (
+          <div className="mb-8 relative overflow-hidden bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-1">
             <div className="bg-white rounded-xl p-4 relative">
               <button
-              onClick={disconnect}
-              className="absolute top-2 right-2 p-2 hover:bg-gray-100 rounded-full transition-colors z-10"
-              title="Disconnect WHOOP">
-
+                onClick={disconnect}
+                className="absolute top-2 right-2 p-2 hover:bg-gray-100 rounded-full transition-colors z-10"
+                title="Disconnect WHOOP"
+              >
                 <X className="w-4 h-4 text-gray-600" />
               </button>
               
               <div className="overflow-hidden relative">
                 <div className="flex gap-8 animate-scroll-rtl">
-                  {[...Array(3)].map((_, setIndex) =>
-                <div key={setIndex} className="flex gap-8 flex-shrink-0">
-                      {getMetricsDisplay().map((metric, idx) =>
-                  <div key={`${setIndex}-${idx}`} className="flex items-center gap-3 px-6 py-2 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg flex-shrink-0">
+                  {[...Array(3)].map((_, setIndex) => (
+                    <div key={setIndex} className="flex gap-8 flex-shrink-0">
+                      {getMetricsDisplay().map((metric, idx) => (
+                        <div key={`${setIndex}-${idx}`} className="flex items-center gap-3 px-6 py-2 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg flex-shrink-0">
                           <div className="flex flex-col">
                             <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">
                               {metric.label}
@@ -70,20 +55,20 @@ export function AnimatedHeroSection() {
                             </span>
                           </div>
                         </div>
-                  )}
+                      ))}
                     </div>
-                )}
+                  ))}
                 </div>
               </div>
             </div>
           </div>
-        }
+        )}
 
         {/* Hero Content with Yellow Background */}
         <div
           className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center rounded-[33px] px-12 md:px-16 lg:px-20 py-16 md:py-20 lg:py-28"
-          style={{ backgroundColor: "rgb(247, 248, 212)" }}>
-
+          style={{ backgroundColor: "rgb(247, 248, 212)" }}
+        >
           {/* Left Side - Text Content */}
           <div className="z-10 space-y-6">
             <h1 style={{
@@ -157,6 +142,6 @@ export function AnimatedHeroSection() {
           </div>
         </div>
       </div>
-    </section>);
-
+    </section>
+  );
 }
