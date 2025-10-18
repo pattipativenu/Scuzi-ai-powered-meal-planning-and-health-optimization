@@ -6,8 +6,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Send, Image as ImageIcon, Loader2, ChefHat, Camera, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import WhoopMetricsTicker from "@/components/WhoopMetricsTicker";
-import WhoopDataChart from "@/components/WhoopDataChart";
 
 interface Message {
   id: string;
@@ -16,20 +14,6 @@ interface Message {
   image?: string;
   timestamp: Date;
   thinking?: string;
-}
-
-interface WhoopMetrics {
-  connected: boolean;
-  sleep?: string;
-  strain?: string;
-  calories?: number;
-  recovery?: number;
-  hrv?: number;
-  rhr?: number;
-  avgHeartRate?: number;
-  spo2?: string;
-  skinTemp?: string;
-  respiratoryRate?: string;
 }
 
 interface ChatHistory {
@@ -101,20 +85,6 @@ export default function ScuziChat() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [whoopMetrics, setWhoopMetrics] = useState<WhoopMetrics>({
-    connected: false,
-    sleep: null,
-    strain: null,
-    calories: null,
-    recovery: null,
-    hrv: null,
-    rhr: null,
-    avgHeartRate: null,
-    spo2: null,
-    skinTemp: null,
-    respiratoryRate: null,
-  });
-  const [isConnectingWhoop, setIsConnectingWhoop] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
   
@@ -154,49 +124,6 @@ export default function ScuziChat() {
     }
   }, []);
 
-  // Listen for postMessage from OAuth popup window
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) {
-        console.warn('Ignoring message from unknown origin:', event.origin);
-        return;
-      }
-
-      if (event.data.type === 'WHOOP_AUTH_SUCCESS') {
-        console.log('✅ Received WHOOP auth success from popup');
-        
-        fetchWhoopMetrics();
-        
-        const successMessage: Message = {
-          id: Date.now().toString(),
-          role: "assistant",
-          content: "✅ WHOOP connected successfully! I can now personalize recommendations based on your sleep, strain, and recovery data.",
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, successMessage]);
-      } else if (event.data.type === 'WHOOP_AUTH_ERROR') {
-        console.log('❌ Received WHOOP auth error from popup');
-        
-        const errorData = event.data.data;
-        const errorMessage: Message = {
-          id: Date.now().toString(),
-          role: "assistant",
-          content: `❌ WHOOP connection failed: ${errorData.description || 'Unknown error'}. Please try again.`,
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, errorMessage]);
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, []);
-
-  // Fetch WHOOP metrics on mount
-  useEffect(() => {
-    fetchWhoopMetrics();
-  }, []);
-
   // Cleanup camera stream on unmount
   useEffect(() => {
     return () => {
@@ -205,90 +132,6 @@ export default function ScuziChat() {
       }
     };
   }, [stream]);
-
-  const fetchWhoopMetrics = async () => {
-    try {
-      const response = await fetch("/api/whoop/metrics");
-      if (response.ok) {
-        const data = await response.json();
-        setWhoopMetrics(data);
-      }
-    } catch (error) {
-      console.error("Error fetching WHOOP metrics:", error);
-    }
-  };
-
-  const handleWhoopConnect = async () => {
-    setIsConnectingWhoop(true);
-    try {
-      const response = await fetch("/api/whoop/connect");
-      if (response.ok) {
-        const data = await response.json();
-        
-        const infoMessage: Message = {
-          id: Date.now().toString(),
-          role: "assistant",
-          content: `🔐 Opening WHOOP authentication...\n\n📍 Redirect URI being used:\n${data.redirectUri}\n\n⚠️ Make sure this EXACT URL (including https://) is registered in your WHOOP Developer Portal under "Authorized Redirect URIs"`,
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, infoMessage]);
-        
-        const authWindow = window.open(
-          data.authUrl,
-          "_blank",
-          "noopener,noreferrer,width=600,height=700"
-        );
-        
-        if (!authWindow) {
-          const errorMessage: Message = {
-            id: Date.now().toString(),
-            role: "assistant",
-            content: "⚠️ Please allow popups for this site to connect WHOOP. After allowing popups, click Connect again.",
-            timestamp: new Date(),
-          };
-          setMessages((prev) => [...prev, errorMessage]);
-        }
-        
-        setIsConnectingWhoop(false);
-      }
-    } catch (error) {
-      console.error("Error connecting WHOOP:", error);
-      setIsConnectingWhoop(false);
-      
-      const errorMessage: Message = {
-        id: Date.now().toString(),
-        role: "assistant",
-        content: "❌ Failed to initiate WHOOP connection. Please try again.",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-    }
-  };
-
-  const handleWhoopDisconnect = async () => {
-    try {
-      const response = await fetch("/api/whoop/disconnect", {
-        method: "POST",
-      });
-      if (response.ok) {
-        setWhoopMetrics({
-          connected: false,
-          sleep: null,
-          strain: null,
-          calories: null,
-          recovery: null,
-          hrv: null,
-          rhr: null,
-          avgHeartRate: null,
-          spo2: null,
-          skinTemp: null,
-          respiratoryRate: null,
-        });
-      }
-    } catch (error) {
-      console.error("Error disconnecting WHOOP:", error);
-    }
-  };
 
   const startCamera = async () => {
     try {
@@ -379,7 +222,6 @@ export default function ScuziChat() {
               image: imageToSend,
             },
           ],
-          whoopMetrics: whoopMetrics.connected ? whoopMetrics : null,
         }),
       });
 
@@ -483,43 +325,8 @@ export default function ScuziChat() {
             >
               Your AI food and health analyst
             </p>
-            {whoopMetrics.connected && (
-              <div className="flex items-center gap-2 mt-2">
-                <Button
-                  onClick={handleWhoopDisconnect}
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 px-3 text-sm text-red-500 hover:text-red-600 hover:bg-red-50"
-                  style={{
-                    fontFamily: '"Right Grotesk Wide", sans-serif',
-                    fontSize: '16px',
-                    fontWeight: 500
-                  }}
-                >
-                  Disconnect WHOOP
-                </Button>
-              </div>
-            )}
-            {!whoopMetrics.connected && (
-              <Button
-                onClick={handleWhoopConnect}
-                disabled={isConnectingWhoop}
-                size="sm"
-                className="mt-2 h-8 px-3 text-sm bg-[rgb(209,222,38)] hover:bg-[rgb(209,222,38)]/90 text-[rgb(39,39,42)]"
-                style={{
-                  fontFamily: '"Right Grotesk Wide", sans-serif',
-                  fontSize: '16px',
-                  fontWeight: 500
-                }}
-              >
-                {isConnectingWhoop ? "Connecting..." : ""}
-              </Button>
-            )}
           </div>
         </div>
-        
-        {/* WHOOP Metrics Ticker */}
-        <WhoopMetricsTicker metrics={whoopMetrics} />
       </div>
 
       {/* Camera Modal */}
@@ -556,13 +363,6 @@ export default function ScuziChat() {
 
       {/* Scrollable Messages Container */}
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
-        {/* WHOOP Data Chart */}
-        {whoopMetrics.connected && (
-          <div className="mb-6">
-            <WhoopDataChart metrics={whoopMetrics} />
-          </div>
-        )}
-
         {messages.map((message) => (
           <div
             key={message.id}
