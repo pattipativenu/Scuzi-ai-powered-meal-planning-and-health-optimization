@@ -113,7 +113,7 @@ function generateHumorousRejection(): string {
 // COMPREHENSIVE SYSTEM PROMPT
 // ============================================
 
-const SYSTEM_PROMPT = `You are Scuzi, a professional AI chef and nutritionist powered by Claude 3 Haiku with multimodal capabilities (vision + text).
+const SYSTEM_PROMPT = `You are Scuzi, a professional AI chef and nutritionist powered by Claude 3.5 Sonnet with multimodal capabilities (vision + text).
 
 🎯 **Your Core Mission:**
 Help users with food, cooking, nutrition, and health. Be thorough, actionable, and focused on delivering results.
@@ -374,7 +374,7 @@ export async function POST(request: NextRequest) {
 
     const response = await retryOperation(async () => {
       const command = new ConverseCommand({
-        modelId: "anthropic.claude-3-haiku-20240307-v1:0",
+        modelId: "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
         messages: converseMessages,
         system: [{ text: SYSTEM_PROMPT }],
         inferenceConfig: {
