@@ -47,19 +47,6 @@ export default function ScuziChat() {
   }, [messages]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const initialQuery = sessionStorage.getItem('chatInitialQuery');
-    if (initialQuery) {
-      setInput(initialQuery);
-      sessionStorage.removeItem('chatInitialQuery');
-      setTimeout(() => {
-        textareaRef.current?.focus();
-      }, 100);
-    }
-  }, []);
-
-  useEffect(() => {
     return () => {
       if (stream) {
         stream.getTracks().forEach((track) => track.stop());
@@ -175,7 +162,8 @@ export default function ScuziChat() {
       console.log("[FRONTEND] Response data:", {
         hasContent: !!data.content,
         shouldGenerateImage: data.shouldGenerateImage,
-        hasMetadata: !!data.imageMetadata
+        hasMetadata: !!data.imageMetadata,
+        historyItemId: data.historyItemId
       });
 
       // Add assistant's text response
@@ -199,7 +187,8 @@ export default function ScuziChat() {
               "Content-Type": "application/json"
             },
             body: JSON.stringify({
-              imageMetadata: data.imageMetadata
+              imageMetadata: data.imageMetadata,
+              historyItemId: data.historyItemId // Pass history item ID for DynamoDB update
             })
           });
 
