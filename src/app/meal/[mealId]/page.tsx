@@ -1,8 +1,11 @@
+"use client";
+
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Clock, Users, ChefHat } from "lucide-react";
+import { ArrowLeft, Star, MessageCircle, Clock, Bookmark, Plus, Minus } from "lucide-react";
 import { mockMeals } from "@/lib/mockMeals";
+import { useState } from "react";
 
 interface MealDetailPageProps {
   params: {
@@ -12,139 +15,416 @@ interface MealDetailPageProps {
 
 export default function MealDetailPage({ params }: MealDetailPageProps) {
   const meal = mockMeals[params.mealId];
+  const [servings, setServings] = useState(meal?.servings || 4);
+  const [activeTab, setActiveTab] = useState<"ingredients" | "nutrition">("ingredients");
 
   if (!meal) {
     notFound();
   }
 
+  const baseServings = meal.servings;
+  const servingMultiplier = servings / baseServings;
+
+  const adjustIngredientAmount = (amount: string) => {
+    const numberMatch = amount.match(/(\d+\.?\d*)/);
+    if (numberMatch) {
+      const originalNumber = parseFloat(numberMatch[1]);
+      const adjustedNumber = (originalNumber * servingMultiplier).toFixed(1).replace(/\.0$/, '');
+      return amount.replace(numberMatch[1], adjustedNumber);
+    }
+    return amount;
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-20 py-8">
         {/* Back Button */}
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
+          className="inline-flex items-center gap-2 hover:opacity-70 mb-8 transition-opacity"
+          style={{
+            fontFamily: '"General Sans", sans-serif',
+            fontSize: '15px',
+            color: 'rgb(39, 39, 42)'
+          }}
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Week
         </Link>
 
-        {/* Hero Image */}
-        <div className="relative w-full h-64 md:h-96 rounded-xl overflow-hidden mb-8">
-          <Image
-            src={meal.image}
-            alt={meal.name}
-            fill
-            className="object-cover"
-            priority
-          />
+        {/* Hero Section - Desktop/Tablet: Image Right, Content Left */}
+        <div className="grid md:grid-cols-2 gap-8 lg:gap-12 mb-16">
+          {/* Left Side - Content */}
+          <div className="flex flex-col justify-center order-2 md:order-1">
+            <h1 style={{
+              fontFamily: '"Right Grotesk Spatial", sans-serif',
+              fontWeight: 500,
+              fontSize: '48px',
+              lineHeight: '56px',
+              color: 'rgb(39, 39, 42)',
+              marginBottom: '16px'
+            }}>
+              {meal.name}
+            </h1>
+            
+            <p style={{
+              fontFamily: '"General Sans", sans-serif',
+              fontSize: '17px',
+              lineHeight: '24px',
+              color: 'rgb(82, 82, 91)',
+              marginBottom: '24px'
+            }}>
+              {meal.description}
+            </p>
+
+            {/* Rating, Notes, Duration - Inline */}
+            <div className="flex items-center gap-6 mb-6">
+              <div className="flex items-center gap-1">
+                <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                <span style={{
+                  fontFamily: '"Right Grotesk Wide", sans-serif',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  color: 'rgb(39, 39, 42)'
+                }}>
+                  4.5
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MessageCircle className="w-5 h-5 text-gray-600" />
+                <span style={{
+                  fontFamily: '"General Sans", sans-serif',
+                  fontSize: '15px',
+                  color: 'rgb(82, 82, 91)'
+                }}>
+                  2 Notes
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-gray-600" />
+                <span style={{
+                  fontFamily: '"General Sans", sans-serif',
+                  fontSize: '15px',
+                  color: 'rgb(82, 82, 91)'
+                }}>
+                  {(meal.prepTime || 0) + (meal.cookTime || 0)} mins cook
+                </span>
+              </div>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-4">
+              <button
+                className="flex items-center gap-2 px-6 py-3 bg-black text-white hover:bg-gray-800 transition-colors"
+                style={{
+                  fontFamily: '"Right Grotesk Wide", sans-serif',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  borderRadius: '33px'
+                }}
+              >
+                <Bookmark className="w-4 h-4" />
+                Save
+              </button>
+              <button
+                className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-black text-black hover:bg-gray-50 transition-colors"
+                style={{
+                  fontFamily: '"Right Grotesk Wide", sans-serif',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  borderRadius: '33px'
+                }}
+              >
+                Add to Plan
+              </button>
+            </div>
+          </div>
+
+          {/* Right Side - Image */}
+          <div className="order-1 md:order-2">
+            <div className="relative w-full aspect-[4/3] overflow-hidden" style={{ borderRadius: '33px' }}>
+              <Image
+                src={meal.image}
+                alt={meal.name}
+                fill
+                className="object-cover"
+                priority
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Title and Description */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4">{meal.name}</h1>
-          <p className="text-lg text-muted-foreground">{meal.description}</p>
-        </div>
+        {/* Recipe Details Section - Desktop/Tablet: Instructions Left, Ingredients/Nutrition Right */}
+        <div className="grid md:grid-cols-[1.5fr_1fr] gap-8 lg:gap-12">
+          {/* Left Column - Step-by-Step Instructions */}
+          <div>
+            <h2 style={{
+              fontFamily: '"Right Grotesk Spatial", sans-serif',
+              fontWeight: 500,
+              fontSize: '30px',
+              lineHeight: '36px',
+              color: 'rgb(39, 39, 42)',
+              marginBottom: '24px'
+            }}>
+              Step-by-Step Instructions
+            </h2>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-card border border-border rounded-lg p-4">
-            <div className="flex items-center gap-2 text-muted-foreground mb-2">
-              <Clock className="w-5 h-5" />
-              <span className="text-sm">Prep Time</span>
-            </div>
-            <p className="text-2xl font-semibold">{meal.prepTime} min</p>
-          </div>
-          <div className="bg-card border border-border rounded-lg p-4">
-            <div className="flex items-center gap-2 text-muted-foreground mb-2">
-              <ChefHat className="w-5 h-5" />
-              <span className="text-sm">Cook Time</span>
-            </div>
-            <p className="text-2xl font-semibold">{meal.cookTime} min</p>
-          </div>
-          <div className="bg-card border border-border rounded-lg p-4">
-            <div className="flex items-center gap-2 text-muted-foreground mb-2">
-              <Users className="w-5 h-5" />
-              <span className="text-sm">Servings</span>
-            </div>
-            <p className="text-2xl font-semibold">{meal.servings}</p>
-          </div>
-          <div className="bg-card border border-border rounded-lg p-4">
-            <div className="flex items-center gap-2 text-muted-foreground mb-2">
-              <span className="text-sm">Calories</span>
-            </div>
-            <p className="text-2xl font-semibold">{meal.nutrition.calories}</p>
-          </div>
-        </div>
-
-        {/* Main Content Grid */}
-        <div className="grid md:grid-cols-3 gap-8">
-          {/* Ingredients */}
-          <div className="md:col-span-1">
-            <h2 className="text-2xl font-bold mb-4">Ingredients</h2>
-            <div className="bg-card border border-border rounded-lg p-6">
-              <ul className="space-y-3">
-                {meal.ingredients.map((ingredient, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
-                    <div className="flex-1">
-                      <span className="font-medium">{ingredient.amount}</span>
-                      <span className="text-muted-foreground ml-2">{ingredient.name}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+            <div className="space-y-6">
+              {meal.instructions.map((instruction, index) => (
+                <div key={index} className="flex gap-4">
+                  <div
+                    className="flex-shrink-0 flex items-center justify-center"
+                    style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '50%',
+                      backgroundColor: 'rgb(39, 39, 42)',
+                      color: 'white',
+                      fontFamily: '"Right Grotesk Wide", sans-serif',
+                      fontSize: '16px',
+                      fontWeight: 500
+                    }}
+                  >
+                    {index + 1}
+                  </div>
+                  <div className="flex-1 pt-2">
+                    <p style={{
+                      fontFamily: '"Right Grotesk Wide", sans-serif',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      color: 'rgb(82, 82, 91)',
+                      marginBottom: '8px'
+                    }}>
+                      Step {index + 1}
+                    </p>
+                    <p style={{
+                      fontFamily: '"General Sans", sans-serif',
+                      fontSize: '15px',
+                      lineHeight: '21px',
+                      color: 'rgb(39, 39, 42)'
+                    }}>
+                      {instruction}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Instructions */}
-          <div className="md:col-span-2">
-            <h2 className="text-2xl font-bold mb-4">Instructions</h2>
-            <div className="bg-card border border-border rounded-lg p-6">
-              <ol className="space-y-4">
-                {meal.instructions.map((instruction, index) => (
-                  <li key={index} className="flex gap-4">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
-                      {index + 1}
-                    </div>
-                    <p className="flex-1 pt-1">{instruction}</p>
-                  </li>
-                ))}
-              </ol>
+          {/* Right Column - Ingredients + Nutrition with Tabs */}
+          <div>
+            {/* Toggle Tabs */}
+            <div className="flex gap-2 mb-6 sticky top-0 bg-white py-2 z-10">
+              <button
+                onClick={() => setActiveTab("ingredients")}
+                className="flex-1 py-3 transition-all"
+                style={{
+                  fontFamily: '"Right Grotesk Wide", sans-serif',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  borderRadius: '33px',
+                  backgroundColor: activeTab === "ingredients" ? 'rgb(39, 39, 42)' : 'rgb(244, 244, 245)',
+                  color: activeTab === "ingredients" ? 'white' : 'rgb(82, 82, 91)'
+                }}
+              >
+                Ingredients
+              </button>
+              <button
+                onClick={() => setActiveTab("nutrition")}
+                className="flex-1 py-3 transition-all"
+                style={{
+                  fontFamily: '"Right Grotesk Wide", sans-serif',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  borderRadius: '33px',
+                  backgroundColor: activeTab === "nutrition" ? 'rgb(39, 39, 42)' : 'rgb(244, 244, 245)',
+                  color: activeTab === "nutrition" ? 'white' : 'rgb(82, 82, 91)'
+                }}
+              >
+                Nutrition
+              </button>
             </div>
-          </div>
-        </div>
 
-        {/* Nutrition Table */}
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold mb-4">Nutrition Information</h2>
-          <div className="bg-card border border-border rounded-lg overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-muted">
-                <tr>
-                  <th className="text-left p-4 font-semibold">Nutrient</th>
-                  <th className="text-right p-4 font-semibold">Amount per Serving</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-t border-border">
-                  <td className="p-4">Calories</td>
-                  <td className="p-4 text-right font-semibold">{meal.nutrition.calories} kcal</td>
-                </tr>
-                <tr className="border-t border-border">
-                  <td className="p-4">Protein</td>
-                  <td className="p-4 text-right font-semibold">{meal.nutrition.protein}g</td>
-                </tr>
-                <tr className="border-t border-border">
-                  <td className="p-4">Carbohydrates</td>
-                  <td className="p-4 text-right font-semibold">{meal.nutrition.carbs}g</td>
-                </tr>
-                <tr className="border-t border-border">
-                  <td className="p-4">Fat</td>
-                  <td className="p-4 text-right font-semibold">{meal.nutrition.fat}g</td>
-                </tr>
-              </tbody>
-            </table>
+            {/* Ingredients Tab */}
+            {activeTab === "ingredients" && (
+              <div>
+                {/* Serving Size Selector */}
+                <div className="mb-6 p-4 bg-gray-50" style={{ borderRadius: '20px' }}>
+                  <p style={{
+                    fontFamily: '"General Sans", sans-serif',
+                    fontSize: '15px',
+                    color: 'rgb(82, 82, 91)',
+                    marginBottom: '12px'
+                  }}>
+                    Serving Size
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => setServings(Math.max(1, servings - 1))}
+                      className="w-10 h-10 flex items-center justify-center bg-white border-2 border-gray-300 hover:border-black transition-colors"
+                      style={{ borderRadius: '50%' }}
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span style={{
+                      fontFamily: '"Right Grotesk Wide", sans-serif',
+                      fontSize: '24px',
+                      fontWeight: 500,
+                      color: 'rgb(39, 39, 42)',
+                      minWidth: '60px',
+                      textAlign: 'center'
+                    }}>
+                      {servings}
+                    </span>
+                    <button
+                      onClick={() => setServings(servings + 1)}
+                      className="w-10 h-10 flex items-center justify-center bg-white border-2 border-gray-300 hover:border-black transition-colors"
+                      style={{ borderRadius: '50%' }}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Ingredients List */}
+                <ul className="space-y-4 mb-6">
+                  {meal.ingredients.map((ingredient, index) => (
+                    <li key={index} className="flex items-start gap-3 pb-4 border-b border-gray-200">
+                      <div className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0" />
+                      <div className="flex-1">
+                        <span style={{
+                          fontFamily: '"Right Grotesk Wide", sans-serif',
+                          fontSize: '15px',
+                          fontWeight: 500,
+                          color: 'rgb(39, 39, 42)'
+                        }}>
+                          {adjustIngredientAmount(ingredient.amount)}
+                        </span>
+                        <span style={{
+                          fontFamily: '"General Sans", sans-serif',
+                          fontSize: '15px',
+                          color: 'rgb(82, 82, 91)',
+                          marginLeft: '8px'
+                        }}>
+                          {ingredient.name}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* Action Buttons */}
+                <div className="space-y-3">
+                  <button
+                    className="w-full py-3 bg-black text-white hover:bg-gray-800 transition-colors"
+                    style={{
+                      fontFamily: '"Right Grotesk Wide", sans-serif',
+                      fontSize: '16px',
+                      fontWeight: 500,
+                      borderRadius: '33px'
+                    }}
+                  >
+                    Add to Plan
+                  </button>
+                  <button
+                    className="w-full py-3 bg-white border-2 border-black text-black hover:bg-gray-50 transition-colors"
+                    style={{
+                      fontFamily: '"Right Grotesk Wide", sans-serif',
+                      fontSize: '16px',
+                      fontWeight: 500,
+                      borderRadius: '33px'
+                    }}
+                  >
+                    Buy Now
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Nutrition Tab */}
+            {activeTab === "nutrition" && (
+              <div>
+                <p style={{
+                  fontFamily: '"General Sans", sans-serif',
+                  fontSize: '15px',
+                  color: 'rgb(82, 82, 91)',
+                  marginBottom: '16px'
+                }}>
+                  Per serving ({Math.round(meal.nutrition.calories / baseServings)} kcal)
+                </p>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center pb-4 border-b border-gray-200">
+                    <span style={{
+                      fontFamily: '"General Sans", sans-serif',
+                      fontSize: '15px',
+                      color: 'rgb(39, 39, 42)'
+                    }}>
+                      Calories
+                    </span>
+                    <span style={{
+                      fontFamily: '"Right Grotesk Wide", sans-serif',
+                      fontSize: '16px',
+                      fontWeight: 500,
+                      color: 'rgb(39, 39, 42)'
+                    }}>
+                      {Math.round(meal.nutrition.calories / baseServings)} kcal
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center pb-4 border-b border-gray-200">
+                    <span style={{
+                      fontFamily: '"General Sans", sans-serif',
+                      fontSize: '15px',
+                      color: 'rgb(39, 39, 42)'
+                    }}>
+                      Protein
+                    </span>
+                    <span style={{
+                      fontFamily: '"Right Grotesk Wide", sans-serif',
+                      fontSize: '16px',
+                      fontWeight: 500,
+                      color: 'rgb(39, 39, 42)'
+                    }}>
+                      {Math.round(meal.nutrition.protein / baseServings)}g
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center pb-4 border-b border-gray-200">
+                    <span style={{
+                      fontFamily: '"General Sans", sans-serif',
+                      fontSize: '15px',
+                      color: 'rgb(39, 39, 42)'
+                    }}>
+                      Carbohydrates
+                    </span>
+                    <span style={{
+                      fontFamily: '"Right Grotesk Wide", sans-serif',
+                      fontSize: '16px',
+                      fontWeight: 500,
+                      color: 'rgb(39, 39, 42)'
+                    }}>
+                      {Math.round(meal.nutrition.carbs / baseServings)}g
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center pb-4 border-b border-gray-200">
+                    <span style={{
+                      fontFamily: '"General Sans", sans-serif',
+                      fontSize: '15px',
+                      color: 'rgb(39, 39, 42)'
+                    }}>
+                      Fat
+                    </span>
+                    <span style={{
+                      fontFamily: '"Right Grotesk Wide", sans-serif',
+                      fontSize: '16px',
+                      fontWeight: 500,
+                      color: 'rgb(39, 39, 42)'
+                    }}>
+                      {Math.round(meal.nutrition.fat / baseServings)}g
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
