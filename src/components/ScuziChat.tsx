@@ -263,7 +263,7 @@ export default function ScuziChat() {
           </Avatar>
           <div className="flex-1">
             <h3
-              className="font-bold text-[rgb(17,24,39)]"
+              className="font-bold text-[rgb(17,24,39)] !whitespace-pre-line"
               style={{
                 fontFamily: '"Right Grotesk Wide", sans-serif',
                 fontSize: '16px',
