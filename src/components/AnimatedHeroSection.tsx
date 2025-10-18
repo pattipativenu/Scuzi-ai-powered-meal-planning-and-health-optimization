@@ -81,7 +81,7 @@ export function AnimatedHeroSection() {
 
         {/* Hero Content with Yellow Background */}
         <div
-          className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center rounded-[25px] px-12 md:px-16 lg:px-20 py-16 md:py-20 lg:py-28"
+          className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center rounded-[25px] px-12 md:px-16 lg:px-20 py-16 md:py-20 lg:py-28 !w-full !h-[602px]"
           style={{ backgroundColor: "rgb(247, 248, 212)" }}>
 
           {/* Left Side - Text Content */}
