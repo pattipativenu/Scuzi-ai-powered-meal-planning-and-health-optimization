@@ -27,7 +27,7 @@ export function AnimatedHeroSection() {
 
   return (
     <section className="relative py-12 md:py-16 overflow-hidden bg-white">
-      <div className="mx-auto px-6 md:px-8 lg:px-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-20">
         {/* WHOOP Connect Section */}
         {!isConnected ? (
           <div className="mb-8 flex justify-start">
@@ -57,9 +57,9 @@ export function AnimatedHeroSection() {
               
               <div className="overflow-hidden relative">
                 <div className="flex gap-8 animate-scroll-rtl">
-                  {[...Array(3)].map((_, setIndex) =>
+                  {[...Array(3)].map((_, setIndex) => (
                     <div key={setIndex} className="flex gap-8 flex-shrink-0">
-                      {getMetricsDisplay().map((metric, idx) =>
+                      {getMetricsDisplay().map((metric, idx) => (
                         <div key={`${setIndex}-${idx}`} className="flex items-center gap-3 px-6 py-2 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg flex-shrink-0">
                           <div className="flex flex-col">
                             <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">
@@ -70,9 +70,9 @@ export function AnimatedHeroSection() {
                             </span>
                           </div>
                         </div>
-                      )}
+                      ))}
                     </div>
-                  )}
+                  ))}
                 </div>
               </div>
             </div>
@@ -80,7 +80,7 @@ export function AnimatedHeroSection() {
         )}
 
         {/* Hero Content with Yellow Background */}
-        <div
+        <div 
           className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center rounded-[25px] px-12 md:px-16 lg:px-20 py-16 md:py-20 lg:py-28"
           style={{ backgroundColor: "rgb(247, 248, 212)" }}
         >
@@ -93,8 +93,8 @@ export function AnimatedHeroSection() {
               lineHeight: '58px',
               color: 'rgb(17, 24, 39)'
             }}
-            className="hidden lg:block">
-
+            className="hidden lg:block"
+            >
               Your home for easy, delicious meal prep recipes
             </h1>
             
@@ -104,8 +104,8 @@ export function AnimatedHeroSection() {
               fontWeight: 700,
               color: 'rgb(17, 24, 39)'
             }}
-            className="lg:hidden text-4xl md:text-5xl leading-tight">
-
+            className="lg:hidden text-4xl md:text-5xl leading-tight"
+            >
               Your home for easy, delicious meal prep recipes
             </h1>
             
@@ -127,15 +127,15 @@ export function AnimatedHeroSection() {
                 fontWeight: 500,
                 fontSize: '16px',
                 lineHeight: '24px'
-              }}>
-
+              }}
+            >
               Start Planning
               <ChevronRight className="w-5 h-5" />
             </Link>
           </div>
 
           {/* Right Side - Hero Image */}
-          <div className="relative w-full h-full overflow-hidden -mt-16 md:-mt-20 lg:-mt-28 -mb-16 md:-mb-20 lg:-mb-28 -mr-12 md:-mr-16 lg:-mr-20">
+          <div className="relative w-full h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden rounded-[0px_33px_33px_0px] -mt-16 md:-mt-20 lg:-mt-28 -mb-16 md:-mb-20 lg:-mb-28 -mr-12 md:-mr-16 lg:-mr-20">
             {!imageError ? (
               <Image
                 src="https://scuziassests.s3.us-east-1.amazonaws.com/hero%20image.webp"
@@ -143,7 +143,7 @@ export function AnimatedHeroSection() {
                 fill
                 priority
                 unoptimized
-                className="object-cover object-right rounded-[0px_33px_33px_0px]"
+                className="object-cover object-right"
                 onError={() => setImageError(true)}
               />
             ) : (

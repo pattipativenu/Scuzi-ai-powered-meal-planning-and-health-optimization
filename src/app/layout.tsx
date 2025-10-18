@@ -6,6 +6,7 @@ import Script from "next/script";
 import { Navigation } from "@/components/Navigation";
 import { FloatingAIChat } from "@/components/FloatingAIChat";
 
+// Force rebuild
 export const metadata: Metadata = {
   title: "MealPrep - Easy, Delicious Meal Planning",
   description: "Your home for easy, delicious meal prep recipes with AI assistance",
