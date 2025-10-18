@@ -85,8 +85,7 @@ export async function GET(request: NextRequest) {
       query += ' WHERE ' + conditions.join(' AND ');
     }
     
-    query += ' ORDER BY Cycle_start_time DESC LIMIT ?';
-    params.push(limit);
+    query += ` ORDER BY Cycle_start_time DESC LIMIT ${limit}`;
     
     const rows = await executeQuery<RowDataPacket[]>(query, params);
     
