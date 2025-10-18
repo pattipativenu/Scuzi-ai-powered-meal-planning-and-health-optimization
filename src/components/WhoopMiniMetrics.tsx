@@ -3,13 +3,12 @@
 import { motion } from "framer-motion";
 
 export function WhoopMiniMetrics() {
-  // Mock data from CSV until AWS is fully connected - Limited to 5 metrics max
+  // Mock data from CSV until AWS is fully connected - Limited to 4 metrics max
   const mockMetrics = [
     { label: "Recovery", value: "+3%", status: "positive" },
     { label: "Heart Rate", value: "-2 bpm", status: "negative" },
     { label: "Sleep", value: "+0.5h", status: "positive" },
     { label: "Strain", value: "+0.6", status: "positive" },
-    { label: "Calories", value: "+150 cal", status: "positive" },
   ];
 
   // Duplicate metrics 3 times for seamless infinite scroll
