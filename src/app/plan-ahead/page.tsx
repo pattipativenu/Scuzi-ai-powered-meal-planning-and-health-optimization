@@ -1,10 +1,27 @@
 import { MealCard } from "@/components/MealCard";
 import { nextWeekMeals } from "@/lib/mockMeals";
 import { Calendar, Clock, Flame } from "lucide-react";
+import { addDays, format } from "date-fns";
 
 export default function PlanAheadPage() {
   const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   const mealTypes = ["breakfast", "lunch", "snack", "dinner"] as const;
+
+  // Calculate next week dates dynamically
+  const getNextWeekDates = () => {
+    const today = new Date();
+    return [
+      { day: "Monday", nextWeekDate: format(addDays(today, 7), "d MMM") },
+      { day: "Tuesday", nextWeekDate: format(addDays(today, 8), "d MMM") },
+      { day: "Wednesday", nextWeekDate: format(addDays(today, 9), "d MMM") },
+      { day: "Thursday", nextWeekDate: format(addDays(today, 10), "d MMM") },
+      { day: "Friday", nextWeekDate: format(addDays(today, 11), "d MMM") },
+      { day: "Saturday", nextWeekDate: format(addDays(today, 12), "d MMM") },
+      { day: "Sunday", nextWeekDate: format(addDays(today, 13), "d MMM") }
+    ];
+  };
+
+  const daysWithDates = getNextWeekDates();
 
   // Calculate summary stats
   const totalMeals = daysOfWeek.reduce((count, day) => {
@@ -61,21 +78,11 @@ export default function PlanAheadPage() {
           </div>
         </div>
 
-        {/* Week Toggle */}
-        <div className="flex gap-2 mb-8">
-          <button className="px-4 py-2 rounded-lg bg-secondary text-secondary-foreground font-medium">
-            Next Week
-          </button>
-          <button className="px-4 py-2 rounded-lg text-muted-foreground hover:bg-secondary transition-colors">
-            Current Week
-          </button>
-        </div>
-
         {/* Next Week's Meals */}
         <div className="space-y-10">
           {/* Desktop: Vertical Days with Horizontal Meals */}
           <div className="hidden md:block">
-            {daysOfWeek.map((day) => (
+            {daysWithDates.map(({ day, nextWeekDate }) => (
               <div key={day} className="mb-10">
                 <h3 
                   className="mb-6"
@@ -86,7 +93,7 @@ export default function PlanAheadPage() {
                     color: 'rgb(39, 39, 42)'
                   }}
                 >
-                  {day}
+                  {day}, {nextWeekDate}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {mealTypes.map((mealType) => {
@@ -109,9 +116,9 @@ export default function PlanAheadPage() {
 
           {/* Mobile: Horizontal Scroll per Day */}
           <div className="md:hidden space-y-6">
-            {daysOfWeek.map((day) => (
+            {daysWithDates.map(({ day, nextWeekDate }) => (
               <div key={day}>
-                <h3 className="text-lg font-semibold mb-3 px-2">{day}</h3>
+                <h3 className="text-lg font-semibold mb-3 px-2">{day}, {nextWeekDate}</h3>
                 <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
                   {mealTypes.map((mealType) => {
                     const meal = nextWeekMeals[day]?.[mealType];

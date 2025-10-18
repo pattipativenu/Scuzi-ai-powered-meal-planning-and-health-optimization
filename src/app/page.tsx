@@ -13,13 +13,13 @@ export default function Home() {
   const getCurrentWeekDates = () => {
     const today = new Date();
     return [
-      { day: "Monday", date: format(today, "d MMM"), nextWeekDate: format(addDays(today, 7), "d MMM") },
-      { day: "Tuesday", date: format(addDays(today, 1), "d MMM"), nextWeekDate: format(addDays(today, 8), "d MMM") },
-      { day: "Wednesday", date: format(addDays(today, 2), "d MMM"), nextWeekDate: format(addDays(today, 9), "d MMM") },
-      { day: "Thursday", date: format(addDays(today, 3), "d MMM"), nextWeekDate: format(addDays(today, 10), "d MMM") },
-      { day: "Friday", date: format(addDays(today, 4), "d MMM"), nextWeekDate: format(addDays(today, 11), "d MMM") },
-      { day: "Saturday", date: format(addDays(today, 5), "d MMM"), nextWeekDate: format(addDays(today, 12), "d MMM") },
-      { day: "Sunday", date: format(addDays(today, 6), "d MMM"), nextWeekDate: format(addDays(today, 13), "d MMM") }
+      { day: "Monday", date: format(today, "d MMM") },
+      { day: "Tuesday", date: format(addDays(today, 1), "d MMM") },
+      { day: "Wednesday", date: format(addDays(today, 2), "d MMM") },
+      { day: "Thursday", date: format(addDays(today, 3), "d MMM") },
+      { day: "Friday", date: format(addDays(today, 4), "d MMM") },
+      { day: "Saturday", date: format(addDays(today, 5), "d MMM") },
+      { day: "Sunday", date: format(addDays(today, 6), "d MMM") }
     ];
   };
 
@@ -107,31 +107,19 @@ export default function Home() {
 
           {/* Desktop & Tablet: Vertical Days with Horizontal Meals */}
           <div className="hidden md:block space-y-10">
-            {daysOfWeek.map(({ day, date, nextWeekDate }) => (
+            {daysOfWeek.map(({ day, date }) => (
               <div key={day}>
-                <div className="flex items-baseline gap-3 mb-6">
-                  <h3 
-                    style={{
-                      fontFamily: '"Right Grotesk Wide", sans-serif',
-                      fontWeight: 500,
-                      fontSize: '16px',
-                      color: 'rgb(39, 39, 42)'
-                    }}
-                  >
-                    {day}, {date}
-                  </h3>
-                  <span 
-                    style={{
-                      fontFamily: '"Right Grotesk Wide", sans-serif',
-                      fontWeight: 500,
-                      fontSize: '16px',
-                      color: 'rgb(39, 39, 42)',
-                      opacity: 0.7
-                    }}
-                  >
-                    | Next Week: {nextWeekDate}
-                  </span>
-                </div>
+                <h3 
+                  className="mb-6"
+                  style={{
+                    fontFamily: '"Right Grotesk Wide", sans-serif',
+                    fontWeight: 500,
+                    fontSize: '16px',
+                    color: 'rgb(39, 39, 42)'
+                  }}
+                >
+                  {day}, {date}
+                </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {mealTypes.map((mealType) => {
                     const meal = currentWeekMeals[day]?.[mealType];
