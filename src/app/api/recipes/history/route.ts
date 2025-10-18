@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, ScanCommand } from "@aws-sdk/lib-dynamodb";
-import { getAWSConfig } from "@/lib/aws-config";
-
-const config = getAWSConfig();
-const client = new DynamoDBClient(config);
-const docClient = DynamoDBDocumentClient.from(client);
+import { ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { docClient } from "@/lib/aws-config";
 
 export async function GET(request: NextRequest) {
   try {
