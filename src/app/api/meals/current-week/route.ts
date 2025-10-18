@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, QueryCommand } from "@aws-sdk/lib-dynamodb";
-import { startOfWeek, format, addWeeks } from "date-fns";
+import { startOfWeek, format } from "date-fns";
 
 const client = new DynamoDBClient({
   region: process.env.AWS_REGION || "us-east-1",
@@ -15,17 +15,16 @@ const docClient = DynamoDBDocumentClient.from(client);
 
 export async function GET(request: NextRequest) {
   try {
-    // Calculate next week identifier
+    // Calculate current week identifier (Monday of current week)
     const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-    const nextWeekStart = addWeeks(currentWeekStart, 1);
-    const nextWeekId = format(nextWeekStart, "yyyy-MM-dd");
+    const weekId = format(currentWeekStart, "yyyy-MM-dd");
 
-    // Query DynamoDB for next week meals
+    // Query DynamoDB for current week meals
     const command = new QueryCommand({
       TableName: process.env.DYNAMODB_MEALPLAN_TABLE || "MealPlanData",
       KeyConditionExpression: "week_id = :weekId",
       ExpressionAttributeValues: {
-        ":weekId": `next_${nextWeekId}`,
+        ":weekId": `current_${weekId}`,
       },
     });
 
@@ -34,22 +33,26 @@ export async function GET(request: NextRequest) {
     if (!response.Items || response.Items.length === 0) {
       return NextResponse.json({
         status: "success",
-        mealPlan: null,
-        message: "No meal plan found for next week",
+        meals: [],
+        message: "No meals found for current week",
       });
     }
 
+    // Get the most recent meal plan for current week
+    const mealPlan = response.Items[0];
+
     return NextResponse.json({
       status: "success",
-      mealPlan: response.Items[0],
-      nextWeekId,
+      meals: mealPlan.meals || [],
+      weekId: weekId,
+      generatedAt: mealPlan.generated_at,
     });
   } catch (error) {
-    console.error("Error retrieving meal plan:", error);
+    console.error("Error fetching current week meals:", error);
     return NextResponse.json(
       {
         status: "error",
-        message: error instanceof Error ? error.message : "Failed to retrieve meal plan",
+        message: error instanceof Error ? error.message : "Failed to fetch meals",
       },
       { status: 500 }
     );

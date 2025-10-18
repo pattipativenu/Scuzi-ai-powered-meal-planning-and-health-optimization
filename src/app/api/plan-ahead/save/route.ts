@@ -1,60 +1,51 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PutCommand } from "@aws-sdk/lib-dynamodb";
-import { dynamoDb } from "@/lib/dynamodb-config";
-import { randomUUID } from "crypto";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { startOfWeek, format, addWeeks } from "date-fns";
 
-const MEAL_PLAN_TABLE = "MealPlanData";
+const client = new DynamoDBClient({
+  region: process.env.AWS_REGION || "us-east-1",
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
+  },
+});
+
+const docClient = DynamoDBDocumentClient.from(client);
 
 export async function POST(request: NextRequest) {
-  console.log("[SAVE MEAL PLAN] Request received");
-  
   try {
     const { meals, whoopSummary, dietaryPreferences } = await request.json();
-    
-    if (!meals || !Array.isArray(meals)) {
-      return NextResponse.json(
-        { error: "Meals array is required" },
-        { status: 400 }
-      );
-    }
-    
-    // Create meal plan record
-    const mealPlanId = randomUUID();
-    const item = {
-      id: mealPlanId,
-      user_id: "guest_user", // Replace with actual user ID when auth is implemented
-      generated_at: new Date().toISOString(),
-      whoop_summary: whoopSummary || "",
-      dietary_preferences: dietaryPreferences || "",
-      meals: meals,
-      total_meals: meals.length,
-      created_at: Date.now(),
-    };
-    
-    // Save to DynamoDB
+
+    // Calculate next week identifier
+    const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+    const nextWeekStart = addWeeks(currentWeekStart, 1);
+    const nextWeekId = format(nextWeekStart, "yyyy-MM-dd");
+
     const command = new PutCommand({
-      TableName: MEAL_PLAN_TABLE,
-      Item: item,
+      TableName: process.env.DYNAMODB_MEALPLAN_TABLE || "MealPlanData",
+      Item: {
+        week_id: `next_${nextWeekId}`, // Store as next week
+        meals,
+        whoopSummary,
+        dietaryPreferences: dietaryPreferences || "",
+        generated_at: new Date().toISOString(),
+      },
     });
-    
-    await dynamoDb.send(command);
-    
-    console.log(`[SAVE MEAL PLAN] Saved meal plan: ${mealPlanId}`);
-    
+
+    await docClient.send(command);
+
     return NextResponse.json({
       status: "success",
-      mealPlanId: mealPlanId,
-      totalMeals: meals.length,
+      message: "Meal plan saved for next week successfully",
+      nextWeekId,
     });
-    
   } catch (error) {
-    console.error("[SAVE MEAL PLAN] Error:", error);
-    
+    console.error("Error saving meal plan:", error);
     return NextResponse.json(
       {
         status: "error",
-        message: "Failed to save meal plan",
-        error: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : "Failed to save meal plan",
       },
       { status: 500 }
     );
