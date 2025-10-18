@@ -21,7 +21,7 @@ export default function ScuziChat() {
   {
     id: "welcome",
     role: "assistant",
-    content: "👋 Hey there! I'm Scuzi, your AI food and health companion powered by Claude 3.5 Sonnet V2 with vision capabilities.\n\n**I can help you with:**\n\n🥗 Recipe ideas from leftover ingredients\n📊 Nutrition analysis of your meals\n🛒 Meal plans from grocery receipts (1-28 meals, up to 7 days)\n🍳 Cooking tips and health advice\n🏷️ Packaged food health assessments\n\nJust chat with me or upload an image to get started!",
+    content: "",
     timestamp: new Date()
   }]
   );
@@ -263,7 +263,7 @@ export default function ScuziChat() {
           </Avatar>
           <div className="flex-1">
             <h3
-              className="font-bold text-[rgb(17,24,39)] !whitespace-pre-line !whitespace-pre-line"
+              className="font-bold text-[rgb(17,24,39)] !whitespace-pre-line !whitespace-pre-line !whitespace-pre-line"
               style={{
                 fontFamily: '"Right Grotesk Wide", sans-serif',
                 fontSize: '16px',
@@ -353,7 +353,7 @@ export default function ScuziChat() {
 
             }
               <p
-              className="whitespace-pre-wrap break-words"
+              className="whitespace-pre-wrap break-words !whitespace-pre-line"
               style={{
                 fontFamily: '"General Sans", sans-serif',
                 fontSize: '15px',
