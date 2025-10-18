@@ -274,13 +274,13 @@ export default function ScuziChat() {
 
             </h3>
             <p
-              className="text-[rgb(17,24,39)] !whitespace-pre-line !whitespace-pre-line"
+              className="text-[rgb(17,24,39)] !whitespace-pre-line !whitespace-pre-line !whitespace-pre-line"
               style={{
                 fontFamily: '"General Sans", sans-serif',
                 fontSize: '15px',
                 lineHeight: '21px',
                 fontWeight: 400
-              }}>Your Food & Health ....
+              }}>Your Food & Health Companion....
 
 
             </p>
