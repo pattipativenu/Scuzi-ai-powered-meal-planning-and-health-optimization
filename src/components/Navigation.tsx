@@ -281,21 +281,6 @@ export function Navigation() {
                     </div>
                   </form>
                 </div>
-
-                <div className="fixed right-[50px] top-[50px] z-[100]">
-                  <motion.div
-                    className="rounded-[25px] relative overflow-hidden"
-                    style={{ backgroundColor: "rgb(209, 222, 38)" }}
-                    variants={menuVariants}
-                    animate={menuOpen ? "open" : "closed"}
-                    initial="closed"
-                  >
-                    <AnimatePresence>
-                      {menuOpen && <Nav setMenuOpen={setMenuOpen} />}
-                    </AnimatePresence>
-                  </motion.div>
-                  <MenuButton isActive={menuOpen} toggleMenu={() => setMenuOpen(!menuOpen)} />
-                </div>
               </div>
             </>
           )}
@@ -355,25 +340,25 @@ export function Navigation() {
                   </div>
                 </form>
               </div>
-
-              {/* Animated Menu for Desktop & Mobile */}
-              <div className="fixed right-[50px] top-[50px] z-[100]">
-                <motion.div
-                  className="rounded-[25px] relative overflow-hidden"
-                  style={{ backgroundColor: "rgb(209, 222, 38)" }}
-                  variants={menuVariants}
-                  animate={menuOpen ? "open" : "closed"}
-                  initial="closed"
-                >
-                  <AnimatePresence>
-                    {menuOpen && <Nav setMenuOpen={setMenuOpen} />}
-                  </AnimatePresence>
-                </motion.div>
-                <MenuButton isActive={menuOpen} toggleMenu={() => setMenuOpen(!menuOpen)} />
-              </div>
             </>
           )}
         </div>
+      </div>
+
+      {/* Animated Menu - Floating on all pages */}
+      <div className="fixed right-[50px] top-[140px] z-[100]">
+        <motion.div
+          className="rounded-[25px] relative overflow-hidden"
+          style={{ backgroundColor: "rgb(209, 222, 38)" }}
+          variants={menuVariants}
+          animate={menuOpen ? "open" : "closed"}
+          initial="closed"
+        >
+          <AnimatePresence>
+            {menuOpen && <Nav setMenuOpen={setMenuOpen} />}
+          </AnimatePresence>
+        </motion.div>
+        <MenuButton isActive={menuOpen} toggleMenu={() => setMenuOpen(!menuOpen)} />
       </div>
     </nav>
   );
