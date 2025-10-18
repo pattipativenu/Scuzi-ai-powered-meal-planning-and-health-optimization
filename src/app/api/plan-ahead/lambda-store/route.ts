@@ -3,7 +3,7 @@ import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { startOfWeek, format, addWeeks } from "date-fns";
 
 // Route segment config - extend API timeout for meal storage
-export const maxDuration = 60; // 60 seconds
+export const maxDuration = 120; // Increased to 120 seconds for 28 meals
 export const dynamic = 'force-dynamic';
 
 const lambdaClient = new LambdaClient({
@@ -14,11 +14,11 @@ const lambdaClient = new LambdaClient({
   },
 });
 
-// Retry logic with exponential backoff
+// Retry logic with exponential backoff - reduced delays
 async function retryWithBackoff<T>(
   fn: () => Promise<T>,
-  maxRetries = 3,
-  baseDelay = 1000
+  maxRetries = 2, // Reduced from 3 to 2
+  baseDelay = 500 // Reduced from 1000ms to 500ms
 ): Promise<T> {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
@@ -74,31 +74,42 @@ async function storeMeal(meal: any, weekId: string) {
   });
 }
 
-// Process meals sequentially to avoid concurrent Lambda execution limits
-async function processMealsSequentially(meals: any[], weekId: string) {
+// Process meals in parallel batches for faster processing
+async function processMealsInBatches(meals: any[], weekId: string) {
   const storedMeals = [];
   const failedMeals = [];
+  const batchSize = 4; // Process 4 meals in parallel
   
-  for (let i = 0; i < meals.length; i++) {
-    const meal = meals[i];
+  console.log(`Processing ${meals.length} meals in batches of ${batchSize}...`);
+  
+  for (let i = 0; i < meals.length; i += batchSize) {
+    const batch = meals.slice(i, i + batchSize);
+    const batchNumber = Math.floor(i / batchSize) + 1;
+    const totalBatches = Math.ceil(meals.length / batchSize);
     
-    console.log(`Processing meal ${i + 1}/${meals.length}: ${meal.name}`);
+    console.log(`Processing batch ${batchNumber}/${totalBatches} (meals ${i + 1}-${Math.min(i + batchSize, meals.length)})`);
     
-    try {
-      const result = await storeMeal(meal, weekId);
-      storedMeals.push(result);
-      console.log(`✓ Stored: ${meal.name}`);
-    } catch (error) {
-      console.error(`✗ Failed: ${meal.name} - ${error instanceof Error ? error.message : 'Unknown error'}`);
-      failedMeals.push({
-        meal: meal.name,
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
+    const results = await Promise.allSettled(
+      batch.map(meal => storeMeal(meal, weekId))
+    );
     
-    // Add small delay between meals to avoid throttling
-    if (i < meals.length - 1) {
-      await new Promise(resolve => setTimeout(resolve, 300));
+    results.forEach((result, index) => {
+      const meal = batch[index];
+      if (result.status === 'fulfilled') {
+        storedMeals.push(result.value);
+        console.log(`✓ Stored: ${meal.name}`);
+      } else {
+        console.error(`✗ Failed: ${meal.name} - ${result.reason}`);
+        failedMeals.push({
+          meal: meal.name,
+          error: result.reason?.message || "Unknown error",
+        });
+      }
+    });
+    
+    // Small delay between batches to avoid overwhelming services
+    if (i + batchSize < meals.length) {
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
   }
 
@@ -116,15 +127,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`Starting to store ${meals.length} meals sequentially...`);
+    console.log(`Starting to store ${meals.length} meals in parallel batches...`);
 
     // Calculate next week identifier
     const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
     const nextWeekStart = addWeeks(currentWeekStart, 1);
     const nextWeekId = format(nextWeekStart, "yyyy-MM-dd");
 
-    // Process meals sequentially to avoid concurrent Lambda execution limits
-    const { storedMeals, failedMeals } = await processMealsSequentially(meals, nextWeekId);
+    // Process meals in parallel batches for faster processing
+    const { storedMeals, failedMeals } = await processMealsInBatches(meals, nextWeekId);
 
     console.log(`Completed: ${storedMeals.length} successful, ${failedMeals.length} failed`);
 
