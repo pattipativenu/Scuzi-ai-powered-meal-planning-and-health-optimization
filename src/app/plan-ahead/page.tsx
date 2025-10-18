@@ -34,6 +34,7 @@ export default function PlanAheadPage() {
   const [error, setError] = useState("");
   const [expandedDays, setExpandedDays] = useState<string[]>(["Monday"]);
   const [mealProgress, setMealProgress] = useState(0);
+  const [isStoring, setIsStoring] = useState(false);
   const { insights } = useWhoopInsights();
 
   const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -91,7 +92,7 @@ export default function PlanAheadPage() {
       setGenerationStep(`Generating ${generateData.meals.length} meal images...`);
       
       const imageProgressInterval = setInterval(() => {
-        setMealProgress((prev) => Math.min(prev + 1, 20));
+        setMealProgress((prev) => Math.min(prev + 1, 22));
       }, 300);
       
       const imageResponse = await fetch("/api/plan-ahead/generate-images", {
@@ -112,66 +113,68 @@ export default function PlanAheadPage() {
         throw new Error(imageData.message || "Failed to generate images");
       }
 
-      setMealProgress(22);
-
-      // Step 3: Store via Lambda
-      setGenerationStep("Storing your meal plan to AWS...");
+      setMealProgress(MAX_MEALS);
       
-      const lambdaResponse = await fetch("/api/plan-ahead/lambda-store", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ meals: imageData.meals }),
-      });
-
-      const lambdaData = await lambdaResponse.json();
+      // Step 3: Display meals immediately
+      setMeals(imageData.meals);
+      setGenerationStep("Meals generated successfully!");
       
-      // Handle partial failures gracefully
-      if (lambdaData.status === "success") {
-        // Some or all meals succeeded
-        if (lambdaData.failedCount > 0) {
-          console.warn(`${lambdaData.failedCount} meals failed to store:`, lambdaData.failures);
-        }
-        
-        setMealProgress(26);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setGenerationStep("");
+      setIsGenerating(false);
 
-        // Step 4: Save reference
-        setGenerationStep("Finalizing your meal plan...");
-        const saveResponse = await fetch("/api/plan-ahead/save", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            meals: lambdaData.meals,
-            whoopSummary: generateData.whoopSummary,
-            dietaryPreferences: "",
-          }),
-        });
-
-        if (!saveResponse.ok) {
-          console.warn("Failed to save meal plan reference, but meals are stored");
-        }
-
-        setMealProgress(MAX_MEALS);
-        setMeals(lambdaData.meals);
-        
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        setGenerationStep("");
-        setIsGenerating(false);
-        
-        // Show warning if some meals failed
-        if (lambdaData.failedCount > 0) {
-          setError(`Generated ${lambdaData.meals.length} meals successfully. ${lambdaData.failedCount} meals failed to store.`);
-        }
-      } else {
-        // All meals failed or error occurred
-        throw new Error(lambdaData.message || "Failed to store meals");
-      }
+      // Step 4: Store to DB/S3 in the background
+      storeMealsInBackground(imageData.meals, generateData.whoopSummary);
+      
     } catch (error) {
       console.error("Error generating meals:", error);
       setError(error instanceof Error ? error.message : "Failed to generate meals");
       setIsGenerating(false);
       setGenerationStep("");
       setMealProgress(0);
+    }
+  };
+
+  const storeMealsInBackground = async (mealsToStore: GeneratedMeal[], whoopSummary: string) => {
+    setIsStoring(true);
+    
+    try {
+      // Store via Lambda
+      const lambdaResponse = await fetch("/api/plan-ahead/lambda-store", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ meals: mealsToStore }),
+      });
+
+      const lambdaData = await lambdaResponse.json();
+      
+      if (lambdaData.status === "success") {
+        // Save reference
+        const saveResponse = await fetch("/api/plan-ahead/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            meals: lambdaData.meals,
+            whoopSummary,
+            dietaryPreferences: "",
+          }),
+        });
+
+        if (!saveResponse.ok) {
+          console.warn("Failed to save meal plan reference");
+        }
+
+        if (lambdaData.failedCount > 0) {
+          console.warn(`${lambdaData.failedCount} meals failed to store to permanent storage`);
+        }
+      } else {
+        console.error("Failed to store meals to permanent storage:", lambdaData.message);
+      }
+    } catch (error) {
+      console.error("Error storing meals in background:", error);
+    } finally {
+      setIsStoring(false);
     }
   };
 
