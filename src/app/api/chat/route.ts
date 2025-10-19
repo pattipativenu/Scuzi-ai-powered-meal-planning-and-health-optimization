@@ -291,7 +291,6 @@ async function storeAIResponse(data: {
     return itemId;
   } catch (error) {
     console.error("[DYNAMODB] Failed to store AI response:", error);
-    // Don't throw - storage failure shouldn't break the chat
     return "";
   }
 }
@@ -303,7 +302,6 @@ async function storeAIResponse(data: {
 function analyzeResponse(text: string): { type: string; title: string; description: string } {
   const lowerText = text.toLowerCase();
   
-  // Check for recipe
   if (lowerText.includes("ingredients:") || lowerText.includes("step-by-step instructions") || lowerText.includes("🥘")) {
     const titleMatch = text.match(/🥘\s*\*\*(.+?)\*\*/);
     const title = titleMatch ? titleMatch[1] : "Recipe";
@@ -311,7 +309,6 @@ function analyzeResponse(text: string): { type: string; title: string; descripti
     return { type: "recipe", title, description };
   }
   
-  // Check for nutrition analysis
   if (lowerText.includes("nutrition") && (lowerText.includes("calories") || lowerText.includes("protein"))) {
     return { 
       type: "nutrition", 
@@ -320,7 +317,6 @@ function analyzeResponse(text: string): { type: string; title: string; descripti
     };
   }
   
-  // Check for meal plan
   if (lowerText.includes("meal plan") || lowerText.includes("day 1") || lowerText.includes("monday:")) {
     return { 
       type: "meal_plan", 
@@ -329,7 +325,6 @@ function analyzeResponse(text: string): { type: string; title: string; descripti
     };
   }
   
-  // Check for health risk
   if (lowerText.includes("health risk") || lowerText.includes("harmful") || lowerText.includes("ingredients:")) {
     return { 
       type: "health_risk", 
@@ -338,7 +333,6 @@ function analyzeResponse(text: string): { type: string; title: string; descripti
     };
   }
   
-  // General advice
   return { 
     type: "general_advice", 
     title: "Cooking & Health Advice",
@@ -400,15 +394,12 @@ export async function POST(request: NextRequest) {
     const converseMessages = messages.map((msg: Message) => {
       const content = [];
 
-      // Add image first if present (Claude processes images before text)
       if (msg.image) {
         try {
-          // Extract base64 data and detect format
           let base64Data: string;
           let imageFormat: "jpeg" | "png" | "gif" | "webp" = "jpeg";
           
           if (msg.image.includes("data:image/")) {
-            // Extract MIME type from data URI
             const mimeMatch = msg.image.match(/data:image\/(jpeg|jpg|png|gif|webp);base64,/);
             if (mimeMatch) {
               const detectedFormat = mimeMatch[1].toLowerCase();
@@ -423,7 +414,6 @@ export async function POST(request: NextRequest) {
           
           const imageBytes = Buffer.from(base64Data, "base64");
           
-          // Validate image size
           if (imageBytes.length < 100) {
             console.warn("[IMAGE] Image too small, skipping");
             throw new Error("Image file is too small or corrupted");
@@ -445,7 +435,6 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Add text content
       if (msg.content) {
         content.push({
           text: msg.content,
@@ -513,12 +502,11 @@ export async function POST(request: NextRequest) {
 
     const responseAnalysis = analyzeResponse(cleanedResponse);
     
-    // Store in DynamoDB and get the item ID
     const historyItemId = await storeAIResponse({
       type: responseAnalysis.type,
       title: responseAnalysis.title,
       description: responseAnalysis.description,
-      image_url: "", // Will be updated later when image is generated
+      image_url: "",
       ai_response: cleanedResponse,
     });
 
@@ -526,7 +514,7 @@ export async function POST(request: NextRequest) {
       content: cleanedResponse || "I'm here to help with your food and health questions! 🍳",
       shouldGenerateImage: imageMetadata.shouldGenerate,
       imageMetadata: imageMetadata.shouldGenerate ? imageMetadata : null,
-      historyItemId, // Return the ID so frontend can update it with image
+      historyItemId,
     });
 
   } catch (error) {
