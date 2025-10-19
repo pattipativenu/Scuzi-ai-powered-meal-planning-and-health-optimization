@@ -156,7 +156,7 @@ Return ONLY valid JSON in this exact format:
 VERIFICATION: Before responding, count your meals to ensure exactly 28 total (7 days × 4 meal types).`;
 
     const command = new ConverseCommand({
-      modelId: "anthropic.claude-3-haiku-20240307-v1:0",
+      modelId: "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
       messages: [
         {
           role: "user",
