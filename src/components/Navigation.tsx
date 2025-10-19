@@ -391,7 +391,7 @@ export function Navigation() {
             {!isOnChatPage &&
             <>
                 <Link href="/" className="flex items-center gap-2 font-semibold text-lg flex-shrink-0 absolute left-8" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
-                  <span className="!font-extrabold !text-[29px] !not-italic !px-[17px] !w-full !h-full !whitespace-pre-line">Scuzi</span>
+                  <span className="!not-italic !px-[17px] !whitespace-pre-line !font-extrabold !text-[31px] !w-full !h-full">Scuzi</span>
                 </Link>
 
                 <div className="flex-1 max-w-2xl mx-auto">
