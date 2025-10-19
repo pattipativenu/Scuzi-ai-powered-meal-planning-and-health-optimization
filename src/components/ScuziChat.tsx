@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Send, Image as ImageIcon, Loader2, ChefHat, Camera, X, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 interface Message {
   id: string;
@@ -14,6 +15,7 @@ interface Message {
   image?: string;
   timestamp: Date;
   thinking?: string;
+  isLoadingImage?: boolean;
 }
 
 export default function ScuziChat() {
@@ -139,7 +141,6 @@ export default function ScuziChat() {
           ...conversationMessages.map((m) => ({
             role: m.role,
             content: m.content,
-            // CRITICAL: Only include images for user messages, not assistant messages
             image: m.role === "user" ? m.image : undefined
           })),
           {
@@ -180,7 +181,21 @@ export default function ScuziChat() {
       if (data.shouldGenerateImage && data.imageMetadata) {
         console.log("[FRONTEND] Generating image with metadata...");
 
+        // Add loading placeholder for image
+        const loadingImageMessage: Message = {
+          id: (Date.now() + 2).toString(),
+          role: "assistant",
+          content: "🎨 Generating your meal image...",
+          timestamp: new Date(),
+          isLoadingImage: true
+        };
+        setMessages((prev) => [...prev, loadingImageMessage]);
+
         try {
+          // Add 30-second timeout to the fetch request
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000);
+
           const imageResponse = await fetch("/api/generate-meal-image", {
             method: "POST",
             headers: {
@@ -188,18 +203,23 @@ export default function ScuziChat() {
             },
             body: JSON.stringify({
               imageMetadata: data.imageMetadata,
-              historyItemId: data.historyItemId // Pass history item ID for DynamoDB update
-            })
+              historyItemId: data.historyItemId
+            }),
+            signal: controller.signal
           });
 
+          clearTimeout(timeoutId);
           console.log("[FRONTEND] Image response status:", imageResponse.status);
+
+          // Remove loading message
+          setMessages((prev) => prev.filter(m => m.id !== loadingImageMessage.id));
 
           if (imageResponse.ok) {
             const imageData = await imageResponse.json();
             console.log("[FRONTEND] Image generated successfully");
 
             const imageMessage: Message = {
-              id: (Date.now() + 2).toString(),
+              id: (Date.now() + 3).toString(),
               role: "assistant",
               content: `Here's what ${imageData.mealDescription} looks like:`,
               image: imageData.imageUrl,
@@ -207,11 +227,39 @@ export default function ScuziChat() {
             };
             setMessages((prev) => [...prev, imageMessage]);
           } else {
-            console.warn("[FRONTEND] Image generation failed, but continuing...");
+            const errorData = await imageResponse.json().catch(() => ({}));
+            console.warn("[FRONTEND] Image generation failed:", errorData);
+            
+            // Show friendly error message
+            const errorMessage: Message = {
+              id: (Date.now() + 3).toString(),
+              role: "assistant",
+              content: "⚠️ Image generation is taking longer than usual. Your recipe is ready above! The image might appear in your history later.",
+              timestamp: new Date()
+            };
+            setMessages((prev) => [...prev, errorMessage]);
           }
         } catch (imageError) {
-          console.error("[FRONTEND] Image generation error (non-critical):", imageError);
-          // Don't show error to user - image generation is non-critical
+          console.error("[FRONTEND] Image generation error:", imageError);
+          
+          // Remove loading message
+          setMessages((prev) => prev.filter(m => m.id !== loadingImageMessage.id));
+          
+          // Check if it's a timeout error
+          const isTimeout = imageError instanceof Error && 
+            (imageError.name === 'AbortError' || imageError.message.includes('abort'));
+          
+          if (isTimeout) {
+            console.warn("[FRONTEND] Image generation timeout");
+            const timeoutMessage: Message = {
+              id: (Date.now() + 3).toString(),
+              role: "assistant",
+              content: "⏱️ Image generation is taking too long. Your recipe is ready above! Try asking for the image again if needed.",
+              timestamp: new Date()
+            };
+            setMessages((prev) => [...prev, timeoutMessage]);
+          }
+          // Don't show error for other cases - just silently fail
         }
       }
     } catch (error) {
@@ -243,35 +291,31 @@ export default function ScuziChat() {
     <div className="flex flex-col h-screen bg-white">
       {/* Sticky Header */}
       <div className="sticky top-0 bg-white z-50 shadow-sm">
-        <div className="px-6 py-6 flex items-center gap-4">
-          <Avatar className="h-12 w-12">
+        <div className="px-4 md:px-6 py-4 md:py-6 flex items-center gap-3 md:gap-4">
+          <Avatar className="h-8 w-8 md:h-12 md:w-12">
             <AvatarImage src="" />
             <AvatarFallback className="bg-[rgb(209,222,38)] text-[rgb(39,39,42)]">
-              <ChefHat className="h-6 w-6" />
+              <ChefHat className="h-4 w-4 md:h-6 md:w-6" />
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
             <h3
-              className="font-bold text-[rgb(17,24,39)] !whitespace-pre-line !whitespace-pre-line !whitespace-pre-line"
+              className="font-bold text-[rgb(17,24,39)]"
               style={{
                 fontFamily: '"Right Grotesk Wide", sans-serif',
-                fontSize: '16px',
-                lineHeight: '24px',
+                fontSize: '14px',
+                lineHeight: '20px',
                 fontWeight: 500
               }}>Scuzi AI
-
-
             </h3>
             <p
-              className="text-[rgb(17,24,39)] !whitespace-pre-line !whitespace-pre-line !whitespace-pre-line"
+              className="text-[rgb(17,24,39)]"
               style={{
                 fontFamily: '"General Sans", sans-serif',
-                fontSize: '15px',
-                lineHeight: '21px',
+                fontSize: '13px',
+                lineHeight: '18px',
                 fontWeight: 400
               }}>Your Food & Health Companion....
-
-
             </p>
           </div>
         </div>
@@ -310,63 +354,72 @@ export default function ScuziChat() {
       }
 
       {/* Scrollable Messages Container */}
-      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 md:py-6 space-y-4 pb-20 md:pb-6">
         {messages.map((message) =>
-        <div
+        <motion.div
           key={message.id}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ 
+            duration: 0.3, 
+            type: "spring", 
+            stiffness: 200,
+            damping: 20
+          }}
           className={cn(
-            "flex gap-3 max-w-[85%]",
+            "flex gap-2 md:gap-3 max-w-[85%]",
             message.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto"
           )}>
-
             {message.role === "assistant" &&
-          <Avatar className="h-10 w-10 flex-shrink-0">
+          <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
                 <AvatarFallback className="bg-[rgb(209,222,38)] text-[rgb(39,39,42)]">
-                  <ChefHat className="h-5 w-5" />
+                  <ChefHat className="h-3 w-3 md:h-4 md:w-4" />
                 </AvatarFallback>
               </Avatar>
           }
             <div
             className={cn(
-              "rounded-xl px-4 py-3 shadow-sm",
+              "rounded-xl px-3 py-2 md:px-4 md:py-3 shadow-sm",
               message.role === "user" ?
-              "bg-[rgb(209,222,38)] text-[rgb(39,39,42)]" :
-              "bg-gray-50 text-[rgb(17,24,39)]"
+              "bg-gray-100 text-[rgb(39,39,42)]" :
+              "bg-yellow-50 text-[rgb(17,24,39)]"
             )}>
-
               {message.image &&
             <img
               src={message.image}
               alt="Uploaded content"
-              className="rounded-lg mb-3 max-w-full h-auto" />
-
+              className="rounded-lg mb-2 md:mb-3 max-w-full h-auto" />
             }
+              {message.isLoadingImage && (
+                <div className="flex items-center gap-2 mb-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-[rgb(209,222,38)]" />
+                  <span className="text-xs md:text-sm text-gray-500">Generating image...</span>
+                </div>
+              )}
               <p
-              className="whitespace-pre-wrap break-words !whitespace-pre-line !whitespace-pre-line"
+              className="whitespace-pre-wrap break-words"
               style={{
                 fontFamily: '"General Sans", sans-serif',
-                fontSize: '15px',
-                lineHeight: '21px',
+                fontSize: '14px',
+                lineHeight: '20px',
                 fontWeight: 400
               }}>
-
                 {message.content}
               </p>
               <p
-              className="text-gray-400 mt-2"
+              className="text-gray-400 mt-1 md:mt-2"
               style={{
                 fontFamily: '"General Sans", sans-serif',
-                fontSize: '12px',
+                fontSize: '11px',
                 fontWeight: 400
               }}>
-
                 {message.timestamp.toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit"
               })}
               </p>
             </div>
-          </div>
+          </motion.div>
         )}
         {isLoading &&
         <div className="flex gap-3 max-w-[85%] mr-auto">
@@ -387,7 +440,7 @@ export default function ScuziChat() {
       </div>
 
       {/* Sticky Input Area */}
-      <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 z-50">
+      <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 md:px-6 py-3 md:py-4 z-50 pb-20 md:pb-4">
         {selectedImage &&
         <div className="mb-3 relative inline-block">
             <img
@@ -403,62 +456,45 @@ export default function ScuziChat() {
             </button>
           </div>
         }
-        <div className="flex items-end gap-3">
+        <div className="flex items-end gap-2 md:gap-3">
           <input
             type="file"
             ref={fileInputRef}
             onChange={handleImageSelect}
             accept="image/*"
             className="hidden" />
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={startCamera}
-            disabled={isLoading}
-            className="text-[rgb(39,39,42)] hover:text-[rgb(17,24,39)] hover:bg-gray-100">
-
-            <Camera className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isLoading}
-            className="text-[rgb(39,39,42)] hover:text-[rgb(17,24,39)] hover:bg-gray-100">
-
-            <ImageIcon className="h-5 w-5" />
-          </Button>
-          <Textarea
-            ref={textareaRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Type a message or upload an image..."
-            disabled={isLoading}
-            className="flex-1 min-h-[44px] max-h-[120px] bg-white border border-gray-200 text-[rgb(17,24,39)] placeholder:text-gray-400 resize-none rounded-lg focus:border-[rgb(209,222,38)] focus:ring-1 focus:ring-[rgb(209,222,38)]"
-            style={{
-              fontFamily: '"Right Grotesk Wide", sans-serif',
-              fontSize: '16px',
-              lineHeight: '24px',
-              fontWeight: 500
-            }}
-            rows={1} />
-
+          <div className="relative flex-1">
+            <Textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Type a message or upload an image…"
+              disabled={isLoading}
+              className="w-full min-h-[44px] max-h-[120px] bg-neutral-100 border border-gray-200 text-[rgb(17,24,39)] placeholder:text-gray-400 resize-none rounded-2xl focus:border-[rgb(209,222,38)] focus:ring-1 focus:ring-[rgb(209,222,38)] pl-12 pr-4 shadow-sm"
+              style={{
+                fontFamily: '"Right Grotesk Wide", sans-serif',
+                fontSize: '15px',
+                lineHeight: '22px',
+                fontWeight: 400
+              }}
+              rows={1} />
+            <Camera 
+              className="absolute left-3 top-2.5 h-5 w-5 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" 
+              onClick={startCamera}
+            />
+          </div>
           <Button
             onClick={handleSend}
             disabled={isLoading || !input.trim() && !selectedImage}
             size="icon"
-            className="bg-[rgb(209,222,38)] hover:bg-[rgb(209,222,38)]/90 text-[rgb(39,39,42)] h-11 w-11 rounded-lg disabled:opacity-50">
-
+            className="bg-[rgb(209,222,38)] hover:bg-[rgb(209,222,38)]/90 text-[rgb(39,39,42)] h-11 w-11 rounded-lg disabled:opacity-50 flex-shrink-0">
             {isLoading ?
             <Loader2 className="h-5 w-5 animate-spin" /> :
-
             <Send className="h-5 w-5" />
             }
           </Button>
         </div>
       </div>
     </div>);
-
 }

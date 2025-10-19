@@ -9,6 +9,7 @@ interface WhoopMetric {
   value: string;
   trend: "up" | "down" | "stable";
   changePercent?: number;
+  percentValue?: number; // For color coding
 }
 
 export function WhoopMiniMetrics() {
@@ -53,6 +54,7 @@ export function WhoopMiniMetrics() {
             value: `${Math.round(latest.recovery_score_percent)}%`,
             trend,
             changePercent: ((latest.recovery_score_percent - previous.recovery_score_percent) / previous.recovery_score_percent) * 100,
+            percentValue: latest.recovery_score_percent,
           });
         }
 
@@ -119,6 +121,7 @@ export function WhoopMiniMetrics() {
             value: `${Math.round(latest.sleep_performance_percent)}%`,
             trend,
             changePercent: ((latest.sleep_performance_percent - previous.sleep_performance_percent) / previous.sleep_performance_percent) * 100,
+            percentValue: latest.sleep_performance_percent,
           });
         }
 
@@ -145,6 +148,14 @@ export function WhoopMiniMetrics() {
 
   // Duplicate metrics 3 times for seamless infinite scroll
   const scrollingMetrics = [...metrics, ...metrics, ...metrics];
+
+  // Get color based on percentage value (for Recovery and Sleep metrics)
+  const getPercentageColor = (percentValue?: number) => {
+    if (!percentValue) return "rgb(39, 39, 42)"; // Default black
+    if (percentValue < 50) return "#DC2626"; // Red
+    if (percentValue < 75) return "#F97316"; // Orange
+    return "#16A34A"; // Green
+  };
 
   const getTrendColor = (trend: "up" | "down" | "stable") => {
     switch (trend) {
@@ -209,21 +220,39 @@ export function WhoopMiniMetrics() {
   return (
     <div className="overflow-hidden max-w-full">
       <motion.div
-        className="flex items-center gap-2 animate-scroll-rtl"
+        className="flex items-center gap-2"
+        style={{
+          animation: "scroll-rtl 12s linear infinite",
+        }}
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
+        transition={{ 
+          duration: 0.5, 
+          ease: "easeOut",
+          delay: 0.1,
+          type: "spring",
+          stiffness: 100
+        }}
       >
         {scrollingMetrics.map((metric, index) => {
           const color = getTrendColor(metric.trend);
           const icon = getTrendIcon(metric.trend);
+          const valueColor = getPercentageColor(metric.percentValue);
 
           return (
             <motion.div
               key={`${metric.label}-${index}`}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 whitespace-nowrap flex-shrink-0"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ 
+                duration: 0.4,
+                delay: index * 0.05,
+                type: "spring",
+                stiffness: 200,
+                damping: 15
+              }}
               whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.2 }}
             >
               <span style={{ color }}>{icon}</span>
               <span
@@ -232,7 +261,7 @@ export function WhoopMiniMetrics() {
                   fontWeight: 600,
                   fontSize: "14px",
                   lineHeight: "20px",
-                  color: "rgb(39, 39, 42)",
+                  color: valueColor,
                 }}
               >
                 {metric.value}

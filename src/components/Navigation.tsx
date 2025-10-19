@@ -320,7 +320,6 @@ export function Navigation() {
                   onClick={handleGoBack}
                   className="p-2 hover:bg-black/5 rounded-lg transition-colors"
                   title="Go Back">
-
                     <ArrowLeft className="w-6 h-6" style={{ color: "rgb(39, 39, 42)" }} />
                   </button>
                   <Link href="/" className="flex items-center gap-2 font-semibold text-lg" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
@@ -328,62 +327,11 @@ export function Navigation() {
                   </Link>
                 </div>
 
-                <div className="md:hidden flex items-center justify-between gap-6 w-full">
-                  <Link href="/" className="flex items-center gap-2 font-semibold text-lg flex-shrink-0" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
-                    <span>SCUZI</span>
+                {/* Mobile: Centered SCUZI only */}
+                <div className="md:hidden flex items-center justify-center w-full">
+                  <Link href="/" className="flex items-center gap-2 font-semibold text-lg" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
+                    <span className="!not-italic !whitespace-pre-line !font-extrabold !text-[35px]">SCUZI</span>
                   </Link>
-
-                  <div className="flex-1 max-w-2xl">
-                    <form onSubmit={handleSearch} className="relative w-full">
-                      <input
-                      ref={searchInputRef}
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder={placeholders[placeholderIndex]}
-                      className="w-full h-11 pl-4 pr-28 rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-black/10 transition-all shimmer-placeholder"
-                      style={{
-                        backgroundColor: "rgb(209, 222, 38)",
-                        fontFamily: '"Right Grotesk Wide", ui-sans-serif, system-ui, sans-serif',
-                        fontWeight: 500,
-                        fontSize: "16px",
-                        lineHeight: "24px",
-                        color: "rgb(39, 39, 42)",
-                        boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.05)"
-                      }} />
-
-
-                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                        <button
-                        type="button"
-                        className="p-2 hover:bg-black/5 rounded-lg transition-all"
-                        style={{ opacity: hasSearchQuery ? 1 : 0.4 }}
-                        title="Take photo"
-                        onClick={handleSearchIconClick}>
-
-                          <Camera className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
-                        </button>
-                        <button
-                        type="button"
-                        className="p-2 hover:bg-black/5 rounded-lg transition-all"
-                        style={{ opacity: hasSearchQuery ? 1 : 0.4 }}
-                        title="Upload photo"
-                        onClick={handleSearchIconClick}>
-
-                          <Upload className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
-                        </button>
-                        <button
-                        type="button"
-                        onClick={handleSearchIconClick}
-                        className="p-2 hover:bg-black/5 rounded-lg transition-all"
-                        style={{ opacity: hasSearchQuery ? 1 : 0.4 }}
-                        title="Search">
-
-                          <Search className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
-                        </button>
-                      </div>
-                    </form>
-                  </div>
                 </div>
               </>
             }

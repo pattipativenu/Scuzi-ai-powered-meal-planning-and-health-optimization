@@ -66,11 +66,11 @@ export function AnimatedHeroSection() {
 
         {/* Hero Content with Yellow Background */}
         <div
-          className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center rounded-[33px] px-12 md:px-16 lg:px-20 py-16 md:py-20 lg:py-28"
+          className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center rounded-[33px] px-6 md:px-12 lg:px-20 py-12 md:py-16 lg:py-28"
           style={{ backgroundColor: "rgb(247, 248, 212)" }}>
 
           {/* Left Side - Text Content */}
-          <div className="z-10 space-y-6">
+          <div className="z-10 space-y-6 text-center lg:text-left">
             <h1 style={{
               fontFamily: '"Right Grotesk Spatial", sans-serif',
               fontWeight: 700,
@@ -79,7 +79,6 @@ export function AnimatedHeroSection() {
               color: 'rgb(17, 24, 39)'
             }}
             className="hidden lg:block">
-
               Your home for easy, delicious meal prep recipes
             </h1>
             
@@ -89,28 +88,31 @@ export function AnimatedHeroSection() {
               fontWeight: 700,
               color: 'rgb(17, 24, 39)'
             }}
-            className="lg:hidden text-4xl md:text-5xl leading-tight">
-
+            className="lg:hidden text-3xl leading-tight max-w-[90%] mx-auto">
               Your home for easy, delicious meal prep recipes
             </h1>
             
-            <p className="!whitespace-pre-line !w-[443px] !h-[101px] !text-[17px]" style={{ fontFamily: '"General Sans", sans-serif' }}>
+            <p 
+              className="text-sm text-gray-700 mt-2 max-w-[90%] mx-auto lg:mx-0" 
+              style={{ fontFamily: '"General Sans", sans-serif' }}
+            >
               "AI-powered meals personalized for you, fueled by your WHOOP data."
             </p>
             
-            <Link
-              href="/personalize"
-              className="inline-flex items-center gap-2 bg-gray-900 text-white px-8 py-4 rounded-lg hover:bg-gray-800 transition-colors shadow-lg"
-              style={{
-                fontFamily: '"Right Grotesk Wide", sans-serif',
-                fontWeight: 500,
-                fontSize: '16px',
-                lineHeight: '24px'
-              }}>
-
-              Start Planning
-              <ChevronRight className="w-5 h-5" />
-            </Link>
+            <div className="flex justify-center lg:justify-start">
+              <Link
+                href="/personalize"
+                className="inline-flex items-center gap-2 bg-gray-900 text-white px-8 py-4 rounded-lg hover:bg-gray-800 transition-colors shadow-lg"
+                style={{
+                  fontFamily: '"Right Grotesk Wide", sans-serif',
+                  fontWeight: 500,
+                  fontSize: '16px',
+                  lineHeight: '24px'
+                }}>
+                Start Planning
+                <ChevronRight className="w-5 h-5" />
+              </Link>
+            </div>
           </div>
 
           {/* Right Side - Hero Image */}
