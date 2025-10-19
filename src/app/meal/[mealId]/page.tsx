@@ -46,16 +46,32 @@ export default function MealDetailPage() {
     try {
       setLoading(true);
       
-      // Fetch the meal plan that contains this meal
-      const response = await fetch("/api/plan-ahead/retrieve");
-      const data = await response.json();
+      // Parse mealId (format: "Monday-Breakfast")
+      const [day, mealType] = mealId.split("-");
       
-      if (data.status === "success" && data.mealPlan?.meals) {
-        // Parse mealId (format: "Monday-Breakfast")
-        const [day, mealType] = mealId.split("-");
+      // Try current week meals first
+      const currentWeekResponse = await fetch("/api/meals/current-week");
+      const currentWeekData = await currentWeekResponse.json();
+      
+      if (currentWeekData.status === "success" && currentWeekData.meals) {
+        const foundMeal = currentWeekData.meals.find(
+          (m: MealData) => m.day === day && m.meal_type === mealType
+        );
         
-        // Find the specific meal
-        const foundMeal = data.mealPlan.meals.find(
+        if (foundMeal) {
+          setMeal(foundMeal);
+          setServings(foundMeal.servings);
+          setLoading(false);
+          return;
+        }
+      }
+      
+      // Fallback to plan-ahead meals (next week)
+      const planAheadResponse = await fetch("/api/plan-ahead/retrieve");
+      const planAheadData = await planAheadResponse.json();
+      
+      if (planAheadData.status === "success" && planAheadData.mealPlan?.meals) {
+        const foundMeal = planAheadData.mealPlan.meals.find(
           (m: MealData) => m.day === day && m.meal_type === mealType
         );
         
