@@ -7,36 +7,16 @@ import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { dynamoDb, HISTORY_TABLE_NAME } from "@/lib/dynamodb-config";
 
 // ============================================
-// AWS BEDROCK CLIENT WITH BEARER TOKEN
+// AWS BEDROCK CLIENT WITH STANDARD CREDENTIALS
 // ============================================
 
-const getBedrockClient = () => {
-  const bearerToken = process.env.AWS_BEARER_TOKEN_BEDROCK;
-  
-  if (!bearerToken) {
-    throw new Error("AWS_BEARER_TOKEN_BEDROCK is required but not found in environment variables");
-  }
-  
-  const client = new BedrockRuntimeClient({
-    region: process.env.AWS_REGION || "us-east-1",
-  });
-
-  // Inject bearer token in Authorization header
-  client.middlewareStack.add(
-    (next: any) => async (args: any) => {
-      args.request.headers.Authorization = `Bearer ${bearerToken}`;
-      return next(args);
-    },
-    {
-      step: "build",
-      name: "addBearerToken",
-    }
-  );
-
-  return client;
-};
-
-const client = getBedrockClient();
+const client = new BedrockRuntimeClient({
+  region: process.env.AWS_REGION || "us-east-1",
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
 
 // ============================================
 // ENHANCED RETRY LOGIC WITH EXPONENTIAL BACKOFF

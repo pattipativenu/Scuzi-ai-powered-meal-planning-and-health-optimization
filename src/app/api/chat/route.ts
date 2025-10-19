@@ -39,7 +39,7 @@ function classifyTopic(message: string): { isRelevant: boolean; category: string
 
   const lowerMessage = message.toLowerCase();
 
-  // ✅ RELEVANT KEYWORDS - Food, Cooking, Health, Nutrition
+  // ✅ RELEVANT KEYWORDS - Food, Cooking, Health, Nutrition, Dietary Preferences
   const relevantKeywords = [
     "recipe", "cook", "food", "meal", "dish", "ingredient", "spice", "flavor",
     "bake", "fry", "grill", "roast", "boil", "sauté", "simmer", "steam",
@@ -50,7 +50,13 @@ function classifyTopic(message: string): { isRelevant: boolean; category: string
     "tikka", "masala", "biryani", "pizza", "burger", "taco", "sushi",
     "nutrition", "calories", "protein", "carbs", "fat", "fiber", "vitamin",
     "healthy", "health", "wellness", "fitness", "weight", "diet",
-    "grocery", "shopping", "receipt", "pantry", "leftover", "fridge"
+    "grocery", "shopping", "receipt", "pantry", "leftover", "fridge",
+    // CRITICAL: Add dietary restriction keywords
+    "high protein", "low carb", "low fat", "sugar free", "gluten free",
+    "dairy free", "keto", "paleo", "whole30", "avoid sugar", "no sugar",
+    "low calorie", "high fiber", "lean", "organic", "natural",
+    "topping", "sauce", "dressing", "seasoning", "garnish",
+    "serving", "portion", "people", "person", "servings"
   ];
 
   // 🚫 IRRELEVANT KEYWORDS
