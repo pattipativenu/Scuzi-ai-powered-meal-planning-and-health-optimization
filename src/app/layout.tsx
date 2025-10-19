@@ -12,41 +12,24 @@ import { Toaster } from "@/components/ui/sonner";
 import { usePathname } from "next/navigation";
 
 export default function RootLayout({
-  children,
+  children
 }: Readonly<{
-  children: React.ReactNode;
+children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  const hideNavigation = pathname.startsWith("/personalize");
+  const isOnChatPage = pathname === '/chat';
 
   return (
     <html lang="en">
-      <head>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@100;200;300;400;500;600;700;800;900&display=swap" />        <style>{`
-        :root {
-          --font-open-sans: 'Open Sans', sans-serif;
-        }
-      `}</style>
-      </head>
       <body className="antialiased">
-        <ErrorReporter />
-        <Script
-          src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/scripts//route-messenger.js"
-          strategy="afterInteractive"
-          data-target-origin="*"
-          data-message-type="ROUTE_CHANGE"
-          data-include-search-params="true"
-          data-only-in-iframe="true"
-          data-debug="true"
-          data-custom-data='{"appName": "YourApp", "version": "1.0.0", "greeting": "hi"}'
-        />
-        {!hideNavigation && <Navigation />}
+        <Navigation />
         {children}
-        {!hideNavigation && <BottomNavigation />}
-        {!hideNavigation && <FloatingAskScuzi />}
-        <Toaster />
-        <VisualEditsMessenger />
+        <Toaster richColors position="top-center" />
+        
+        {!isOnChatPage && <FloatingAskScuzi />}
+        
+        <BottomNavigation />
       </body>
-    </html>
-  );
+    </html>);
+
 }

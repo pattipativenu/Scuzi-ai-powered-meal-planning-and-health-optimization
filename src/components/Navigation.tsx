@@ -330,7 +330,7 @@ export function Navigation() {
                 {/* Mobile: Centered SCUZI only */}
                 <div className="md:hidden flex items-center justify-center w-full">
                   <Link href="/" className="flex items-center gap-2 font-semibold text-lg" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
-                    <span className="!not-italic !whitespace-pre-line !font-extrabold !text-[35px] !whitespace-pre-line">Scuzi</span>
+                    <span className="!not-italic !whitespace-pre-line !font-extrabold !text-[35px]">SCUZI</span>
                   </Link>
                 </div>
               </>
@@ -471,11 +471,32 @@ export function Navigation() {
         </div>
       </div>
 
-      {/* Second Row - Whitish Background with WHOOP Connect and Menu */}
+      {/* Second Row - Whitish Background with WHOOP Connect */}
       <div style={{ backgroundColor: "rgb(250, 250, 250)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3 h-20">
-            {/* Mobile Home: WHOOP + Metrics Badge */}
+            {/* Chat Page: WHOOP + Metrics (No Menu) */}
+            {isOnChatPage && (
+              <div className="flex items-center gap-3 w-full">
+                <button
+                  onClick={handleWhoopConnect}
+                  disabled={whoopLoading}
+                  className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 rounded-full bg-black text-white hover:bg-gray-800 transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                  </svg>
+                  <span style={{ fontFamily: '"Right Grotesk Wide", sans-serif', fontWeight: 500, fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.3px", whiteSpace: "nowrap" }}>
+                    {whoopLoading ? "CONNECTING..." : "WHOOP"}
+                  </span>
+                </button>
+
+                <div className="flex-1 overflow-hidden">
+                  <WhoopMiniMetrics />
+                </div>
+              </div>
+            )}
+
+            {/* Mobile Home: WHOOP + Metrics Badge (No Menu) */}
             {isHomePage &&
             <div className="md:hidden flex items-center gap-3 w-full">
                 <button
@@ -497,41 +518,43 @@ export function Navigation() {
               </div>
             }
 
-            {/* Desktop: Keep existing layout */}
-            <div className={isHomePage ? "hidden md:flex items-center gap-3 w-full" : "flex items-center gap-3 w-full"}>
-              <button
-                onClick={handleWhoopConnect}
-                disabled={whoopLoading}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white hover:bg-gray-800 transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed">
+            {/* Desktop Home & Other Pages: Keep existing layout with Menu */}
+            {!isOnChatPage && (
+              <div className={isHomePage ? "hidden md:flex items-center gap-3 w-full" : "flex items-center gap-3 w-full"}>
+                <button
+                  onClick={handleWhoopConnect}
+                  disabled={whoopLoading}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white hover:bg-gray-800 transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed">
 
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                </svg>
-                <span style={{ fontFamily: '"Right Grotesk Wide", sans-serif', fontWeight: 500, fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.3px", whiteSpace: "nowrap" }}>
-                  {whoopLoading ? "CONNECTING..." : "WHOOP CONNECT"}
-                </span>
-              </button>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                  </svg>
+                  <span style={{ fontFamily: '"Right Grotesk Wide", sans-serif', fontWeight: 500, fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.3px", whiteSpace: "nowrap" }}>
+                    {whoopLoading ? "CONNECTING..." : "WHOOP CONNECT"}
+                  </span>
+                </button>
 
-              <div className="hidden lg:flex flex-1 justify-center overflow-hidden max-w-2xl mx-auto">
-                <WhoopMiniMetrics />
+                <div className="hidden lg:flex flex-1 justify-center overflow-hidden max-w-2xl mx-auto">
+                  <WhoopMiniMetrics />
+                </div>
+
+                {/* Menu Button - Hidden on mobile home page and never shown on chat page */}
+                <div className={`relative h-[40px] flex items-center flex-shrink-0 ${isHomePage ? "hidden md:flex" : ""}`}>
+                  <motion.div
+                    className="rounded-[25px] absolute overflow-hidden"
+                    style={{ backgroundColor: "rgb(209, 222, 38)" }}
+                    variants={menuVariants}
+                    animate={menuOpen ? "open" : "closed"}
+                    initial="closed">
+
+                    <AnimatePresence>
+                      {menuOpen && <Nav setMenuOpen={setMenuOpen} />}
+                    </AnimatePresence>
+                  </motion.div>
+                  <MenuButton isActive={menuOpen} toggleMenu={() => setMenuOpen(!menuOpen)} />
+                </div>
               </div>
-
-              {/* Menu Button - Hidden on mobile home page */}
-              <div className={`relative h-[40px] flex items-center flex-shrink-0 ${isHomePage ? "hidden md:flex" : ""}`}>
-                <motion.div
-                  className="rounded-[25px] absolute overflow-hidden"
-                  style={{ backgroundColor: "rgb(209, 222, 38)" }}
-                  variants={menuVariants}
-                  animate={menuOpen ? "open" : "closed"}
-                  initial="closed">
-
-                  <AnimatePresence>
-                    {menuOpen && <Nav setMenuOpen={setMenuOpen} />}
-                  </AnimatePresence>
-                </motion.div>
-                <MenuButton isActive={menuOpen} toggleMenu={() => setMenuOpen(!menuOpen)} />
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
