@@ -38,18 +38,14 @@ export function FloatingAskScuzi() {
 
   return (
     <motion.div
-      className="md:hidden fixed left-1/2 z-40 w-[90%] max-w-md"
-      style={{ 
-        bottom: "84px",
-        transform: "translateX(-50%)"
-      }}
+      className="md:hidden fixed bottom-[84px] left-0 right-0 z-40 flex justify-center px-4"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut", delay: 0.2 }}
     >
       <button
         onClick={handleClick}
-        className="w-full h-14 rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98] flex flex-col items-center justify-center gap-0.5 backdrop-blur-md"
+        className="w-full max-w-md h-14 rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98] flex flex-col items-center justify-center gap-0.5 backdrop-blur-md"
         style={{
           background: "rgba(0, 0, 0, 0.75)",
         }}
