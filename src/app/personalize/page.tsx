@@ -74,26 +74,10 @@ const questions: Question[] = [
   options: [
   { emoji: "👨‍🍳", label: "From Scratch", value: "from_scratch" },
   { emoji: "🕒", label: "Quick & Simple", value: "quick_simple" },
-  { emoji: "🥣", label: "Mix of Both", value: "mix_both" },
-  { emoji: "🚫", label: "", value: "ready_to_eat" }]
-
+  { emoji: "🥣", label: "Mix of Both", value: "mix_both" }]
 },
 {
   id: 5,
-  title: "What kitchen equipment do you usually have access to?",
-  type: "multi-select",
-  field: "equipment",
-  options: [
-  { emoji: "🔪", label: "Stove", value: "stove" },
-  { emoji: "🧑‍🍳", label: "Oven", value: "oven" },
-  { emoji: "🧊", label: "Refrigerator", value: "refrigerator" },
-  { emoji: "🍳", label: "Air Fryer", value: "air_fryer" },
-  { emoji: "🥤", label: "Blender", value: "blender" },
-  { emoji: "🍲", label: "Microwave", value: "microwave" }]
-
-},
-{
-  id: 6,
   title: "How many meals do you want us to plan per day?",
   type: "single-select",
   field: "meals_per_day",
@@ -101,10 +85,9 @@ const questions: Question[] = [
   { emoji: "🍽️", label: "3 Meals", value: "3" },
   { emoji: "🍴", label: "4 Meals", value: "4" },
   { emoji: "🥗", label: "5+ Meals", value: "5" }]
-
 },
 {
-  id: 7,
+  id: 6,
   title: "Do you follow any specific diet?",
   type: "single-select",
   field: "diet_type",
@@ -114,10 +97,9 @@ const questions: Question[] = [
   { emoji: "🐟", label: "Pescatarian", value: "pescatarian" },
   { emoji: "🌱", label: "Vegan", value: "vegan" },
   { emoji: "⚖️", label: "No Preference", value: "no_preference" }]
-
 },
 {
-  id: 8,
+  id: 7,
   title: "How active are you daily?",
   type: "single-select",
   field: "activity_level",
@@ -126,7 +108,6 @@ const questions: Question[] = [
   { emoji: "🚶", label: "Lightly Active", value: "lightly_active" },
   { emoji: "🏋️", label: "Moderately Active", value: "moderately_active" },
   { emoji: "🏃‍♂️", label: "Very Active", value: "very_active" }]
-
 }];
 
 
