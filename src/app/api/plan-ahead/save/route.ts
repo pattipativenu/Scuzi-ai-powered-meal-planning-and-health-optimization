@@ -17,15 +17,15 @@ export async function POST(request: NextRequest) {
   try {
     const { meals, whoopSummary, dietaryPreferences } = await request.json();
 
-    // Calculate next week identifier
+    // Calculate current week identifier (this Monday)
     const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-    const nextWeekStart = addWeeks(currentWeekStart, 1);
-    const nextWeekId = format(nextWeekStart, "yyyy-MM-dd");
+    const currentWeekId = format(currentWeekStart, "yyyy-MM-dd");
 
+    // Save as "next week" with proper prefix
     const command = new PutCommand({
       TableName: process.env.DYNAMODB_MEALPLAN_TABLE || "MealPlanData",
       Item: {
-        week_id: nextWeekId, // Consistent format without prefix
+        week_id: `next_${currentWeekId}`, // Save with "next_" prefix for current week
         meals,
         whoopSummary,
         dietaryPreferences: dietaryPreferences || "",
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       status: "success",
       message: "Meal plan saved for next week successfully",
-      nextWeekId,
+      weekId: `next_${currentWeekId}`,
     });
   } catch (error) {
     console.error("Error saving meal plan:", error);

@@ -15,16 +15,16 @@ const docClient = DynamoDBDocumentClient.from(client);
 
 export async function GET(request: NextRequest) {
   try {
-    // Calculate current week identifier (matching lambda-store format)
+    // Calculate current week identifier
     const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-    const weekId = format(currentWeekStart, "yyyy-MM-dd");
+    const currentWeekId = format(currentWeekStart, "yyyy-MM-dd");
 
-    // Query DynamoDB for current week meals
+    // Query for "next week" meals (with "next_" prefix)
     const command = new QueryCommand({
       TableName: process.env.DYNAMODB_MEALPLAN_TABLE || "MealPlanData",
       KeyConditionExpression: "week_id = :weekId",
       ExpressionAttributeValues: {
-        ":weekId": weekId,
+        ":weekId": `next_${currentWeekId}`,
       },
     });
 
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       status: "success",
       mealPlan: response.Items[0],
-      weekId,
+      weekId: currentWeekId,
     });
   } catch (error) {
     console.error("Error retrieving meal plan:", error);
