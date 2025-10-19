@@ -165,7 +165,7 @@ VERIFICATION: Before responding, count your meals to ensure exactly 28 total (7 
       ],
       system: [{ text: systemPrompt }],
       inferenceConfig: {
-        maxTokens: 16000,
+        maxTokens: 8192,
         temperature: 0.7,
       },
     });
