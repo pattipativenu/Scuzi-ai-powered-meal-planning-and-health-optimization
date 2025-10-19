@@ -81,3 +81,19 @@ export const mealCompletions = sqliteTable('meal_completions', {
   completedAt: text('completed_at').notNull(),
   userId: integer('user_id'),
 });
+
+// Add meals library table at the end
+export const mealsLibrary = sqliteTable('meals_library', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  description: text('description'),
+  mealType: text('meal_type').notNull(), // breakfast, lunch, snack, dinner
+  prepTime: integer('prep_time').notNull(), // minutes
+  cookTime: integer('cook_time').notNull(), // minutes
+  servings: integer('servings').notNull(),
+  ingredients: text('ingredients', { mode: 'json' }).notNull(), // [{name, amount, unit, category}]
+  instructions: text('instructions', { mode: 'json' }).notNull(), // array of strings
+  nutrition: text('nutrition', { mode: 'json' }).notNull(), // {calories, protein, carbs, fat, fiber, sodium}
+  tags: text('tags', { mode: 'json' }), // ["high-protein", "low-carb", etc]
+  createdAt: text('created_at').notNull(),
+});
