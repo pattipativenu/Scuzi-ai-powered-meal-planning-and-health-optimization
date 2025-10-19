@@ -289,8 +289,8 @@ export default function ScuziChat() {
 
   return (
     <div className="flex flex-col h-screen bg-white">
-      {/* Sticky Header */}
-      <div className="sticky top-0 bg-white z-50 shadow-sm">
+      {/* Sticky Header - Hidden on Mobile */}
+      <div className="hidden md:block sticky top-0 bg-white z-50 shadow-sm">
         <div className="px-4 md:px-6 py-4 md:py-6 flex items-center gap-3 md:gap-4">
           <Avatar className="h-8 w-8 md:h-12 md:w-12">
             <AvatarImage src="" />
@@ -354,7 +354,7 @@ export default function ScuziChat() {
       }
 
       {/* Scrollable Messages Container */}
-      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 md:py-6 space-y-4 pb-20 md:pb-6">
+      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 md:py-6 space-y-4 pb-24 md:pb-6">
         {messages.map((message) =>
         <motion.div
           key={message.id}
@@ -382,7 +382,7 @@ export default function ScuziChat() {
               "rounded-xl px-3 py-2 md:px-4 md:py-3 shadow-sm",
               message.role === "user" ?
               "bg-gray-100 text-[rgb(39,39,42)]" :
-              "bg-yellow-50 text-[rgb(17,24,39)]"
+              "bg-[#fffbea] text-[rgb(17,24,39)]"
             )}>
               {message.image &&
             <img
@@ -422,25 +422,60 @@ export default function ScuziChat() {
           </motion.div>
         )}
         {isLoading &&
-        <div className="flex gap-3 max-w-[85%] mr-auto">
-            <Avatar className="h-10 w-10 flex-shrink-0">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex gap-2 md:gap-3 max-w-[85%] mr-auto"
+        >
+            <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
               <AvatarFallback className="bg-[rgb(209,222,38)] text-[rgb(39,39,42)]">
-                <ChefHat className="h-5 w-5" />
+                <ChefHat className="h-3 w-3 md:h-4 md:w-4" />
               </AvatarFallback>
             </Avatar>
-            <div className="bg-gray-50 rounded-xl px-4 py-3">
-              <div className="flex gap-1 items-center">
-                <Loader2 className="w-4 h-4 animate-spin text-[rgb(209,222,38)]" />
-                <span className="text-sm text-gray-500 ml-2">Claude is thinking...</span>
+            <div className="bg-[#fffbea] rounded-xl px-3 py-2 md:px-4 md:py-3 shadow-sm">
+              <div className="flex items-center gap-2">
+                <span 
+                  className="text-gray-600"
+                  style={{
+                    fontFamily: '"General Sans", sans-serif',
+                    fontSize: '14px',
+                    fontWeight: 400
+                  }}
+                >
+                  Scuzi thinking
+                </span>
+                <div className="flex gap-1">
+                  <motion.span
+                    animate={{ opacity: [0.3, 1, 0.3] }}
+                    transition={{ duration: 1.2, repeat: Infinity, delay: 0 }}
+                    className="text-gray-600"
+                  >
+                    ●
+                  </motion.span>
+                  <motion.span
+                    animate={{ opacity: [0.3, 1, 0.3] }}
+                    transition={{ duration: 1.2, repeat: Infinity, delay: 0.2 }}
+                    className="text-gray-600"
+                  >
+                    ●
+                  </motion.span>
+                  <motion.span
+                    animate={{ opacity: [0.3, 1, 0.3] }}
+                    transition={{ duration: 1.2, repeat: Infinity, delay: 0.4 }}
+                    className="text-gray-600"
+                  >
+                    ●
+                  </motion.span>
+                </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         }
         <div ref={messagesEndRef} />
       </div>
 
       {/* Sticky Input Area */}
-      <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 md:px-6 py-3 md:py-4 z-50 pb-20 md:pb-4">
+      <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 md:px-6 py-3 md:py-4 z-40 pb-20 md:pb-4">
         {selectedImage &&
         <div className="mb-3 relative inline-block">
             <img
