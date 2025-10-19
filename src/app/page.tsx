@@ -8,7 +8,9 @@ import { useState, useEffect } from "react";
 import { addDays, format, startOfWeek } from "date-fns";
 import { useHistoryFeed } from "@/hooks/useHistoryFeed";
 import { useCurrentWeekMeals } from "@/hooks/useCurrentWeekMeals";
+import { HistoryDetailDialog } from "@/components/HistoryDetailDialog";
 import type { Meal } from "@/types/meal";
+import type { HistoryItem } from "@/hooks/useHistoryFeed";
 
 export default function Home() {
   // Fetch real current week meals from database
@@ -103,6 +105,15 @@ export default function Home() {
 
   // Fetch real history data from DynamoDB
   const { history, isLoading, error } = useHistoryFeed();
+
+  // History detail dialog state
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState<HistoryItem | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleHistoryCardClick = (item: HistoryItem) => {
+    setSelectedHistoryItem(item);
+    setDialogOpen(true);
+  };
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
@@ -223,15 +234,6 @@ export default function Home() {
       <section className="py-16" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
         <div className="max-w-[1400px] mx-auto px-6">
           <h2 className="!font-bold">
-
-
-
-
-
-
-
-
-
             Recent AI History
           </h2>
           
@@ -244,10 +246,6 @@ export default function Home() {
           {error &&
           <div className="text-center py-20">
               <p className="!text-black">
-
-
-
-
                 Failed to load history: {error}
               </p>
             </div>
@@ -270,17 +268,16 @@ export default function Home() {
               {history.map((item) =>
             <div
               key={item.id}
+              onClick={() => handleHistoryCardClick(item)}
               className="bg-white rounded-[20px] shadow-md overflow-hidden hover:scale-[1.02] transition-transform cursor-pointer">
 
-                  {item.image_url &&
+                  {item.image_url ? (
               <img
                 src={item.image_url}
                 alt={item.title}
                 className="object-cover w-full h-[240px]" />
-
-              }
-                  {!item.image_url &&
-              <div className="w-full h-[240px] bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center">
+              ) : (
+              <div className="w-full h-[240px] bg-gradient-to-br from-yellow-400 to-yellow-600 flex flex-col items-center justify-center gap-2">
                       <span style={{
                   fontFamily: '"Right Grotesk Wide", sans-serif',
                   fontSize: '48px',
@@ -289,8 +286,16 @@ export default function Home() {
                 }}>
                         AI
                       </span>
+                      <p style={{
+                  fontFamily: '"General Sans", sans-serif',
+                  fontSize: '13px',
+                  color: 'white',
+                  opacity: 0.9
+                }}>
+                        Image is not available
+                      </p>
                     </div>
-              }
+              )}
                   <div className="p-4 space-y-2">
                     <div className="flex items-center gap-2 mb-2">
                       <span
@@ -300,7 +305,6 @@ export default function Home() {
                       backgroundColor: 'rgb(254, 243, 199)',
                       color: 'rgb(146, 64, 14)'
                     }}>
-
                         {item.type.replace('_', ' ')}
                       </span>
                     </div>
@@ -321,7 +325,6 @@ export default function Home() {
                     lineHeight: '21px',
                     color: 'rgb(107, 114, 128)'
                   }}>
-
                       {item.description}
                     </p>
                     <p style={{
@@ -568,6 +571,13 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* History Detail Dialog */}
+      <HistoryDetailDialog
+        item={selectedHistoryItem}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+      />
     </div>
   );
 }

@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
   console.log("[IMAGE API] Request received");
   
   try {
-    const { mealDescription, imageMetadata } = await request.json();
+    const { mealDescription, imageMetadata, historyItemId } = await request.json();
 
     if (!mealDescription && !imageMetadata) {
       console.error("[IMAGE API] Missing required parameters");
@@ -137,6 +137,29 @@ export async function POST(request: NextRequest) {
     const imageUrl = `data:image/png;base64,${base64Image}`;
 
     console.log(`[IMAGE API] Returning image (${base64Image.length} chars)`);
+
+    // ============================================
+    // UPDATE DYNAMODB WITH GENERATED IMAGE
+    // ============================================
+
+    if (historyItemId) {
+      try {
+        const updateCommand = new UpdateCommand({
+          TableName: HISTORY_TABLE_NAME,
+          Key: { id: historyItemId },
+          UpdateExpression: "SET image_url = :imageUrl",
+          ExpressionAttributeValues: {
+            ":imageUrl": imageUrl,
+          },
+        });
+
+        await dynamoDb.send(updateCommand);
+        console.log("[DYNAMODB] Updated history item with generated image:", historyItemId);
+      } catch (dbError) {
+        console.error("[DYNAMODB] Failed to update history item:", dbError);
+        // Don't fail the request if DynamoDB update fails
+      }
+    }
 
     return NextResponse.json({
       imageUrl,

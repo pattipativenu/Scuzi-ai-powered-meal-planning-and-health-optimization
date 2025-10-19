@@ -249,16 +249,23 @@ async function storeAIResponse(data: {
   description: string;
   image_url?: string;
   ai_response: string;
+  user_image?: string; // Add user-provided image
 }): Promise<string> {
   try {
     const itemId = randomUUID();
+    const timestamp = Date.now();
+    
+    // Calculate TTL: 1 hour from now (in seconds)
+    const ttl = Math.floor(timestamp / 1000) + 3600;
+    
     const item = {
       id: itemId,
-      timestamp: Date.now(),
+      timestamp: timestamp,
+      ttl: ttl, // DynamoDB TTL attribute
       type: data.type,
       title: data.title || "Untitled",
       description: data.description || "",
-      image_url: data.image_url || "",
+      image_url: data.image_url || data.user_image || "", // Use generated image or user image
       ai_response: data.ai_response,
       created_by: "guest_user",
     };
@@ -484,12 +491,16 @@ export async function POST(request: NextRequest) {
 
     const responseAnalysis = analyzeResponse(cleanedResponse);
     
+    // Extract user image from last user message
+    const userImage = lastUserMessage?.image || "";
+    
     const historyItemId = await storeAIResponse({
       type: responseAnalysis.type,
       title: responseAnalysis.title,
       description: responseAnalysis.description,
       image_url: "",
       ai_response: cleanedResponse,
+      user_image: userImage, // Pass user's image
     });
 
     return NextResponse.json({
