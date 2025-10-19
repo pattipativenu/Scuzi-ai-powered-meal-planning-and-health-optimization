@@ -21,7 +21,7 @@ export default function ScuziChat() {
   {
     id: "welcome",
     role: "assistant",
-    content: "👋 Hey there! I'm Scuzi — your AI food and health companion.\n\nHere's what I can help you with:\n\n🥗 Create recipes from your leftover ingredients\n📊 Analyze your meals with complete nutrition details\n🛒 Build 7-day meal plans straight from your grocery receipts\n🍳 Give cooking tips and practical healthy swaps\n🏷️ Assess packaged foods and reveal hidden additives\n\nJust type, snap, or upload — and I'll handle the rest.\nLet's make every meal smarter and healthier. 🍽️",
+    content: "\uD83D\uDC4B Hey there! I'm Scuzi \u2014 your AI food and health companion.\n\nHere's what I can help you with:\n\n\uD83E\uDD57 Create recipes from your leftover ingredients\n\uD83D\uDCCA Analyze your meals with complete nutrition details\n\uD83D\uDED2 Create recipes\xA0from your grocery receipts\n\uD83C\uDF73 Give cooking tips and practical healthy swaps\n\uD83C\uDFF7\uFE0F Assess packaged foods and reveal hidden additives\n\nJust type, snap, or upload \u2014 and I'll handle the rest.\nLet's make every meal smarter and healthier. \uD83C\uDF7D\uFE0F",
     timestamp: new Date()
   }]
   );
@@ -342,7 +342,7 @@ export default function ScuziChat() {
 
             }
               <p
-              className="whitespace-pre-wrap break-words !whitespace-pre-line"
+              className="whitespace-pre-wrap break-words !whitespace-pre-line !whitespace-pre-line"
               style={{
                 fontFamily: '"General Sans", sans-serif',
                 fontSize: '15px',
