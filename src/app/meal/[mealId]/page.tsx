@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { Clock, Users, ChevronLeft, Plus, Minus, Flame } from "lucide-react";
+import { Clock, ChefHat, Users, ArrowLeft, Flame, Plus, Minus } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface MealData {
@@ -37,60 +37,62 @@ export default function MealDetailPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (mealId) {
-      loadMealData();
-    }
-  }, [mealId]);
-
-  const loadMealData = async () => {
-    try {
-      setLoading(true);
-      
-      // First check localStorage for immediate access
-      const cachedMeals = localStorage.getItem("currentMealPlan");
-      if (cachedMeals) {
-        const meals = JSON.parse(cachedMeals) as MealData[];
-        const [day, mealType] = mealId.split("-");
-        
-        const foundMeal = meals.find(
-          (m: MealData) => m.day === day && m.meal_type === mealType
-        );
-        
-        if (foundMeal) {
-          setMeal(foundMeal);
-          setServings(foundMeal.servings);
-          setLoading(false);
-          return;
+    const loadMeal = async () => {
+      try {
+        // First check localStorage for immediate access
+        const cachedMeals = localStorage.getItem("currentMealPlan");
+        if (cachedMeals) {
+          const meals = JSON.parse(cachedMeals);
+          const [day, mealType] = mealId.split("-");
+          
+          const foundMeal = meals.find(
+            (m: any) => m.day === day && m.meal_type === mealType
+          );
+          
+          if (foundMeal) {
+            // Convert image URL to use proxy if it's an S3 URL
+            if (foundMeal.image && foundMeal.image.includes('s3.') && foundMeal.image.includes('.amazonaws.com')) {
+              foundMeal.image = `/api/image-proxy?url=${encodeURIComponent(foundMeal.image)}`;
+            }
+            setMeal(foundMeal);
+            setLoading(false);
+            return;
+          }
         }
-      }
 
-      // Fall back to API if not in cache
-      const response = await fetch("/api/plan-ahead/retrieve");
-      const data = await response.json();
-      
-      if (data.status === "success" && data.mealPlan?.meals) {
-        const [day, mealType] = mealId.split("-");
-        
-        const foundMeal = data.mealPlan.meals.find(
-          (m: MealData) => m.day === day && m.meal_type === mealType
-        );
-        
-        if (foundMeal) {
-          setMeal(foundMeal);
-          setServings(foundMeal.servings);
+        // Fall back to API
+        const response = await fetch("/api/plan-ahead/retrieve");
+        const data = await response.json();
+
+        if (data.status === "success" && data.mealPlan?.meals) {
+          const [day, mealType] = mealId.split("-");
+          
+          const foundMeal = data.mealPlan.meals.find(
+            (m: any) => m.day === day && m.meal_type === mealType
+          );
+
+          if (foundMeal) {
+            // Convert image URL to use proxy if it's an S3 URL
+            if (foundMeal.image && foundMeal.image.includes('s3.') && foundMeal.image.includes('.amazonaws.com')) {
+              foundMeal.image = `/api/image-proxy?url=${encodeURIComponent(foundMeal.image)}`;
+            }
+            setMeal(foundMeal);
+          } else {
+            setError("Meal not found");
+          }
         } else {
-          setError("Meal not found. Please generate a meal plan first.");
+          setError("No meal plan available");
         }
-      } else {
-        setError("No meal plan found. Please generate a meal plan first.");
+      } catch (error) {
+        console.error("Error loading meal:", error);
+        setError("Failed to load meal details");
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Error loading meal:", error);
-      setError("Failed to load meal details.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    loadMeal();
+  }, [mealId]);
 
   const adjustServings = (newServings: number) => {
     if (newServings < 1) return;
@@ -161,7 +163,7 @@ export default function MealDetailPage() {
           onClick={() => router.back()}
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ArrowLeft className="w-5 h-5" />
           <span>Back to Plan</span>
         </button>
 

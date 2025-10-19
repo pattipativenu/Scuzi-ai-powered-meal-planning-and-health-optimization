@@ -197,6 +197,11 @@ export default function PlanAheadPage() {
       imageUrl = `data:image/png;base64,${(meal as any).image_base64}`;
     }
     
+    // If S3 URL, use proxy to avoid 403 errors
+    if (imageUrl && imageUrl.includes('s3.') && imageUrl.includes('.amazonaws.com')) {
+      imageUrl = `/api/image-proxy?url=${encodeURIComponent(imageUrl)}`;
+    }
+    
     // Fallback to placeholder if no image
     if (!imageUrl) {
       imageUrl = "/placeholder-meal.jpg";
