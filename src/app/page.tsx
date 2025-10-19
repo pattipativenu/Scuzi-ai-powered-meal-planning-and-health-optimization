@@ -116,12 +116,12 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen md:pt-0 pt-40 md:pb-0 pb-20" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
       {/* Hero Section */}
       <AnimatedHeroSection />
 
       {/* Current Week's Meals */}
-      <section className="py-8 md:py-16 bg-white">
+      <section className="py-8 md:py-16" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
         <div className="max-w-[1400px] mx-auto px-4 md:px-6">
           <div className="flex items-baseline justify-between mb-6 md:mb-12">
             <h2 className="!font-semibold !text-2xl md:!text-3xl">
@@ -144,43 +144,55 @@ export default function Home() {
           </div>
 
           {/* Loading State */}
-          {mealsLoading && (
-            <div className="flex justify-center items-center py-20">
+          {mealsLoading &&
+          <div className="flex justify-center items-center py-20">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
             </div>
-          )}
+          }
 
           {/* No Meals State */}
-          {!mealsLoading && currentWeekMealsData.length === 0 && (
-            <div className="text-center py-20">
+          {!mealsLoading && currentWeekMealsData.length === 0 &&
+          <div className="text-center py-20">
               <p
-                style={{
-                  fontFamily: '"General Sans", sans-serif',
-                  fontSize: '15px',
-                  color: 'rgb(163, 163, 163)'
-                }}
-              >
+              style={{
+                fontFamily: '"General Sans", sans-serif',
+                fontSize: '15px',
+                color: 'rgb(163, 163, 163)'
+              }}>
+
                 No meals planned for this week yet. Generate meals in Plan Ahead!
               </p>
             </div>
-          )}
+          }
 
           {/* Desktop & Tablet: Vertical Days with Horizontal Meals */}
-          {!mealsLoading && currentWeekMealsData.length > 0 && (
-            <div className="hidden md:block space-y-10">
+          {!mealsLoading && currentWeekMealsData.length > 0 &&
+          <div className="hidden md:block space-y-10">
               {daysOfWeek.map(({ day, date }) =>
             <div key={day}>
-                  <h3
-                className="mb-6"
-                style={{
-                  fontFamily: '"Right Grotesk Wide", sans-serif',
-                  fontWeight: 500,
-                  fontSize: '16px',
-                  color: 'rgb(39, 39, 42)'
-                }}>
-
-                    {day}, {date}
-                  </h3>
+                  <div className="flex items-center justify-between mb-6">
+                    <h3
+                      style={{
+                        fontFamily: '"Right Grotesk Wide", sans-serif',
+                        fontWeight: 500,
+                        fontSize: '16px',
+                        color: 'rgb(39, 39, 42)'
+                      }}
+                    >
+                      {day}, {date}
+                    </h3>
+                    <Link
+                      href="/plan-ahead"
+                      className="flex items-center gap-1 text-sm hover:underline"
+                      style={{
+                        fontFamily: '"General Sans", sans-serif',
+                        color: 'rgb(107, 114, 128)'
+                      }}
+                    >
+                      Next Week
+                      <ChevronRight className="w-4 h-4" />
+                    </Link>
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {mealTypes.map((mealType) => {
                   const meal = getMealForDayAndType(day, mealType);
@@ -205,80 +217,90 @@ export default function Home() {
                 </div>
             )}
             </div>
-          )}
+          }
 
-          {/* Mobile: 2-column grid */}
-          {!mealsLoading && currentWeekMealsData.length > 0 && (
-            <div className="md:hidden space-y-6">
+          {/* Mobile: 2-column grid with optimized sizing */}
+          {!mealsLoading && currentWeekMealsData.length > 0 &&
+          <div className="md:hidden space-y-6">
               {daysOfWeek.map(({ day, date }) => {
-                const dayMeals = mealTypes
-                  .map(type => getMealForDayAndType(day, type))
-                  .filter(Boolean);
-                
-                if (dayMeals.length === 0) return null;
-                
-                return (
-                  <div key={day}>
+            const dayMeals = mealTypes.map(type => getMealForDayAndType(day, type)).filter(Boolean);
+            if (dayMeals.length === 0) return null;
+            
+            return (
+              <div key={day}>
+                  <div className="flex items-center justify-between mb-3 px-2">
                     <h3 
-                      className="text-base font-semibold mb-3 px-1"
                       style={{
                         fontFamily: '"Right Grotesk Wide", sans-serif',
                         fontSize: '16px',
+                        fontWeight: 500,
                         color: 'rgb(39, 39, 42)'
                       }}
                     >
                       {day}, {date}
                     </h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      {dayMeals.map((meal) => (
-                        <div key={meal!.id} className="w-full">
-                          <MealCard meal={meal!} size="small" />
-                        </div>
-                      ))}
-                    </div>
+                    <Link
+                      href="/plan-ahead"
+                      className="flex items-center gap-1"
+                      style={{
+                        fontFamily: '"General Sans", sans-serif',
+                        fontSize: '12px',
+                        color: 'rgb(107, 114, 128)'
+                      }}
+                    >
+                      <ChevronRight className="w-3 h-3" />
+                    </Link>
                   </div>
-                );
-              })}
+                  <div className="grid grid-cols-2 gap-3 px-2">
+                    {dayMeals.map((meal) => 
+                      <div key={meal!.id} className="w-full">
+                        <MealCard meal={meal!} size="small" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+            );
+          })}
             </div>
-          )}
+          }
         </div>
       </section>
 
-      {/* History Section */}
-      <section className="py-8 md:py-16 bg-white">
-        <div className="max-w-[1400px] mx-auto px-4 md:px-6">
+      {/* History Section - Real AI-Generated Content */}
+      <section className="py-8 md:py-16" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
+        <div className="max-w-[1400px] mx-auto px-6">
           <h2 className="!font-bold mb-8 !whitespace-pre-line !text-[29px]">Recent Chat History
 
           </h2>
           
-          {isLoading && (
-            <div className="flex justify-center items-center py-20">
+          {isLoading &&
+          <div className="flex justify-center items-center py-20">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
             </div>
-          )}
+          }
           
-          {error && (
-            <div className="text-center py-20">
+          {error &&
+          <div className="text-center py-20">
               <p className="!text-black">
                 Failed to load history: {error}
               </p>
             </div>
-          )}
+          }
           
-          {!isLoading && !error && history.length === 0 && (
-            <div className="text-center py-20">
+          {!isLoading && !error && history.length === 0 &&
+          <div className="text-center py-20">
               <p style={{
-                fontFamily: '"General Sans", sans-serif',
-                fontSize: '15px',
-                color: 'rgb(163, 163, 163)'
-              }}>
+              fontFamily: '"General Sans", sans-serif',
+              fontSize: '15px',
+              color: 'rgb(163, 163, 163)'
+            }}>
                 No history yet. Start a conversation in the chat to see your AI-generated content here!
               </p>
             </div>
-          )}
+          }
           
-          {!isLoading && !error && history.length > 0 && (
-            <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
+          {!isLoading && !error && history.length > 0 &&
+          <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
               {history.map((item) =>
             <div
               key={item.id}
@@ -359,13 +381,13 @@ export default function Home() {
                 </div>
             )}
             </div>
-          )}
+          }
         </div>
       </section>
 
-      {/* Customer Reviews */}
-      <section className="py-8 md:py-16 bg-white">
-        <div className="max-w-4xl mx-auto px-4 md:px-20">
+      {/* Customer Reviews Carousel */}
+      <section className="py-8 md:py-16" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
+        <div className="max-w-4xl mx-auto px-20">
           <div className="relative rounded-2xl shadow-lg p-12 text-center min-h-[280px] flex flex-col justify-center" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
             <div className="flex justify-center gap-1 mb-6">
               {[...Array(5)].map((_, i) =>
@@ -437,7 +459,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="bg-black py-12">
-        <div className="max-w-7xl mx-auto px-4 md:px-20">
+        <div className="max-w-7xl mx-auto px-20">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
             {/* Column 1: Brand */}
             <div>
@@ -590,8 +612,8 @@ export default function Home() {
       <HistoryDetailDialog
         item={selectedHistoryItem}
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
-      />
+        onOpenChange={setDialogOpen} />
+
     </div>
   );
 }

@@ -12,25 +12,27 @@ export function FloatingAskScuzi() {
 
   const subtexts = [
     "Turn leftovers into meals",
-    "Convert your food prep to nutrition insights",
-    "Find recipes from what's in your fridge",
-    "Optimize your meals with WHOOP data",
+    "Convert food to nutrition insights",
+    "Find recipes from your fridge",
+    "Optimize meals with WHOOP data",
   ];
+
+  // Only show on Home, Plan Ahead, and Pantry pages
+  const shouldShow = pathname === '/' || pathname === '/plan-ahead' || pathname === '/pantry';
 
   // Rotate subtext every 3 seconds
   useEffect(() => {
+    if (!shouldShow) return;
+    
     const interval = setInterval(() => {
       setSubtextIndex((prev) => (prev + 1) % subtexts.length);
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [shouldShow]);
 
   const handleClick = () => {
     router.push("/chat");
   };
-
-  // Only show on specific pages: Home, Plan Ahead, Pantry
-  const shouldShow = ["/", "/plan-ahead", "/pantry"].includes(pathname);
 
   if (!shouldShow) return null;
 
@@ -47,9 +49,9 @@ export function FloatingAskScuzi() {
     >
       <button
         onClick={handleClick}
-        className="w-full h-14 rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-98 flex flex-col items-center justify-center gap-0.5 backdrop-blur-md"
+        className="w-full h-14 rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98] flex flex-col items-center justify-center gap-0.5 backdrop-blur-md"
         style={{
-          background: "rgba(0, 0, 0, 0.8)",
+          background: "rgba(0, 0, 0, 0.75)",
         }}
       >
         <div className="flex items-center gap-2">
@@ -62,7 +64,7 @@ export function FloatingAskScuzi() {
               color: "white",
             }}
           >
-            💬 Ask Scuzi anything…
+            💬 Ask Scuzi
           </span>
         </div>
         <div className="h-4 overflow-hidden">

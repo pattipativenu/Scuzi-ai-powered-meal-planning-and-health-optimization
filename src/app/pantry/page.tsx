@@ -112,7 +112,7 @@ export default function PantryPage() {
     : [];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background md:pt-0 pt-40 md:pb-0 pb-20">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
         <div className="mb-12">

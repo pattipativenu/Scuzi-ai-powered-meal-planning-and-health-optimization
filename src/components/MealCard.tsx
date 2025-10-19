@@ -12,21 +12,21 @@ interface MealCardProps {
 }
 
 export const MealCard = ({ meal, size = "medium" }: MealCardProps) => {
-  // Responsive sizing based on size prop
-  const imageHeight = size === "small" ? "h-[160px]" : size === "large" ? "h-[280px]" : "h-[240px]";
-  const padding = size === "small" ? "p-3" : "p-4";
+  // Enhanced responsive sizing for mobile-first design
+  const imageHeight = size === "small" ? "h-[180px]" : size === "large" ? "h-[280px]" : "h-[240px]";
+  const padding = size === "small" ? "p-4" : "p-4";
   const titleSize = size === "small" ? "text-base" : "text-lg";
-  const descSize = size === "small" ? "text-xs" : "text-sm";
-  const metaSize = size === "small" ? "text-[10px]" : "text-xs";
-  const iconSize = size === "small" ? "w-3 h-3" : "w-4 h-4";
-  const badgePadding = size === "small" ? "px-1.5 py-0.5" : "px-2 py-1";
+  const descSize = size === "small" ? "text-sm" : "text-sm";
+  const metaSize = size === "small" ? "text-xs" : "text-xs";
+  const iconSize = size === "small" ? "w-3.5 h-3.5" : "w-4 h-4";
+  const badgePadding = size === "small" ? "px-2 py-0.5" : "px-2 py-1";
 
   return (
     <Link href={`/meal/${meal.id}`}>
       <motion.div
         whileHover={{ scale: 1.02 }}
         transition={{ type: "spring", stiffness: 200 }}
-        className="bg-card rounded-[20px] overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-border flex flex-col h-full"
+        className="bg-card rounded-[16px] overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-border flex flex-col h-full"
       >
         <div className={`relative bg-muted ${imageHeight}`}>
           <Image
@@ -35,11 +35,12 @@ export const MealCard = ({ meal, size = "medium" }: MealCardProps) => {
             fill
             className="object-cover w-full h-full"
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+            priority={false}
           />
         </div>
-        <div className={`${padding} flex-1 flex flex-col`}>
+        <div className={`${padding} flex-1 flex flex-col gap-2`}>
           <h3 
-            className={`font-semibold ${titleSize} mb-2 line-clamp-2`}
+            className={`font-semibold ${titleSize} line-clamp-2`}
             style={{
               fontFamily: '"Right Grotesk Wide", sans-serif',
               color: 'rgb(39, 39, 42)'
@@ -48,7 +49,7 @@ export const MealCard = ({ meal, size = "medium" }: MealCardProps) => {
             {meal.name}
           </h3>
           <p 
-            className={`${descSize} text-muted-foreground mb-3 line-clamp-2 flex-1`}
+            className={`${descSize} text-muted-foreground line-clamp-2 flex-1`}
             style={{
               fontFamily: '"General Sans", sans-serif',
               color: 'rgb(107, 114, 128)'

@@ -227,8 +227,8 @@ export default function PlanAheadPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-[1400px] mx-auto px-6 py-8">
+    <div className="min-h-screen bg-background md:pt-0 pt-40 md:pb-0 pb-20">
+      <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-8">
         {/* Header with Generate Button */}
         <div className="flex justify-between items-center mb-8">
           <div>
