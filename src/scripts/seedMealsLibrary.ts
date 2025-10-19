@@ -50,6 +50,7 @@ const meals = [
       sodium: 85
     },
     tags: ["high-protein", "high-fiber", "make-ahead", "probiotic", "gut-healthy"],
+    imagePrompt: "Top-view realistic photo of blueberry almond overnight oats in a glass jar. Creamy oats layered with almond butter, chia, and blueberries. Beige linen background, soft daylight, marble surface, minimal props, clean bright flat-lay composition.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -86,6 +87,7 @@ const meals = [
       sodium: 520
     },
     tags: ["high-protein", "quick", "gut-healthy", "leafy-greens"],
+    imagePrompt: "45° front photo of a folded spinach feta omelette with cherry tomatoes and whole-grain toast on a white plate. Natural daylight, wooden table, soft shadows, rustic breakfast mood, crisp edges, no people.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -122,6 +124,7 @@ const meals = [
       sodium: 120
     },
     tags: ["quick", "no-cook", "probiotic", "prebiotic", "high-protein"],
+    imagePrompt: "Side-angle photo of banana almond chia smoothie in a tall glass jar. Light beige tone, topped with banana slices and chia seeds. Glass on a wooden coaster, marble background, daylight glow, minimalist clean style.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -158,6 +161,7 @@ const meals = [
       sodium: 480
     },
     tags: ["high-protein", "high-fiber", "probiotic", "quick"],
+    imagePrompt: "25° top-angle photo of avocado and cottage cheese toast with cherry tomatoes and lemon drizzle. Served on ceramic plate over linen cloth, bright morning light, fresh green tones, minimal background.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -197,6 +201,7 @@ const meals = [
       sodium: 320
     },
     tags: ["high-protein", "probiotic", "recovery", "weekend-brunch"],
+    imagePrompt: "45° front photo of stacked golden pancakes topped with kefir and mixed berries. Light maple drizzle, ceramic plate on marble counter, natural light, soft focus, fresh breakfast vibe.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -236,6 +241,7 @@ const meals = [
       sodium: 320
     },
     tags: ["vegan", "anti-inflammatory", "high-protein", "gut-healthy"],
+    imagePrompt: "45° front photo of bright yellow tofu scramble with bell peppers and spinach. Served on white ceramic plate beside whole-grain toast, wooden surface, daylight, clean healthy presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -275,6 +281,7 @@ const meals = [
       sodium: 380
     },
     tags: ["high-fiber", "vegetarian", "recovery", "gut-healthy"],
+    imagePrompt: "Top-view photo of sweet potato and black bean breakfast bowl with scrambled eggs and spinach. Roasted sweet potatoes, black beans, and fresh greens on a white plate, natural light, rustic kitchen aesthetic.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -311,6 +318,7 @@ const meals = [
       sodium: 120
     },
     tags: ["no-cook", "high-protein", "quick", "probiotic"],
+    imagePrompt: "Top-view photo of layered Greek yogurt parfait with granola, mixed berries, and chia seeds. White ceramic bowl, soft daylight, clean bright colors, minimalist presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -349,6 +357,7 @@ const meals = [
       sodium: 1240
     },
     tags: ["high-protein", "quick", "omega-3"],
+    imagePrompt: "Top-view photo of salmon and cream cheese bagel with red onion and capers. Toasted whole grain bagel, golden crust, fresh herbs, natural light, elegant breakfast styling.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -386,6 +395,7 @@ const meals = [
       sodium: 85
     },
     tags: ["high-protein", "high-fiber", "gluten-free", "vegan"],
+    imagePrompt: "Top-view photo of quinoa bowl with cinnamon and mixed berries. Warm quinoa, pecans, and fresh berries on a white plate, natural light, cozy kitchen vibe.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -422,6 +432,7 @@ const meals = [
       sodium: 35
     },
     tags: ["make-ahead", "no-cook", "vegan", "high-fiber"],
+    imagePrompt: "Top-view photo of chia pudding with diced mango and coconut flakes. Glass jar, natural light, tropical colors, clean minimalist style.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -459,6 +470,7 @@ const meals = [
       sodium: 720
     },
     tags: ["high-protein", "high-fiber", "portable"],
+    imagePrompt: "Top-view photo of veggie-loaded breakfast burrito with scrambled eggs, black beans, and salsa. Whole wheat tortilla, colorful vegetables, fresh cheese, natural light, vibrant colors.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -493,6 +505,7 @@ const meals = [
       sodium: 680
     },
     tags: ["high-protein", "no-cook", "quick", "probiotic"],
+    imagePrompt: "Top-view photo of cottage cheese bowl with pineapple chunks and walnuts. Fresh mint garnish, natural light, tropical colors, clean presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -529,6 +542,116 @@ const meals = [
       sodium: 280
     },
     tags: ["high-protein", "meal-prep", "portable", "low-carb"],
+    imagePrompt: "Top-view photo of breakfast egg muffins in a muffin tin. Golden brown, with spinach and cherry tomatoes, natural light, rustic kitchen aesthetic.",
+    imageUrl: "",
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: uuidv4(),
+    name: "Apple Cinnamon Yogurt Bowl with Walnuts",
+    mealType: "breakfast",
+    description: "Creamy yogurt bowl with sweet apples and crunchy walnuts",
+    prepTime: 5,
+    cookTime: 0,
+    servings: 1,
+    ingredients: [
+      { name: "Greek yogurt", quantity: 1, unit: "cup", category: "fridge" },
+      { name: "cottage cheese", quantity: 0.5, unit: "cup", category: "fridge" },
+      { name: "apple", quantity: 1, unit: "medium", category: "cupboard" },
+      { name: "walnuts", quantity: 0.25, unit: "cup", category: "cupboard" },
+      { name: "cinnamon", quantity: 0.5, unit: "tsp", category: "cupboard" },
+      { name: "honey", quantity: 1, unit: "tbsp", category: "cupboard" }
+    ],
+    instructions: [
+      "Mix Greek yogurt and cottage cheese in a bowl.",
+      "Dice apple into small cubes.",
+      "Top yogurt mixture with apple cubes and walnuts.",
+      "Sprinkle cinnamon and drizzle honey over top.",
+      "Serve immediately."
+    ],
+    nutrition: {
+      calories: 390,
+      protein: 28,
+      carbs: 42,
+      fat: 14,
+      fiber: 6,
+      sugar: 32,
+      sodium: 340
+    },
+    tags: ["high-protein", "no-cook", "quick", "probiotic"],
+    imagePrompt: "Top-view photo of Greek yogurt and cottage cheese bowl topped with apple cubes, walnuts, and cinnamon dust. White ceramic bowl on marble, soft daylight, cozy warm tone, minimal props.",
+    imageUrl: "",
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: uuidv4(),
+    name: "Tuna & Avocado Toast with Microgreens",
+    mealType: "breakfast",
+    description: "Protein-packed toast with tuna, avocado, and fresh microgreens",
+    prepTime: 10,
+    cookTime: 5,
+    servings: 1,
+    ingredients: [
+      { name: "whole grain bread", quantity: 2, unit: "slices", category: "cupboard" },
+      { name: "tuna", quantity: 1, unit: "can", category: "fridge" },
+      { name: "avocado", quantity: 0.5, unit: "whole", category: "cupboard" },
+      { name: "microgreens", quantity: 1, unit: "cup", category: "fridge" },
+      { name: "lemon juice", quantity: 1, unit: "tsp", category: "fridge" },
+      { name: "dill", quantity: 1, unit: "tbsp", category: "fridge" }
+    ],
+    instructions: [
+      "Toast bread until golden.",
+      "Spread tuna and avocado on toast.",
+      "Add microgreens and drizzle with lemon juice.",
+      "Sprinkle with dill. Serve immediately."
+    ],
+    nutrition: {
+      calories: 420,
+      protein: 32,
+      carbs: 30,
+      fat: 20,
+      fiber: 10,
+      sugar: 6,
+      sodium: 680
+    },
+    tags: ["high-protein", "quick", "nutrient-dense"],
+    imagePrompt: "Top-view photo of tuna and avocado toast with microgreens. Golden toast, fresh tuna, creamy avocado, and vibrant greens, natural light, elegant presentation.",
+    imageUrl: "",
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: uuidv4(),
+    name: "Protein Smoothie Bowl with Granola",
+    mealType: "breakfast",
+    description: "Creamy protein smoothie bowl with granola and fresh fruit",
+    prepTime: 10,
+    cookTime: 0,
+    servings: 1,
+    ingredients: [
+      { name: "protein powder", quantity: 1, unit: "scoop", category: "cupboard" },
+      { name: "banana", quantity: 1, unit: "whole", category: "cupboard" },
+      { name: "Greek yogurt", quantity: 1, unit: "cup", category: "fridge" },
+      { name: "almond milk", quantity: 1, unit: "cup", category: "fridge" },
+      { name: "mixed berries", quantity: 0.5, unit: "cup", category: "fridge" },
+      { name: "granola", quantity: 0.5, unit: "cup", category: "cupboard" }
+    ],
+    instructions: [
+      "Blend banana, yogurt, protein powder, and almond milk until smooth.",
+      "Pour into a bowl.",
+      "Top with mixed berries, granola, and a drizzle of honey.",
+      "Serve immediately."
+    ],
+    nutrition: {
+      calories: 480,
+      protein: 32,
+      carbs: 58,
+      fat: 14,
+      fiber: 12,
+      sugar: 28,
+      sodium: 280
+    },
+    tags: ["high-protein", "no-cook", "quick", "probiotic"],
+    imagePrompt: "Top-view photo of protein smoothie bowl with banana, berries, and granola. Creamy base, colorful toppings, natural light, vibrant colors, clean presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -568,6 +691,7 @@ const meals = [
       sodium: 980
     },
     tags: ["high-protein", "low-carb", "gluten-free-option"],
+    imagePrompt: "Top-view photo of romaine lettuce salad with grilled chicken slices, shaved parmesan, and light Caesar dressing. Ceramic bowl, soft daylight, crisp fresh greens, realistic texture.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -606,6 +730,7 @@ const meals = [
       sodium: 780
     },
     tags: ["vegetarian", "gluten-free", "meal-prep", "mediterranean"],
+    imagePrompt: "Top-view photo of colorful quinoa bowl with cherry tomatoes, cucumber, and feta cheese. Mediterranean vegetables, fresh herbs, natural light, vibrant colors.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -643,6 +768,7 @@ const meals = [
       sodium: 820
     },
     tags: ["high-protein", "quick", "portable", "no-cook"],
+    imagePrompt: "Top-view photo of turkey and avocado wrap with lettuce and tomato. Whole wheat tortilla, fresh turkey, creamy avocado, crisp vegetables, natural light, elegant presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -681,6 +807,7 @@ const meals = [
       sodium: 920
     },
     tags: ["high-protein", "omega-3", "asian-inspired"],
+    imagePrompt: "Top-view photo of salmon teriyaki with brown rice and broccoli. Glazed salmon, steamed broccoli, fluffy rice, natural light, vibrant colors, healthy meal presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -719,6 +846,7 @@ const meals = [
       sodium: 420
     },
     tags: ["vegetarian", "vegan-option", "high-fiber", "meal-prep"],
+    imagePrompt: "Top-view photo of black bean and sweet potato burrito bowl. Roasted sweet potatoes, black beans, and corn on a white plate, natural light, vibrant colors, healthy meal presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -756,6 +884,7 @@ const meals = [
       sodium: 680
     },
     tags: ["high-protein", "mediterranean", "marinated"],
+    imagePrompt: "Top-view photo of Greek chicken gyro with tzatziki. Marinated chicken, pita bread, cool tzatziki sauce, fresh herbs, natural light, vibrant colors, healthy meal presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -793,6 +922,7 @@ const meals = [
       sodium: 1120
     },
     tags: ["high-protein", "asian-inspired", "nut-based"],
+    imagePrompt: "Top-view photo of Thai peanut noodle bowl with chicken. Stir-fried vegetables, creamy peanut sauce, fresh herbs, natural light, vibrant colors, healthy meal presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -828,6 +958,7 @@ const meals = [
       sodium: 720
     },
     tags: ["vegetarian", "italian", "quick"],
+    imagePrompt: "Top-view photo of caprese sandwich with balsamic glaze. Fresh mozzarella, ripe tomato, basil leaves, balsamic glaze, natural light, vibrant colors, healthy meal presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -865,6 +996,7 @@ const meals = [
       sodium: 980
     },
     tags: ["high-protein", "omega-3", "asian-inspired", "gluten-free"],
+    imagePrompt: "Top-view photo of tuna poke bowl. Fresh tuna, sushi rice, edamame, cucumber, avocado, sesame seeds, natural light, vibrant colors, healthy meal presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -902,6 +1034,7 @@ const meals = [
       sodium: 980
     },
     tags: ["high-protein", "low-carb", "quick", "asian-inspired"],
+    imagePrompt: "Top-view photo of chicken and vegetable stir-fry. Tender chicken, colorful vegetables, soy sauce, natural light, vibrant colors, healthy meal presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -939,6 +1072,7 @@ const meals = [
       sodium: 680
     },
     tags: ["vegetarian", "vegan", "high-fiber", "meal-prep"],
+    imagePrompt: "Top-view photo of lentil and vegetable soup. Hearty lentils, carrots, celery, onion, fresh herbs, natural light, vibrant colors, healthy meal presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -976,6 +1110,7 @@ const meals = [
       sodium: 720
     },
     tags: ["high-protein", "quick", "mexican-inspired"],
+    imagePrompt: "Top-view photo of shrimp tacos with lime crema. Spicy shrimp, fresh cabbage slaw, creamy lime crema, natural light, vibrant colors, healthy meal presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1013,6 +1148,7 @@ const meals = [
       sodium: 620
     },
     tags: ["vegetarian", "vegan-option", "no-cook", "high-fiber"],
+    imagePrompt: "Top-view photo of chickpea salad sandwich. Creamy chickpea salad, fresh vegetables, whole grain bread, natural light, vibrant colors, healthy meal presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1048,6 +1184,7 @@ const meals = [
       sodium: 880
     },
     tags: ["high-protein", "meal-prep", "comfort-food"],
+    imagePrompt: "Top-view photo of BBQ pulled chicken bowl. Tender pulled chicken, quinoa, slaw, warm corn, natural light, vibrant colors, healthy meal presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1081,6 +1218,7 @@ const meals = [
       sodium: 125
     },
     tags: ["quick", "no-cook", "portable"],
+    imagePrompt: "Top-view photo of apple wedges drizzled with peanut butter and cinnamon. Beige linen background, natural daylight, rustic wholesome aesthetic, clean snack styling.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1117,6 +1255,7 @@ const meals = [
       sodium: 380
     },
     tags: ["vegan", "no-cook", "high-fiber"],
+    imagePrompt: "Top-view photo of hummus and veggie sticks. Creamy hummus, colorful vegetables, natural light, vibrant colors, healthy snack presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1149,6 +1288,7 @@ const meals = [
       sodium: 75
     },
     tags: ["high-protein", "quick", "no-cook"],
+    imagePrompt: "Top-view photo of Greek yogurt with honey and mixed nuts. Creamy yogurt, honey drizzle, crunchy nuts, natural light, vibrant colors, healthy snack presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1185,6 +1325,7 @@ const meals = [
       sodium: 35
     },
     tags: ["no-bake", "make-ahead", "portable"],
+    imagePrompt: "Top-view photo of trail mix energy balls. No-bake energy balls, colorful mix, natural light, vibrant colors, healthy snack presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1216,6 +1357,7 @@ const meals = [
       sodium: 5
     },
     tags: ["quick", "no-cook", "energy-boost"],
+    imagePrompt: "Top-view photo of banana with almond butter. Simple banana, creamy almond butter, natural light, vibrant colors, healthy snack presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1251,6 +1393,7 @@ const meals = [
       sodium: 140
     },
     tags: ["high-protein", "low-carb", "meal-prep"],
+    imagePrompt: "Top-view photo of hard-boiled eggs with everything bagel seasoning. Protein-packed eggs, savory seasoning, natural light, vibrant colors, healthy snack presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1282,6 +1425,7 @@ const meals = [
       sodium: 380
     },
     tags: ["quick", "no-cook", "portable"],
+    imagePrompt: "Top-view photo of cheese and whole grain crackers. Sharp cheddar, crunchy crackers, natural light, vibrant colors, healthy snack presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1316,6 +1460,7 @@ const meals = [
       sodium: 480
     },
     tags: ["high-protein", "vegan", "quick"],
+    imagePrompt: "Top-view photo of steamed edamame with sea salt. Lightly salted edamame, natural light, vibrant colors, healthy snack presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1354,6 +1499,7 @@ const meals = [
       sodium: 280
     },
     tags: ["vegetarian", "quick", "nutrient-dense"],
+    imagePrompt: "Top-view photo of avocado toast bites. Mini avocado toasts with cherry tomatoes, natural light, vibrant colors, healthy snack presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1388,6 +1534,7 @@ const meals = [
       sodium: 180
     },
     tags: ["high-protein", "quick", "post-workout"],
+    imagePrompt: "Top-view photo of protein shake. Simple protein shake with banana and berries, natural light, vibrant colors, healthy snack presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1421,6 +1568,7 @@ const meals = [
       sodium: 340
     },
     tags: ["high-protein", "low-fat", "quick"],
+    imagePrompt: "Top-view photo of rice cakes with cottage cheese and berries. Light rice cakes, creamy cottage cheese, fresh berries, natural light, vibrant colors, healthy snack presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1451,6 +1599,7 @@ const meals = [
       sodium: 5
     },
     tags: ["quick", "antioxidants", "heart-healthy"],
+    imagePrompt: "Top-view photo of dark chocolate and almonds. Antioxidant-rich dark chocolate, crunchy almonds, natural light, vibrant colors, healthy snack presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1483,6 +1632,7 @@ const meals = [
       sodium: 220
     },
     tags: ["low-carb", "quick", "no-cook"],
+    imagePrompt: "Top-view photo of celery sticks with cream cheese. Crisp celery, creamy cream cheese, natural light, vibrant colors, healthy snack presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1520,6 +1670,7 @@ const meals = [
       sodium: 310
     },
     tags: ["vegan", "high-fiber", "make-ahead"],
+    imagePrompt: "Top-view photo of roasted chickpeas. Crunchy roasted chickpeas, savory seasonings, natural light, vibrant colors, healthy snack presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1558,6 +1709,7 @@ const meals = [
       sodium: 420
     },
     tags: ["high-protein", "low-carb", "nutrient-dense"],
+    imagePrompt: "45° front photo of medium-rare steak with garlic sautéed greens and creamy mashed potatoes. White plate, linen background, daylight, subtle gloss, elegant hearty feel.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1594,6 +1746,7 @@ const meals = [
       sodium: 280
     },
     tags: ["high-protein", "omega-3", "nutrient-dense"],
+    imagePrompt: "Top-view photo of baked salmon with asparagus and quinoa. Herb-crusted salmon, tender asparagus, fluffy quinoa, natural light, vibrant colors, healthy meal presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1629,6 +1782,7 @@ const meals = [
       sodium: 360
     },
     tags: ["high-protein", "nutrient-dense", "balanced"],
+    imagePrompt: "Top-view photo of chicken breast with sweet potato and green beans. Herb-roasted chicken, caramelized sweet potato, crisp green beans, natural light, vibrant colors, healthy meal presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1666,6 +1820,7 @@ const meals = [
       sodium: 1080
     },
     tags: ["high-protein", "asian-inspired", "quick"],
+    imagePrompt: "Top-view photo of shrimp stir-fry with brown rice. Quick shrimp stir-fry, colorful vegetables, brown rice, natural light, vibrant colors, healthy meal presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1702,6 +1857,7 @@ const meals = [
       sodium: 880
     },
     tags: ["high-protein", "low-carb", "italian-inspired"],
+    imagePrompt: "Top-view photo of turkey meatballs with zucchini noodles. Lean turkey meatballs, marinara sauce, zucchini noodles, natural light, vibrant colors, healthy meal presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1739,6 +1895,7 @@ const meals = [
       sodium: 1180
     },
     tags: ["high-protein", "asian-inspired"],
+    imagePrompt: "Top-view photo of beef and broccoli stir-fry. Tender beef, colorful vegetables, savory sauce, natural light, vibrant colors, healthy meal presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1775,6 +1932,7 @@ const meals = [
       sodium: 480
     },
     tags: ["high-protein", "low-fat", "nutrient-dense"],
+    imagePrompt: "Top-view photo of baked cod with roasted Brussels sprouts. Flaky cod, caramelized Brussels sprouts, lemon zest, natural light, vibrant colors, healthy meal presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1812,6 +1970,7 @@ const meals = [
       sodium: 680
     },
     tags: ["high-protein", "high-fiber", "mexican-inspired"],
+    imagePrompt: "Top-view photo of chicken fajita bowl. Sizzling chicken fajitas, colorful vegetables, brown rice, natural light, vibrant colors, healthy meal presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1848,6 +2007,7 @@ const meals = [
       sodium: 320
     },
     tags: ["high-protein", "nutrient-dense", "comfort-food"],
+    imagePrompt: "Top-view photo of pork tenderloin with roasted root vegetables. Juicy pork tenderloin, colorful root vegetables, natural light, vibrant colors, healthy meal presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1885,6 +2045,7 @@ const meals = [
       sodium: 280
     },
     tags: ["vegetarian", "vegan", "high-fiber", "indian-inspired"],
+    imagePrompt: "Top-view photo of vegetarian lentil curry. Hearty lentils, colorful vegetables, aromatic spices, natural light, vibrant colors, healthy meal presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1921,6 +2082,7 @@ const meals = [
       sodium: 320
     },
     tags: ["high-protein", "low-carb", "keto-friendly"],
+    imagePrompt: "Top-view photo of grilled chicken with cauliflower rice and avocado. Marinated chicken, low-carb cauliflower rice, fresh avocado, natural light, vibrant colors, healthy meal presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1957,6 +2119,7 @@ const meals = [
       sodium: 920
     },
     tags: ["high-protein", "italian-inspired", "comfort-food"],
+    imagePrompt: "Top-view photo of baked chicken parmesan with whole wheat pasta. Crispy chicken parmesan, marinara sauce, whole wheat pasta, natural light, vibrant colors, healthy meal presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1993,6 +2156,7 @@ const meals = [
       sodium: 680
     },
     tags: ["high-protein", "omega-3", "nutrient-dense"],
+    imagePrompt: "Top-view photo of tuna steak with quinoa and sautéed spinach. Seared tuna steak, fluffy quinoa, garlic spinach, natural light, vibrant colors, healthy meal presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -2029,6 +2193,7 @@ const meals = [
       sodium: 480
     },
     tags: ["high-protein", "meal-prep", "comfort-food"],
+    imagePrompt: "Top-view photo of stuffed bell peppers with ground turkey. Colorful bell peppers, seasoned turkey, brown rice, natural light, vibrant colors, healthy meal presentation.",
     imageUrl: "",
     createdAt: new Date().toISOString()
   }
