@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 type Category = "freezer" | "fridge" | "cupboard";
 
@@ -26,19 +27,14 @@ export default function PantryPage() {
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editQuantity, setEditQuantity] = useState<number>(0);
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!isPending && !session?.user) {
-      router.push("/login?redirect=/pantry");
-    }
-  }, [session, isPending, router]);
-
-  // Fetch inventory data
+  // Fetch inventory data only if authenticated
   useEffect(() => {
     if (session?.user) {
       fetchInventory();
+    } else if (!isPending) {
+      setIsLoading(false);
     }
-  }, [session]);
+  }, [session, isPending]);
 
   const fetchInventory = async () => {
     setIsLoading(true);
@@ -65,7 +61,6 @@ export default function PantryPage() {
 
   const handleSaveEdit = async (itemName: string) => {
     try {
-      // Update the inventory locally
       setInventory(prev => 
         prev.map(item => 
           item.ingredientName === itemName 
@@ -129,8 +124,39 @@ export default function PantryPage() {
     );
   }
 
+  // Show login prompt if not authenticated
   if (!session?.user) {
-    return null;
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <div className="mb-6 flex justify-center">
+            <Package className="w-16 h-16 text-muted-foreground" />
+          </div>
+          <h1 className="text-3xl font-bold mb-4" style={{ fontFamily: "var(--font-heading)" }}>
+            Pantry
+          </h1>
+          <p className="text-lg text-muted-foreground mb-8" style={{ fontFamily: '"General Sans", sans-serif' }}>
+            Sign in to view and manage your personal ingredient inventory
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/login?redirect=/pantry"
+              className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+              style={{ fontFamily: '"Right Grotesk Wide", sans-serif', fontWeight: 500 }}
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/register?redirect=/pantry"
+              className="px-6 py-3 border-2 border-black text-black rounded-lg hover:bg-gray-50 transition-colors"
+              style={{ fontFamily: '"Right Grotesk Wide", sans-serif', fontWeight: 500 }}
+            >
+              Create Account
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -185,10 +211,10 @@ export default function PantryPage() {
             >
               {filteredInventory.length === 0 ? (
                 <div className="text-center py-16">
-                  <div style={{ color: getCategoryColor(selectedCategory) }}>
+                  <div className="flex justify-center mb-4" style={{ color: getCategoryColor(selectedCategory) }}>
                     {getCategoryIcon(selectedCategory)}
                   </div>
-                  <p className="text-muted-foreground mt-4" style={{ fontFamily: '"General Sans", sans-serif' }}>
+                  <p className="text-muted-foreground" style={{ fontFamily: '"General Sans", sans-serif' }}>
                     No items in {selectedCategory}
                   </p>
                 </div>
@@ -198,9 +224,6 @@ export default function PantryPage() {
                     <div key={`${item.ingredientName}-${index}`}>
                       <div className="flex items-center justify-between p-6 hover:bg-secondary/50 transition-colors">
                         <div className="flex items-center gap-4 flex-1">
-                          <div style={{ color: getCategoryColor(item.category) }}>
-                            {getCategoryIcon(item.category)}
-                          </div>
                           <span className="text-lg" style={{ fontFamily: '"General Sans", sans-serif' }}>
                             {item.ingredientName}
                           </span>
@@ -219,14 +242,14 @@ export default function PantryPage() {
                               />
                               <button
                                 onClick={() => handleSaveEdit(item.ingredientName)}
-                                className="px-3 py-1 bg-black text-white rounded-lg text-sm"
+                                className="px-3 py-1 bg-black text-white rounded-lg text-sm hover:bg-gray-800 transition-colors"
                                 style={{ fontFamily: '"General Sans", sans-serif' }}
                               >
                                 Save
                               </button>
                               <button
                                 onClick={() => setEditingItem(null)}
-                                className="px-3 py-1 border border-border rounded-lg text-sm"
+                                className="px-3 py-1 border border-border rounded-lg text-sm hover:bg-secondary transition-colors"
                                 style={{ fontFamily: '"General Sans", sans-serif' }}
                               >
                                 Cancel
@@ -243,7 +266,7 @@ export default function PantryPage() {
                                   className="p-2 hover:bg-secondary rounded-lg transition-colors"
                                   title="Edit quantity"
                                 >
-                                  <Pencil className="w-4 h-4 text-muted-foreground" />
+                                  <Pencil className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
                                 </button>
                                 <button
                                   onClick={() => handleDeleteItem(item.ingredientName)}
