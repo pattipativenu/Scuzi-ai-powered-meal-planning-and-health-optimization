@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
-import { startOfWeek, format, addWeeks } from "date-fns";
+import { startOfWeek, format } from "date-fns";
 
 // Route segment config - extend API timeout for meal storage
-export const maxDuration = 120; // Increased to 120 seconds for 28 meals
+export const maxDuration = 120;
 export const dynamic = 'force-dynamic';
 
 const lambdaClient = new LambdaClient({
@@ -14,11 +14,11 @@ const lambdaClient = new LambdaClient({
   },
 });
 
-// Retry logic with exponential backoff - reduced delays
+// Retry logic with exponential backoff
 async function retryWithBackoff<T>(
   fn: () => Promise<T>,
-  maxRetries = 2, // Reduced from 3 to 2
-  baseDelay = 500 // Reduced from 1000ms to 500ms
+  maxRetries = 2,
+  baseDelay = 500
 ): Promise<T> {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
@@ -49,7 +49,7 @@ async function storeMeal(meal: any, weekId: string) {
       cook_time: meal.cook_time,
       servings: meal.servings,
       image_bytes: meal.image_base64 || meal.image,
-      week_id: `next_${weekId}`,
+      week_id: weekId, // Use current week ID without prefix
     };
 
     const command = new InvokeCommand({
@@ -78,7 +78,7 @@ async function storeMeal(meal: any, weekId: string) {
 async function processMealsInBatches(meals: any[], weekId: string) {
   const storedMeals = [];
   const failedMeals = [];
-  const batchSize = 4; // Process 4 meals in parallel
+  const batchSize = 4;
   
   console.log(`Processing ${meals.length} meals in batches of ${batchSize}...`);
   
@@ -107,7 +107,6 @@ async function processMealsInBatches(meals: any[], weekId: string) {
       }
     });
     
-    // Small delay between batches to avoid overwhelming services
     if (i + batchSize < meals.length) {
       await new Promise(resolve => setTimeout(resolve, 200));
     }
@@ -129,28 +128,25 @@ export async function POST(request: NextRequest) {
 
     console.log(`Starting to store ${meals.length} meals in parallel batches...`);
 
-    // Calculate next week identifier
+    // Calculate current week identifier (matching retrieve API)
     const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-    const nextWeekStart = addWeeks(currentWeekStart, 1);
-    const nextWeekId = format(nextWeekStart, "yyyy-MM-dd");
+    const weekId = format(currentWeekStart, "yyyy-MM-dd");
 
-    // Process meals in parallel batches for faster processing
-    const { storedMeals, failedMeals } = await processMealsInBatches(meals, nextWeekId);
+    // Process meals in parallel batches
+    const { storedMeals, failedMeals } = await processMealsInBatches(meals, weekId);
 
     console.log(`Completed: ${storedMeals.length} successful, ${failedMeals.length} failed`);
 
-    // Return success if at least some meals were stored
     if (storedMeals.length > 0) {
       return NextResponse.json({
         status: "success",
         meals: storedMeals,
-        nextWeekId,
+        weekId,
         message: `Successfully stored ${storedMeals.length}/${meals.length} meals`,
         failedCount: failedMeals.length,
         failures: failedMeals,
       });
     } else {
-      // All meals failed
       return NextResponse.json(
         {
           status: "error",

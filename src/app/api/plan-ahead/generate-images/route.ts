@@ -3,8 +3,6 @@ import {
   BedrockRuntimeClient,
   InvokeModelCommand,
 } from "@aws-sdk/client-bedrock-runtime";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { randomUUID } from "crypto";
 
 // ============================================
 // AWS CLIENTS WITH BEARER TOKEN
@@ -35,15 +33,21 @@ const getBedrockClient = () => {
   return client;
 };
 
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || "us-east-1",
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
-  },
-});
-
 const bedrockClient = getBedrockClient();
+
+// ============================================
+// DISHWARE MAPPING BY MEAL TYPE
+// ============================================
+
+const getDishware = (mealType: string): string => {
+  const dishwareMap: Record<string, string> = {
+    "Breakfast": "white ceramic bowl",
+    "Lunch": "white ceramic plate",
+    "Dinner": "white deep bowl",
+    "Snack": "white ceramic plate",
+  };
+  return dishwareMap[mealType] || "white ceramic plate";
+};
 
 // ============================================
 // ENHANCED RETRY LOGIC
@@ -78,11 +82,15 @@ async function retryOperation<T>(
 // GENERATE SINGLE IMAGE WITH TITAN G1 V2
 // ============================================
 
-async function generateMealImage(prompt: string, mealName: string): Promise<string> {
-  console.log(`[IMAGE] Generating: ${mealName}`);
+async function generateMealImage(meal: any): Promise<string> {
+  console.log(`[IMAGE] Generating: ${meal.name}`);
   
-  // Enhance prompt for consistency
-  const enhancedPrompt = `${prompt}, white plate, natural daylight, 45-degree angle, shallow depth of field, sharp focus, restaurant quality, appetizing, high resolution, professional food photography`;
+  // Use meal's image_prompt if available, otherwise create one
+  const basePrompt = meal.image_prompt || `${meal.name} - ${meal.description}`;
+  const dishware = getDishware(meal.meal_type);
+  
+  // Enhance prompt for professional food photography
+  const enhancedPrompt = `Professional food photography: ${basePrompt}, served on ${dishware}, natural daylight, 45-degree angle, shallow depth of field, sharp focus, restaurant quality, appetizing, high resolution`;
   
   const input = {
     taskType: "TEXT_IMAGE",
@@ -111,40 +119,40 @@ async function generateMealImage(prompt: string, mealName: string): Promise<stri
   const responseBody = JSON.parse(new TextDecoder().decode(response.body));
   const base64Image = responseBody.images[0];
   
+  console.log(`[IMAGE] ✓ Generated: ${meal.name}`);
   return base64Image;
 }
 
 // ============================================
 // BATCH PROCESS IMAGES WITH RATE LIMITING
-// Returns meals with base64 images for Lambda processing
 // ============================================
 
 async function batchGenerateImages(meals: any[]): Promise<any[]> {
   const results: any[] = [];
-  const batchSize = 5; // Process 5 images at a time
-  const delayBetweenBatches = 3000; // 3 seconds between batches
+  const batchSize = 5;
+  const delayBetweenBatches = 3000;
   
   console.log(`[BATCH] Processing ${meals.length} meals in batches of ${batchSize}`);
   
   for (let i = 0; i < meals.length; i += batchSize) {
     const batch = meals.slice(i, i + batchSize);
-    console.log(`[BATCH] Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(meals.length / batchSize)}`);
+    const batchNumber = Math.floor(i / batchSize) + 1;
+    const totalBatches = Math.ceil(meals.length / batchSize);
+    
+    console.log(`[BATCH] Processing batch ${batchNumber}/${totalBatches} (meals ${i + 1}-${Math.min(i + batchSize, meals.length)})`);
     
     const batchResults = await Promise.all(
       batch.map(async (meal) => {
         try {
-          // Generate image and keep base64 for Lambda
-          const base64Image = await generateMealImage(meal.image_prompt, meal.name);
+          const base64Image = await generateMealImage(meal);
           
           return {
             ...meal,
             image_base64: base64Image,
-            // Also convert to data URL for immediate display
             image: `data:image/png;base64,${base64Image}`,
           };
         } catch (error) {
-          console.error(`[BATCH] Error processing ${meal.name}:`, error);
-          // Return meal without image
+          console.error(`[BATCH] ✗ Error processing ${meal.name}:`, error);
           return {
             ...meal,
             image_base64: null,
@@ -156,13 +164,13 @@ async function batchGenerateImages(meals: any[]): Promise<any[]> {
     
     results.push(...batchResults);
     
-    // Delay between batches to avoid rate limits
     if (i + batchSize < meals.length) {
       console.log(`[BATCH] Waiting ${delayBetweenBatches}ms before next batch...`);
       await new Promise(resolve => setTimeout(resolve, delayBetweenBatches));
     }
   }
   
+  console.log(`[BATCH] ✓ Completed: ${results.length}/${meals.length} meals processed`);
   return results;
 }
 
@@ -185,15 +193,18 @@ export async function POST(request: NextRequest) {
     
     console.log(`[IMAGE BATCH] Processing ${meals.length} meals`);
     
-    // Generate all images (returns base64 for Lambda)
     const mealsWithImages = await batchGenerateImages(meals);
     
-    console.log(`[IMAGE BATCH] Successfully generated ${mealsWithImages.length} images`);
+    const successCount = mealsWithImages.filter(m => m.image_base64).length;
+    const failCount = mealsWithImages.length - successCount;
+    
+    console.log(`[IMAGE BATCH] Complete: ${successCount} success, ${failCount} failed`);
     
     return NextResponse.json({
       status: "success",
       meals: mealsWithImages,
-      totalImages: mealsWithImages.length,
+      totalImages: successCount,
+      failedImages: failCount,
     });
     
   } catch (error) {

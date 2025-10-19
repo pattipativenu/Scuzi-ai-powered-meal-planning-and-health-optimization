@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
         TableName: process.env.DYNAMODB_MEALPLAN_TABLE || "MealPlanData",
         KeyConditionExpression: "week_id = :weekId",
         ExpressionAttributeValues: {
-          ":weekId": `current_${weekId}`,
+          ":weekId": weekId,
         },
       });
       const existingMealsResponse = await docClient.send(existingMealsQuery);
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
       ),
     };
 
-    // Step 4: Generate meals with Claude 3.5 Sonnet V2 (with existing meals context)
+    // Step 4: Generate meals with Claude 3.5 Sonnet V2
     const systemPrompt = `You are an expert AI nutritionist and meal planner integrated with WHOOP health data.
 
 WHOOP Data Summary (Last 14 Days):
@@ -116,23 +116,23 @@ WHOOP Data Summary (Last 14 Days):
 - Average Day Strain: ${whoopSummary.avgStrain}
 - Average Daily Calories: ${whoopSummary.avgCalories} kcal
 
-${existingMeals.length > 0 ? `EXISTING MEALS FROM CURRENT WEEK:
-The user already has these meals in their current week plan:
-${JSON.stringify(existingMeals, null, 2)}
-
-IMPORTANT: Review these existing meals carefully. If they are still relevant and helpful based on the user's WHOOP data and dietary needs, you can REUSE them for next week by including them in your response. Make tweaks or substitutions if needed. Only generate completely NEW meals if the existing ones don't fit the user's current health profile.` : 'No existing meals found. Generate a fresh meal plan.'}
-
-Your task: Generate a personalized 7-day meal plan for NEXT WEEK (28 meals total: Breakfast, Lunch, Snack, Dinner for each day from Monday to Sunday).
-
 ${dietaryPreferences ? `Dietary Preferences: ${dietaryPreferences}` : ''}
 
-Requirements:
-- Each meal must include: name, description, ingredients (with measurements), step-by-step instructions, prep_time, cook_time, servings, and nutrition breakdown (calories, protein, carbs, fat)
-- Adjust calories based on the user's WHOOP metrics
-- If recovery is low (<50%), focus on nutrient-dense, anti-inflammatory meals
-- If strain is high (>15), increase protein and carbs for recovery
-- Ensure variety across the week
-- Provide realistic, achievable recipes
+CRITICAL REQUIREMENTS:
+1. Generate EXACTLY 28 meals total: 4 meals per day × 7 days (Monday through Sunday)
+2. Each day MUST have: Breakfast, Lunch, Snack, and Dinner
+3. EVERY meal must include a descriptive "image_prompt" field for image generation
+4. Ensure meal variety - no repeated meals across the week
+5. Adjust calories based on WHOOP metrics:
+   - If recovery is low (<50%): Focus on anti-inflammatory, nutrient-dense meals
+   - If strain is high (>15): Increase protein and carbs for recovery
+   - Match daily calories to user's average burn rate
+
+IMAGE PROMPT GUIDELINES:
+- Be specific about the dish appearance, plating, and main ingredients
+- Include details like "served in a white ceramic bowl" or "plated on white dish"
+- Mention key visual elements (garnish, sauce placement, protein presentation)
+- Example: "Creamy overnight oats with mixed berries in a glass jar, topped with chia seeds and honey drizzle, natural lighting"
 
 Return ONLY valid JSON in this exact format:
 {
@@ -140,29 +140,32 @@ Return ONLY valid JSON in this exact format:
     {
       "day": "Monday",
       "meal_type": "Breakfast",
-      "name": "Greek Yogurt Berry Bowl",
-      "description": "A protein-rich breakfast...",
-      "ingredients": [{"name": "Greek Yogurt", "amount": "150g"}],
-      "instructions": ["Mix yogurt...", "Add berries..."],
+      "name": "Overnight Recovery Oats",
+      "description": "Nutrient-dense overnight oats with anti-inflammatory ingredients",
+      "image_prompt": "Creamy overnight oats with blueberries and sliced almonds in a glass jar, topped with chia seeds, honey drizzle, and fresh mint, served on white background, natural daylight, appetizing, high resolution",
+      "ingredients": [{"name": "Rolled oats", "amount": "50g"}, {"name": "Almond milk", "amount": "200ml"}],
+      "instructions": ["Combine oats and milk in a jar", "Refrigerate overnight", "Top with berries and serve"],
       "prep_time": 10,
       "cook_time": 0,
       "servings": 1,
-      "nutrition": {"calories": 320, "protein": 18, "carbs": 28, "fat": 9}
+      "nutrition": {"calories": 425, "protein": 15, "carbs": 65, "fat": 12}
     }
   ]
-}`;
+}
+
+VERIFICATION: Before responding, count your meals to ensure exactly 28 total (7 days × 4 meal types).`;
 
     const command = new ConverseCommand({
       modelId: "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
       messages: [
         {
           role: "user",
-          content: [{ text: "Generate a personalized 7-day meal plan based on my WHOOP data and existing meals if applicable." }],
+          content: [{ text: "Generate a complete 7-day meal plan (28 meals total) with EXACTLY 4 meals per day: Breakfast, Lunch, Snack, and Dinner for each day from Monday to Sunday. Include detailed image_prompt for each meal." }],
         },
       ],
       system: [{ text: systemPrompt }],
       inferenceConfig: {
-        maxTokens: 8000,
+        maxTokens: 16000,
         temperature: 0.7,
       },
     });
@@ -177,15 +180,19 @@ Return ONLY valid JSON in this exact format:
     }
 
     const mealPlan = JSON.parse(jsonMatch[0]);
+    
+    // Verify we have exactly 28 meals
+    if (!mealPlan.meals || mealPlan.meals.length !== 28) {
+      console.warn(`Generated ${mealPlan.meals?.length || 0} meals instead of 28`);
+    }
+
+    console.log(`[GENERATE] Successfully generated ${mealPlan.meals.length} meals`);
 
     return NextResponse.json({
       status: "success",
       meals: mealPlan.meals,
       whoopSummary,
-      existingMealsCount: existingMeals.length,
-      message: existingMeals.length > 0 
-        ? `Generated meal plan considering ${existingMeals.length} existing meals` 
-        : "Generated fresh meal plan",
+      message: `Generated ${mealPlan.meals.length} meals`,
     });
   } catch (error) {
     console.error("Error generating meals:", error);
