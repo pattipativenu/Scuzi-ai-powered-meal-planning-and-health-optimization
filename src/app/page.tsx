@@ -116,15 +116,15 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
+    <div className="min-h-screen pb-20 md:pb-0" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
       {/* Hero Section */}
       <AnimatedHeroSection />
 
       {/* Current Week's Meals */}
-      <section className="py-16" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
-        <div className="max-w-[1400px] mx-auto px-6">
-          <div className="flex items-baseline justify-between mb-12">
-            <h2 className="!font-semibold !text-3xl">
+      <section className="py-8 md:py-16" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
+        <div className="max-w-[1400px] mx-auto px-4 md:px-6">
+          <div className="flex items-baseline justify-between mb-6 md:mb-12">
+            <h2 className="!font-semibold !text-2xl md:!text-3xl">
               Current Week's Meals
             </h2>
             <Link
@@ -132,11 +132,11 @@ export default function Home() {
               style={{
                 fontFamily: '"Right Grotesk Wide", sans-serif',
                 fontWeight: 500,
-                fontSize: '16px',
-                lineHeight: '24px',
+                fontSize: '14px',
+                lineHeight: '20px',
                 color: 'rgb(39, 39, 42)'
               }}
-              className="hover:underline flex items-center gap-1 !font-semibold">
+              className="hover:underline flex items-center gap-1 !font-semibold md:text-base">
 
               View Next Week Meals
               <ChevronRight className="w-4 h-4" />
@@ -207,31 +207,42 @@ export default function Home() {
             </div>
           }
 
-          {/* Mobile: Keep existing mobile layout */}
+          {/* Mobile: 2-column grid with optimized sizing */}
           {!mealsLoading && currentWeekMealsData.length > 0 &&
           <div className="md:hidden space-y-6">
-              {daysOfWeek.map(({ day, date }) =>
-            <div key={day}>
-                  <h3 className="text-lg font-semibold mb-3 px-2">{day}, {date}</h3>
-                  <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
-                    {mealTypes.map((mealType) => {
-                  const meal = getMealForDayAndType(day, mealType);
-                  return meal ?
-                  <div key={`${day}-${mealType}`} className="snap-start flex-shrink-0 w-64">
-                          <MealCard meal={meal} size="medium" />
-                        </div> :
-                  null;
-                })}
+              {daysOfWeek.map(({ day, date }) => {
+            const dayMeals = mealTypes.map(type => getMealForDayAndType(day, type)).filter(Boolean);
+            if (dayMeals.length === 0) return null;
+            
+            return (
+              <div key={day}>
+                  <h3 
+                    className="text-base font-semibold mb-3 px-2"
+                    style={{
+                      fontFamily: '"Right Grotesk Wide", sans-serif',
+                      fontSize: '16px',
+                      color: 'rgb(39, 39, 42)'
+                    }}
+                  >
+                    {day}, {date}
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3 px-2">
+                    {dayMeals.map((meal) => 
+                      <div key={meal!.id} className="w-full">
+                        <MealCard meal={meal!} size="small" />
+                      </div>
+                    )}
                   </div>
                 </div>
-            )}
+            );
+          })}
             </div>
           }
         </div>
       </section>
 
       {/* History Section - Real AI-Generated Content */}
-      <section className="py-16" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
+      <section className="py-8 md:py-16" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
         <div className="max-w-[1400px] mx-auto px-6">
           <h2 className="!font-bold mb-8 !whitespace-pre-line !text-[29px]">Recent Chat History
 
@@ -350,7 +361,7 @@ export default function Home() {
       </section>
 
       {/* Customer Reviews Carousel */}
-      <section className="py-16" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
+      <section className="py-8 md:py-16" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
         <div className="max-w-4xl mx-auto px-20">
           <div className="relative rounded-2xl shadow-lg p-12 text-center min-h-[280px] flex flex-col justify-center" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
             <div className="flex justify-center gap-1 mb-6">

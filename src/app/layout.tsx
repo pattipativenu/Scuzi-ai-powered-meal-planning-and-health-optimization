@@ -6,7 +6,8 @@ import VisualEditsMessenger from "../visual-edits/VisualEditsMessenger";
 import ErrorReporter from "@/components/ErrorReporter";
 import Script from "next/script";
 import { Navigation } from "@/components/Navigation";
-import { FloatingAIChat } from "@/components/FloatingAIChat";
+import { BottomNavigation } from "@/components/BottomNavigation";
+import { FloatingAskScuzi } from "@/components/FloatingAskScuzi";
 import { Toaster } from "@/components/ui/sonner";
 import { usePathname } from "next/navigation";
 
@@ -41,7 +42,8 @@ export default function RootLayout({
         />
         {!hideNavigation && <Navigation />}
         {children}
-        <FloatingAIChat />
+        {!hideNavigation && <BottomNavigation />}
+        {!hideNavigation && <FloatingAskScuzi />}
         <Toaster />
         <VisualEditsMessenger />
       </body>
