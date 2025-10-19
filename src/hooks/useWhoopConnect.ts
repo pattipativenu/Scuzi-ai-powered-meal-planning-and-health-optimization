@@ -20,17 +20,32 @@ export function useWhoopConnect() {
   const [metrics, setMetrics] = useState<WhoopMetrics>({ connected: false });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  // Fetch WHOOP metrics on mount and poll every 30 seconds if connected
+  // Get or create userId on mount
   useEffect(() => {
-    fetchMetrics();
-    const interval = setInterval(fetchMetrics, 30000); // Poll every 30 seconds
-    return () => clearInterval(interval);
+    let storedUserId = localStorage.getItem('whoop_user_id');
+    if (!storedUserId) {
+      storedUserId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      localStorage.setItem('whoop_user_id', storedUserId);
+    }
+    setUserId(storedUserId);
   }, []);
 
+  // Fetch WHOOP metrics on mount and poll every 5 minutes if connected
+  useEffect(() => {
+    if (userId) {
+      fetchMetrics();
+      const interval = setInterval(fetchMetrics, 300000); // Poll every 5 minutes
+      return () => clearInterval(interval);
+    }
+  }, [userId]);
+
   const fetchMetrics = async () => {
+    if (!userId) return;
+    
     try {
-      const response = await fetch("/api/whoop/metrics");
+      const response = await fetch(`/api/whoop/metrics?user_id=${userId}`);
       if (response.ok) {
         const data = await response.json();
         setMetrics(data);
@@ -48,36 +63,26 @@ export function useWhoopConnect() {
       const data = await response.json();
       
       if (data.authUrl) {
-        // Open OAuth flow in new window
-        const width = 600;
-        const height = 700;
-        const left = window.screen.width / 2 - width / 2;
-        const top = window.screen.height / 2 - height / 2;
+        console.log("🔗 Opening WHOOP OAuth in new tab:", data.authUrl);
+        console.log("📍 Redirect URI:", data.redirectUri);
         
-        window.open(
-          data.authUrl,
-          "WHOOP OAuth",
-          `width=${width},height=${height},left=${left},top=${top}`
-        );
+        // Open WHOOP OAuth in a new tab
+        window.open(data.authUrl, '_blank', 'noopener,noreferrer');
         
-        // Listen for successful connection
-        const checkConnection = setInterval(async () => {
-          await fetchMetrics();
-          const metricsResponse = await fetch("/api/whoop/metrics");
-          const metricsData = await metricsResponse.json();
-          
-          if (metricsData.connected) {
-            setMetrics(metricsData);
-            clearInterval(checkConnection);
-            setIsLoading(false);
-          }
-        }, 2000);
-        
-        // Stop checking after 5 minutes
+        // Keep loading state for a few seconds to show user the action happened
         setTimeout(() => {
-          clearInterval(checkConnection);
           setIsLoading(false);
-        }, 300000);
+          // Start polling for metrics to detect successful connection
+          const pollInterval = setInterval(async () => {
+            await fetchMetrics();
+            if (metrics.connected) {
+              clearInterval(pollInterval);
+            }
+          }, 3000); // Poll every 3 seconds
+          
+          // Stop polling after 5 minutes
+          setTimeout(() => clearInterval(pollInterval), 300000);
+        }, 2000);
       } else {
         setError(data.error || "Failed to initiate WHOOP connection");
         setIsLoading(false);
@@ -89,9 +94,16 @@ export function useWhoopConnect() {
   };
 
   const disconnect = async () => {
+    if (!userId) return;
+    
     setIsLoading(true);
     try {
-      const response = await fetch("/api/whoop/disconnect", { method: "POST" });
+      const response = await fetch("/api/whoop/disconnect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId })
+      });
+      
       if (response.ok) {
         setMetrics({ connected: false });
       }
@@ -109,5 +121,6 @@ export function useWhoopConnect() {
     connect,
     disconnect,
     isConnected: metrics.connected,
+    userId,
   };
 }
