@@ -5,8 +5,6 @@ import { Refrigerator, Snowflake, Package, Pencil, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useSession } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 type Category = "freezer" | "fridge" | "cupboard";
 
@@ -19,22 +17,19 @@ interface PantryItem {
 }
 
 export default function PantryPage() {
-  const { data: session, isPending } = useSession();
-  const router = useRouter();
+  const { data: session } = useSession();
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [inventory, setInventory] = useState<PantryItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editQuantity, setEditQuantity] = useState<number>(0);
 
-  // Fetch inventory data only if authenticated
+  // Fetch inventory data if authenticated
   useEffect(() => {
     if (session?.user) {
       fetchInventory();
-    } else if (!isPending) {
-      setIsLoading(false);
     }
-  }, [session, isPending]);
+  }, [session]);
 
   const fetchInventory = async () => {
     setIsLoading(true);
@@ -116,49 +111,6 @@ export default function PantryPage() {
     ? inventory.filter(item => item.category === selectedCategory)
     : [];
 
-  if (isPending || isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  // Show login prompt if not authenticated
-  if (!session?.user) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <div className="text-center max-w-md">
-          <div className="mb-6 flex justify-center">
-            <Package className="w-16 h-16 text-muted-foreground" />
-          </div>
-          <h1 className="text-3xl font-bold mb-4" style={{ fontFamily: "var(--font-heading)" }}>
-            Pantry
-          </h1>
-          <p className="text-lg text-muted-foreground mb-8" style={{ fontFamily: '"General Sans", sans-serif' }}>
-            Sign in to view and manage your personal ingredient inventory
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/login?redirect=/pantry"
-              className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
-              style={{ fontFamily: '"Right Grotesk Wide", sans-serif', fontWeight: 500 }}
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/register?redirect=/pantry"
-              className="px-6 py-3 border-2 border-black text-black rounded-lg hover:bg-gray-50 transition-colors"
-              style={{ fontFamily: '"Right Grotesk Wide", sans-serif', fontWeight: 500 }}
-            >
-              Create Account
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -209,7 +161,11 @@ export default function PantryPage() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              {filteredInventory.length === 0 ? (
+              {isLoading ? (
+                <div className="text-center py-16">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                </div>
+              ) : filteredInventory.length === 0 ? (
                 <div className="text-center py-16">
                   <div className="flex justify-center mb-4" style={{ color: getCategoryColor(selectedCategory) }}>
                     {getCategoryIcon(selectedCategory)}
