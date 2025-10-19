@@ -29,23 +29,23 @@ export function AnimatedHeroSection() {
     <section className="relative py-12 md:py-16 overflow-hidden bg-white">
       <div className="mx-auto px-2 md:px-4 lg:px-6">
         {/* WHOOP Metrics Ticker - Only show when connected */}
-        {isConnected && (
-          <div className="mb-8 relative overflow-hidden bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-1">
+        {isConnected &&
+        <div className="mb-8 relative overflow-hidden bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-1">
             <div className="bg-white rounded-xl p-4 relative">
               <button
-                onClick={disconnect}
-                className="absolute top-2 right-2 p-2 hover:bg-gray-100 rounded-full transition-colors z-10"
-                title="Disconnect WHOOP"
-              >
+              onClick={disconnect}
+              className="absolute top-2 right-2 p-2 hover:bg-gray-100 rounded-full transition-colors z-10"
+              title="Disconnect WHOOP">
+
                 <X className="w-4 h-4 text-gray-600" />
               </button>
               
               <div className="overflow-hidden relative">
                 <div className="flex gap-8 animate-scroll-rtl">
-                  {[...Array(3)].map((_, setIndex) => (
-                    <div key={setIndex} className="flex gap-8 flex-shrink-0">
-                      {getMetricsDisplay().map((metric, idx) => (
-                        <div key={`${setIndex}-${idx}`} className="flex items-center gap-3 px-6 py-2 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg flex-shrink-0">
+                  {[...Array(3)].map((_, setIndex) =>
+                <div key={setIndex} className="flex gap-8 flex-shrink-0">
+                      {getMetricsDisplay().map((metric, idx) =>
+                  <div key={`${setIndex}-${idx}`} className="flex items-center gap-3 px-6 py-2 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg flex-shrink-0">
                           <div className="flex flex-col">
                             <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">
                               {metric.label}
@@ -55,20 +55,20 @@ export function AnimatedHeroSection() {
                             </span>
                           </div>
                         </div>
-                      ))}
+                  )}
                     </div>
-                  ))}
+                )}
                 </div>
               </div>
             </div>
           </div>
-        )}
+        }
 
         {/* Hero Content with Yellow Background */}
         <div
           className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center rounded-[33px] px-12 md:px-16 lg:px-20 py-16 md:py-20 lg:py-28"
-          style={{ backgroundColor: "rgb(247, 248, 212)" }}
-        >
+          style={{ backgroundColor: "rgb(247, 248, 212)" }}>
+
           {/* Left Side - Text Content */}
           <div className="z-10 space-y-6">
             <h1 style={{
@@ -94,14 +94,14 @@ export function AnimatedHeroSection() {
               Your home for easy, delicious meal prep recipes
             </h1>
             
-            <p style={{
-              fontFamily: '"General Sans", sans-serif',
-              fontWeight: 400,
-              fontSize: '15px',
-              lineHeight: '21px',
-              color: 'rgb(17, 24, 39)'
-            }}>
-              Plan your week with confidence. Get organized, save time, and enjoy healthy meals every day.
+            <p className="!whitespace-pre-line">
+
+
+
+
+
+              Plan your week with confidence. 
+
             </p>
             
             <Link
@@ -142,6 +142,6 @@ export function AnimatedHeroSection() {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>);
+
 }
