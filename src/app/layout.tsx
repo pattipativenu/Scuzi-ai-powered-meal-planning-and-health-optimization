@@ -1,3 +1,5 @@
+"use client";
+
 import type { Metadata } from "next";
 import "./globals.css";
 import VisualEditsMessenger from "../visual-edits/VisualEditsMessenger";
@@ -5,18 +7,17 @@ import ErrorReporter from "@/components/ErrorReporter";
 import Script from "next/script";
 import { Navigation } from "@/components/Navigation";
 import { FloatingAIChat } from "@/components/FloatingAIChat";
-
-// Force rebuild
-export const metadata: Metadata = {
-  title: "MealPrep - Easy, Delicious Meal Planning",
-  description: "Your home for easy, delicious meal prep recipes with AI assistance",
-};
+import { Toaster } from "@/components/ui/sonner";
+import { usePathname } from "next/navigation";
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const hideNavigation = pathname === "/personalize";
+
   return (
     <html lang="en">
       <body className="antialiased">
@@ -31,9 +32,10 @@ export default function RootLayout({
           data-debug="true"
           data-custom-data='{"appName": "YourApp", "version": "1.0.0", "greeting": "hi"}'
         />
-        <Navigation />
+        {!hideNavigation && <Navigation />}
         {children}
         <FloatingAIChat />
+        <Toaster />
         <VisualEditsMessenger />
       </body>
     </html>

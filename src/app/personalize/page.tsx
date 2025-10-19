@@ -276,6 +276,9 @@ export default function PersonalizePage() {
     if (currentStep > 0) {
       setDirection(-1);
       setCurrentStep(currentStep - 1);
+    } else {
+      // On first question, redirect to home page
+      router.push("/");
     }
   };
 
