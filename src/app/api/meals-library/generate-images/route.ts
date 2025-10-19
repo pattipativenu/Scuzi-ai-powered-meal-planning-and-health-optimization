@@ -114,20 +114,20 @@ export async function POST(request: NextRequest) {
       try {
         console.log(`[IMAGE-GEN] Generating image for: ${meal.name}`);
 
-        // Create detailed image prompt
-        const imagePrompt = `Professional food photography of ${meal.name}: ${meal.description}. Beautifully plated on a white ceramic dish, garnished elegantly, natural daylight, high resolution, appetizing, gourmet presentation, top-down view`;
+        // Use imagePrompt from meal data if available, otherwise create one
+        const imagePrompt = meal.imagePrompt || `Professional food photography of ${meal.name}: ${meal.description}. Beautifully plated on a white ceramic dish, garnished elegantly, natural daylight, high resolution, appetizing, gourmet presentation, top-down view`;
 
         // Generate image
         const base64Image = await generateImage(imagePrompt);
 
         // Upload to S3
-        const imageUrl = await uploadImageToS3(base64Image, meal.id);
+        const imageUrl = await uploadImageToS3(base64Image, meal.meal_id);
 
-        // Update meal in DynamoDB
+        // Update meal in DynamoDB using correct key
         await docClient.send(
           new UpdateCommand({
             TableName: "meals_library",
-            Key: { id: meal.id },
+            Key: { meal_id: meal.meal_id },
             UpdateExpression: "SET imageUrl = :imageUrl",
             ExpressionAttributeValues: {
               ":imageUrl": imageUrl,
