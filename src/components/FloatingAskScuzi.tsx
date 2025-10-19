@@ -1,12 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { MessageCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 
 export function FloatingAskScuzi() {
   const router = useRouter();
+  const pathname = usePathname();
   const [subtextIndex, setSubtextIndex] = useState(0);
 
   const subtexts = [
@@ -28,6 +29,11 @@ export function FloatingAskScuzi() {
     router.push("/chat");
   };
 
+  // Only show on specific pages: Home, Plan Ahead, Pantry
+  const shouldShow = ["/", "/plan-ahead", "/pantry"].includes(pathname);
+
+  if (!shouldShow) return null;
+
   return (
     <motion.div
       className="md:hidden fixed left-1/2 z-40 w-[90%] max-w-md"
@@ -43,7 +49,7 @@ export function FloatingAskScuzi() {
         onClick={handleClick}
         className="w-full h-14 rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-98 flex flex-col items-center justify-center gap-0.5 backdrop-blur-md"
         style={{
-          background: "rgba(0, 0, 0, 0.7)",
+          background: "rgba(0, 0, 0, 0.8)",
         }}
       >
         <div className="flex items-center gap-2">

@@ -288,73 +288,9 @@ export default function ScuziChat() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white md:pt-0 pt-40">
-      {/* Sticky Header - Hidden on Mobile */}
-      <div className="hidden md:block sticky top-0 bg-white z-50 shadow-sm">
-        <div className="px-4 md:px-6 py-4 md:py-6 flex items-center gap-3 md:gap-4">
-          <Avatar className="h-8 w-8 md:h-12 md:w-12">
-            <AvatarImage src="" />
-            <AvatarFallback className="bg-[rgb(209,222,38)] text-[rgb(39,39,42)]">
-              <ChefHat className="h-4 w-4 md:h-6 md:w-6" />
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <h3
-              className="font-bold text-[rgb(17,24,39)]"
-              style={{
-                fontFamily: '"Right Grotesk Wide", sans-serif',
-                fontSize: '14px',
-                lineHeight: '20px',
-                fontWeight: 500
-              }}>Scuzi AI
-            </h3>
-            <p
-              className="text-[rgb(107,114,128)]"
-              style={{
-                fontFamily: '"General Sans", sans-serif',
-                fontSize: '13px',
-                lineHeight: '18px',
-                fontWeight: 400
-              }}>Your personal AI nutrition & meal planning assistant
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Camera Modal */}
-      {showCamera &&
-      <div className="fixed inset-0 z-50 bg-black flex flex-col">
-          <div className="flex-1 relative">
-            <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            className="w-full h-full object-cover" />
-
-            <canvas ref={canvasRef} className="hidden" />
-          </div>
-          <div className="bg-white p-4 flex justify-center gap-4">
-            <Button
-            onClick={closeCamera}
-            size="lg"
-            variant="ghost"
-            className="text-[rgb(39,39,42)] hover:bg-gray-100">
-
-              <X className="h-6 w-6" />
-            </Button>
-            <Button
-            onClick={capturePhoto}
-            size="lg"
-            className="bg-[rgb(209,222,38)] hover:bg-[rgb(209,222,38)]/90 text-[rgb(39,39,42)] rounded-full w-16 h-16">
-
-              <Camera className="h-8 w-8" />
-            </Button>
-          </div>
-        </div>
-      }
-
-      {/* Scrollable Messages Container */}
-      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 md:py-6 space-y-4 pb-24 md:pb-6 scrollbar-hide">
+    <div className="flex flex-col h-screen bg-white">
+      {/* Mobile: Content area with proper padding */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-hide md:pt-0 pt-32 md:pb-6 pb-32">
         {messages.map((message) =>
         <motion.div
           key={message.id}
@@ -474,8 +410,40 @@ export default function ScuziChat() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Sticky Input Area */}
-      <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 md:px-6 py-3 md:py-4 z-40 pb-20 md:pb-4">
+      {/* Camera Modal */}
+      {showCamera &&
+      <div className="fixed inset-0 z-50 bg-black flex flex-col">
+          <div className="flex-1 relative">
+            <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            className="w-full h-full object-cover" />
+
+            <canvas ref={canvasRef} className="hidden" />
+          </div>
+          <div className="bg-white p-4 flex justify-center gap-4">
+            <Button
+            onClick={closeCamera}
+            size="lg"
+            variant="ghost"
+            className="text-[rgb(39,39,42)] hover:bg-gray-100">
+
+              <X className="h-6 w-6" />
+            </Button>
+            <Button
+            onClick={capturePhoto}
+            size="lg"
+            className="bg-[rgb(209,222,38)] hover:bg-[rgb(209,222,38)]/90 text-[rgb(39,39,42)] rounded-full w-16 h-16">
+
+              <Camera className="h-8 w-8" />
+            </Button>
+          </div>
+        </div>
+      }
+
+      {/* Fixed Input Area - Above bottom nav on mobile */}
+      <div className="fixed md:sticky bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 z-40 md:mb-0 mb-16">
         {selectedImage &&
         <div className="mb-3 relative inline-block">
             <img

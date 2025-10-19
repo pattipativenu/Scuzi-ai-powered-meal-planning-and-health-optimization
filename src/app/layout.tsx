@@ -16,30 +16,24 @@ export default function RootLayout({
 }: Readonly<{
 children: React.ReactNode;
 }>) {
-  const pathname = usePathname();
-  const isOnChatPage = pathname === '/chat';
-
   return (
     <html lang="en">
       <body className="antialiased">
-        {/* Mobile-only: Fixed persistent layout structure */}
-        <div className="md:contents flex flex-col min-h-screen overflow-hidden">
-          {/* Top Navigation - Always visible */}
-          <div className="md:relative md:top-auto fixed top-0 left-0 right-0 z-50">
-            <Navigation />
-          </div>
-          
-          {/* Main Content Area - Scrollable with proper padding on mobile */}
-          <main className="md:flex-none flex-1 overflow-y-auto scrollbar-hide md:pb-0 pb-20">
-            {children}
-          </main>
-          
-          {/* Bottom Navigation - Mobile only, always visible */}
-          <BottomNavigation />
-        </div>
+        {/* Top Navigation - Fixed on mobile */}
+        <Navigation />
+        
+        {/* Main Content - Scrollable with proper padding */}
+        <main className="md:min-h-screen pt-[64px] pb-[80px] md:pt-0 md:pb-0 overflow-y-auto scrollbar-hide">
+          {children}
+        </main>
+        
+        {/* Bottom Navigation - Mobile only */}
+        <BottomNavigation />
+        
+        {/* Floating Ask Scuzi Button - Handles visibility internally */}
+        <FloatingAskScuzi />
         
         <Toaster richColors position="top-center" />
-        {!isOnChatPage && <FloatingAskScuzi />}
       </body>
     </html>
   );
