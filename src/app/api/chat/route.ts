@@ -212,6 +212,55 @@ function extractImageMetadata(text: string): {
   const match = text.match(metadataRegex);
   
   if (!match) {
+    console.log("[METADATA] No IMAGE_METADATA tags found, checking for recipe format...");
+    
+    // FALLBACK: Check if this is a recipe response without metadata tags
+    const hasRecipeIndicators = 
+      text.includes("Ingredients:") || 
+      text.includes("**Ingredients:**") ||
+      text.includes("Step-by-Step Instructions") ||
+      text.includes("🥘");
+    
+    if (hasRecipeIndicators) {
+      console.log("[METADATA] Recipe detected without metadata tags, extracting fallback...");
+      
+      // Extract dish name from 🥘 emoji heading
+      const dishNameMatch = text.match(/🥘\s*\*\*(.+?)\*\*/);
+      const dishName = dishNameMatch ? dishNameMatch[1].trim() : "Delicious Meal";
+      
+      // Try to extract cuisine style from common patterns
+      const lowerText = text.toLowerCase();
+      let cuisineStyle = "International";
+      if (lowerText.includes("indian") || lowerText.includes("masala") || lowerText.includes("tikka") || lowerText.includes("curry")) cuisineStyle = "Indian";
+      else if (lowerText.includes("italian") || lowerText.includes("pasta") || lowerText.includes("pizza")) cuisineStyle = "Italian";
+      else if (lowerText.includes("chinese") || lowerText.includes("stir fry")) cuisineStyle = "Chinese";
+      else if (lowerText.includes("mexican") || lowerText.includes("taco") || lowerText.includes("burrito")) cuisineStyle = "Mexican";
+      else if (lowerText.includes("thai")) cuisineStyle = "Thai";
+      else if (lowerText.includes("japanese") || lowerText.includes("sushi")) cuisineStyle = "Japanese";
+      
+      // Try to extract cooking method
+      let cookingMethod = "prepared";
+      if (lowerText.includes("grill")) cookingMethod = "grilled";
+      else if (lowerText.includes("bake") || lowerText.includes("oven")) cookingMethod = "baked";
+      else if (lowerText.includes("fry") || lowerText.includes("fried")) cookingMethod = "fried";
+      else if (lowerText.includes("sauté")) cookingMethod = "sautéed";
+      else if (lowerText.includes("roast")) cookingMethod = "roasted";
+      else if (lowerText.includes("steam")) cookingMethod = "steamed";
+      else if (lowerText.includes("boil")) cookingMethod = "boiled";
+      
+      console.log("[METADATA] Fallback metadata created:", { dishName, cuisineStyle, cookingMethod });
+      
+      return {
+        shouldGenerate: true,
+        dishName,
+        mainIngredients: "fresh ingredients",
+        cuisineStyle,
+        cookingMethod,
+        presentationStyle: "appetizing"
+      };
+    }
+    
+    console.log("[METADATA] No recipe detected, skipping image generation");
     return {
       shouldGenerate: false,
       dishName: "",
@@ -222,6 +271,7 @@ function extractImageMetadata(text: string): {
     };
   }
   
+  console.log("[METADATA] IMAGE_METADATA tags found, parsing...");
   const metadata = match[1];
   const extractField = (field: string): string => {
     const fieldRegex = new RegExp(`${field}:\\s*(.+?)(?=\\n|$)`, 'i');
@@ -229,7 +279,7 @@ function extractImageMetadata(text: string): {
     return fieldMatch ? fieldMatch[1].trim() : "";
   };
   
-  return {
+  const result = {
     shouldGenerate: true,
     dishName: extractField("DISH_NAME"),
     mainIngredients: extractField("MAIN_INGREDIENTS"),
@@ -237,6 +287,9 @@ function extractImageMetadata(text: string): {
     cookingMethod: extractField("COOKING_METHOD"),
     presentationStyle: extractField("PRESENTATION_STYLE")
   };
+  
+  console.log("[METADATA] Extracted metadata:", result);
+  return result;
 }
 
 // ============================================
