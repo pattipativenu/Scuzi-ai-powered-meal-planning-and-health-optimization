@@ -46,3 +46,38 @@ export const userPreferences = sqliteTable('user_preferences', {
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
 });
+
+// Add pantry_inventory table
+export const pantryInventory = sqliteTable('pantry_inventory', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  ingredientName: text('ingredient_name').notNull(),
+  quantity: integer('quantity').default(0).notNull(),
+  category: text('category').notNull(), // "freezer", "fridge", or "cupboard"
+  unit: text('unit'),
+  lastUpdated: text('last_updated').notNull(),
+  userId: integer('user_id'),
+});
+
+// Add shopping_list table
+export const shoppingList = sqliteTable('shopping_list', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  ingredientName: text('ingredient_name').notNull(),
+  quantity: integer('quantity').notNull(),
+  category: text('category').notNull(),
+  unit: text('unit'),
+  isPurchased: integer('is_purchased', { mode: 'boolean' }).default(false).notNull(),
+  createdAt: text('created_at').notNull(),
+  userId: integer('user_id'),
+});
+
+// Add meal_completions table
+export const mealCompletions = sqliteTable('meal_completions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  mealId: text('meal_id').notNull(),
+  mealName: text('meal_name').notNull(),
+  weekType: text('week_type').notNull(), // "current" or "next"
+  day: text('day').notNull(),
+  mealCategory: text('meal_category'),
+  completedAt: text('completed_at').notNull(),
+  userId: integer('user_id'),
+});
