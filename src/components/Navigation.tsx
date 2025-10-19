@@ -313,14 +313,14 @@ export function Navigation() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center gap-6 h-20">
             {/* Chat Page Layout */}
-            {isOnChatPage && (
-              <>
+            {isOnChatPage &&
+            <>
                 <div className="hidden md:flex items-center gap-4 absolute left-8">
                   <button
-                    onClick={handleGoBack}
-                    className="p-2 hover:bg-black/5 rounded-lg transition-colors"
-                    title="Go Back"
-                  >
+                  onClick={handleGoBack}
+                  className="p-2 hover:bg-black/5 rounded-lg transition-colors"
+                  title="Go Back">
+
                     <ArrowLeft className="w-6 h-6" style={{ color: "rgb(39, 39, 42)" }} />
                   </button>
                   <Link href="/" className="flex items-center gap-2 font-semibold text-lg" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
@@ -336,139 +336,6 @@ export function Navigation() {
                   <div className="flex-1 max-w-2xl">
                     <form onSubmit={handleSearch} className="relative w-full">
                       <input
-                        ref={searchInputRef}
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder={placeholders[placeholderIndex]}
-                        className="w-full h-11 pl-4 pr-28 rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-black/10 transition-all shimmer-placeholder"
-                        style={{
-                          backgroundColor: "rgb(209, 222, 38)",
-                          fontFamily: '"Right Grotesk Wide", ui-sans-serif, system-ui, sans-serif',
-                          fontWeight: 500,
-                          fontSize: "16px",
-                          lineHeight: "24px",
-                          color: "rgb(39, 39, 42)",
-                          boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.05)"
-                        }}
-                      />
-
-                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                        <button
-                          type="button"
-                          className="p-2 hover:bg-black/5 rounded-lg transition-all"
-                          style={{ opacity: hasSearchQuery ? 1 : 0.4 }}
-                          title="Take photo"
-                          onClick={handleSearchIconClick}
-                        >
-                          <Camera className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
-                        </button>
-                        <button
-                          type="button"
-                          className="p-2 hover:bg-black/5 rounded-lg transition-all"
-                          style={{ opacity: hasSearchQuery ? 1 : 0.4 }}
-                          title="Upload photo"
-                          onClick={handleSearchIconClick}
-                        >
-                          <Upload className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleSearchIconClick}
-                          className="p-2 hover:bg-black/5 rounded-lg transition-all"
-                          style={{ opacity: hasSearchQuery ? 1 : 0.4 }}
-                          title="Search"
-                        >
-                          <Search className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* Home Page Mobile Layout - Centered SCUZI */}
-            {!isOnChatPage && isHomePage && (
-              <>
-                {/* Desktop: Keep existing layout */}
-                <div className="hidden md:flex items-center justify-center w-full relative">
-                  <Link href="/" className="flex items-center gap-2 font-semibold text-lg flex-shrink-0 absolute left-0" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
-                    <span className="!not-italic !px-[17px] !whitespace-pre-line !font-extrabold !text-[31px] !w-full !h-full">Scuzi</span>
-                  </Link>
-
-                  <div className="flex-1 max-w-2xl mx-auto">
-                    <form onSubmit={handleSearch} className="relative w-full">
-                      <input
-                        ref={searchInputRef}
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder={placeholders[placeholderIndex]}
-                        className="w-full h-11 pl-4 pr-28 rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-black/10 transition-all shimmer-placeholder"
-                        style={{
-                          backgroundColor: "rgb(209, 222, 38)",
-                          fontFamily: '"Right Grotesk Wide", ui-sans-serif, system-ui, sans-serif',
-                          fontWeight: 500,
-                          fontSize: "16px",
-                          lineHeight: "24px",
-                          color: "rgb(39, 39, 42)",
-                          boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.05)"
-                        }}
-                      />
-
-                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                        <button
-                          type="button"
-                          className="p-2 hover:bg-black/5 rounded-lg transition-all"
-                          style={{ opacity: hasSearchQuery ? 1 : 0.4 }}
-                          title="Take photo"
-                          onClick={handleSearchIconClick}
-                        >
-                          <Camera className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
-                        </button>
-                        <button
-                          type="button"
-                          className="p-2 hover:bg-black/5 rounded-lg transition-all"
-                          style={{ opacity: hasSearchQuery ? 1 : 0.4 }}
-                          title="Upload photo"
-                          onClick={handleSearchIconClick}
-                        >
-                          <Upload className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleSearchIconClick}
-                          className="p-2 hover:bg-black/5 rounded-lg transition-all"
-                          style={{ opacity: hasSearchQuery ? 1 : 0.4 }}
-                          title="Search"
-                        >
-                          <Search className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-
-                {/* Mobile: Centered SCUZI only */}
-                <div className="md:hidden flex items-center justify-center w-full">
-                  <Link href="/" className="flex items-center gap-2 font-semibold text-lg" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
-                    <span className="!not-italic !whitespace-pre-line !font-extrabold !text-[31px]">SCUZI</span>
-                  </Link>
-                </div>
-              </>
-            )}
-
-            {/* Other Pages Layout (non-home, non-chat) */}
-            {!isOnChatPage && !isHomePage && (
-              <>
-                <Link href="/" className="flex items-center gap-2 font-semibold text-lg flex-shrink-0 absolute left-8" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
-                  <span className="!not-italic !px-[17px] !whitespace-pre-line !font-extrabold !text-[31px] !w-full !h-full">Scuzi</span>
-                </Link>
-
-                <div className="flex-1 max-w-2xl mx-auto">
-                  <form onSubmit={handleSearch} className="relative w-full">
-                    <input
                       ref={searchInputRef}
                       type="text"
                       value={searchQuery}
@@ -483,42 +350,175 @@ export function Navigation() {
                         lineHeight: "24px",
                         color: "rgb(39, 39, 42)",
                         boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.05)"
-                      }}
-                    />
+                      }} />
 
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                      <button
+
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                        <button
                         type="button"
                         className="p-2 hover:bg-black/5 rounded-lg transition-all"
                         style={{ opacity: hasSearchQuery ? 1 : 0.4 }}
                         title="Take photo"
-                        onClick={handleSearchIconClick}
-                      >
-                        <Camera className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
-                      </button>
-                      <button
+                        onClick={handleSearchIconClick}>
+
+                          <Camera className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
+                        </button>
+                        <button
                         type="button"
                         className="p-2 hover:bg-black/5 rounded-lg transition-all"
                         style={{ opacity: hasSearchQuery ? 1 : 0.4 }}
                         title="Upload photo"
-                        onClick={handleSearchIconClick}
-                      >
-                        <Upload className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
-                      </button>
-                      <button
+                        onClick={handleSearchIconClick}>
+
+                          <Upload className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
+                        </button>
+                        <button
                         type="button"
                         onClick={handleSearchIconClick}
                         className="p-2 hover:bg-black/5 rounded-lg transition-all"
                         style={{ opacity: hasSearchQuery ? 1 : 0.4 }}
-                        title="Search"
-                      >
+                        title="Search">
+
+                          <Search className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </>
+            }
+
+            {/* Home Page Mobile Layout - Centered SCUZI */}
+            {!isOnChatPage && isHomePage &&
+            <>
+                {/* Desktop: Keep existing layout */}
+                <div className="hidden md:flex items-center justify-center w-full relative">
+                  <Link href="/" className="flex items-center gap-2 font-semibold text-lg flex-shrink-0 absolute left-0" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
+                    <span className="!not-italic !px-[17px] !whitespace-pre-line !font-extrabold !text-[31px] !w-full !h-full">Scuzi</span>
+                  </Link>
+
+                  <div className="flex-1 max-w-2xl mx-auto">
+                    <form onSubmit={handleSearch} className="relative w-full">
+                      <input
+                      ref={searchInputRef}
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder={placeholders[placeholderIndex]}
+                      className="w-full h-11 pl-4 pr-28 rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-black/10 transition-all shimmer-placeholder"
+                      style={{
+                        backgroundColor: "rgb(209, 222, 38)",
+                        fontFamily: '"Right Grotesk Wide", ui-sans-serif, system-ui, sans-serif',
+                        fontWeight: 500,
+                        fontSize: "16px",
+                        lineHeight: "24px",
+                        color: "rgb(39, 39, 42)",
+                        boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.05)"
+                      }} />
+
+
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                        <button
+                        type="button"
+                        className="p-2 hover:bg-black/5 rounded-lg transition-all"
+                        style={{ opacity: hasSearchQuery ? 1 : 0.4 }}
+                        title="Take photo"
+                        onClick={handleSearchIconClick}>
+
+                          <Camera className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
+                        </button>
+                        <button
+                        type="button"
+                        className="p-2 hover:bg-black/5 rounded-lg transition-all"
+                        style={{ opacity: hasSearchQuery ? 1 : 0.4 }}
+                        title="Upload photo"
+                        onClick={handleSearchIconClick}>
+
+                          <Upload className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
+                        </button>
+                        <button
+                        type="button"
+                        onClick={handleSearchIconClick}
+                        className="p-2 hover:bg-black/5 rounded-lg transition-all"
+                        style={{ opacity: hasSearchQuery ? 1 : 0.4 }}
+                        title="Search">
+
+                          <Search className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+
+                {/* Mobile: Centered SCUZI only */}
+                <div className="md:hidden flex items-center justify-center w-full">
+                  <Link href="/" className="flex items-center gap-2 font-semibold text-lg" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
+                    <span className="!not-italic !whitespace-pre-line !font-extrabold !whitespace-pre-line !text-[35px]">Scuzi</span>
+                  </Link>
+                </div>
+              </>
+            }
+
+            {/* Other Pages Layout (non-home, non-chat) */}
+            {!isOnChatPage && !isHomePage &&
+            <>
+                <Link href="/" className="flex items-center gap-2 font-semibold text-lg flex-shrink-0 absolute left-8" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
+                  <span className="!not-italic !px-[17px] !whitespace-pre-line !font-extrabold !text-[31px] !w-full !h-full">Scuzi</span>
+                </Link>
+
+                <div className="flex-1 max-w-2xl mx-auto">
+                  <form onSubmit={handleSearch} className="relative w-full">
+                    <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={placeholders[placeholderIndex]}
+                    className="w-full h-11 pl-4 pr-28 rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-black/10 transition-all shimmer-placeholder"
+                    style={{
+                      backgroundColor: "rgb(209, 222, 38)",
+                      fontFamily: '"Right Grotesk Wide", ui-sans-serif, system-ui, sans-serif',
+                      fontWeight: 500,
+                      fontSize: "16px",
+                      lineHeight: "24px",
+                      color: "rgb(39, 39, 42)",
+                      boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.05)"
+                    }} />
+
+
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                      <button
+                      type="button"
+                      className="p-2 hover:bg-black/5 rounded-lg transition-all"
+                      style={{ opacity: hasSearchQuery ? 1 : 0.4 }}
+                      title="Take photo"
+                      onClick={handleSearchIconClick}>
+
+                        <Camera className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
+                      </button>
+                      <button
+                      type="button"
+                      className="p-2 hover:bg-black/5 rounded-lg transition-all"
+                      style={{ opacity: hasSearchQuery ? 1 : 0.4 }}
+                      title="Upload photo"
+                      onClick={handleSearchIconClick}>
+
+                        <Upload className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
+                      </button>
+                      <button
+                      type="button"
+                      onClick={handleSearchIconClick}
+                      className="p-2 hover:bg-black/5 rounded-lg transition-all"
+                      style={{ opacity: hasSearchQuery ? 1 : 0.4 }}
+                      title="Search">
+
                         <Search className="w-5 h-5" style={{ color: "rgb(39, 39, 42)" }} />
                       </button>
                     </div>
                   </form>
                 </div>
               </>
-            )}
+            }
           </div>
         </div>
       </div>
@@ -528,13 +528,13 @@ export function Navigation() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3 h-20">
             {/* Mobile Home: WHOOP + Metrics Badge */}
-            {isHomePage && (
-              <div className="md:hidden flex items-center gap-3 w-full">
+            {isHomePage &&
+            <div className="md:hidden flex items-center gap-3 w-full">
                 <button
-                  onClick={handleWhoopConnect}
-                  disabled={whoopLoading}
-                  className="flex items-center gap-2 px-3 py-2 rounded-full bg-black text-white hover:bg-gray-800 transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
+                onClick={handleWhoopConnect}
+                disabled={whoopLoading}
+                className="flex items-center gap-2 px-3 py-2 rounded-full bg-black text-white hover:bg-gray-800 transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed">
+
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
                   </svg>
@@ -547,15 +547,15 @@ export function Navigation() {
                   <WhoopMiniMetrics />
                 </div>
               </div>
-            )}
+            }
 
             {/* Desktop: Keep existing layout */}
             <div className={isHomePage ? "hidden md:flex items-center gap-3 w-full" : "flex items-center gap-3 w-full"}>
               <button
                 onClick={handleWhoopConnect}
                 disabled={whoopLoading}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white hover:bg-gray-800 transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white hover:bg-gray-800 transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed">
+
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
                 </svg>
@@ -575,8 +575,8 @@ export function Navigation() {
                   style={{ backgroundColor: "rgb(209, 222, 38)" }}
                   variants={menuVariants}
                   animate={menuOpen ? "open" : "closed"}
-                  initial="closed"
-                >
+                  initial="closed">
+
                   <AnimatePresence>
                     {menuOpen && <Nav setMenuOpen={setMenuOpen} />}
                   </AnimatePresence>
@@ -587,6 +587,6 @@ export function Navigation() {
           </div>
         </div>
       </div>
-    </nav>
-  );
+    </nav>);
+
 }
