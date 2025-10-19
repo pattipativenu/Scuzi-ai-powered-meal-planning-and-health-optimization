@@ -138,7 +138,9 @@ async function batchGenerateImages(meals: any[]): Promise<any[]> {
           
           return {
             ...meal,
-            image_base64: base64Image, // Keep base64 for Lambda
+            image_base64: base64Image,
+            // Also convert to data URL for immediate display
+            image: `data:image/png;base64,${base64Image}`,
           };
         } catch (error) {
           console.error(`[BATCH] Error processing ${meal.name}:`, error);
@@ -146,6 +148,7 @@ async function batchGenerateImages(meals: any[]): Promise<any[]> {
           return {
             ...meal,
             image_base64: null,
+            image: "/placeholder-meal.jpg",
           };
         }
       })

@@ -1,587 +1,327 @@
 "use client";
 
-import { notFound } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
-import { ArrowLeft, Star, MessageCircle, Clock, Bookmark, Plus, Minus, Heart, Flag, ImageIcon } from "lucide-react";
-import { mockMeals } from "@/lib/mockMeals";
-import { useState } from "react";
+import { Clock, Users, ChevronLeft, Plus, Minus, Flame } from "lucide-react";
+import { motion } from "framer-motion";
 
-interface MealDetailPageProps {
-  params: {
-    mealId: string;
+interface MealData {
+  day: string;
+  meal_type: string;
+  name: string;
+  description: string;
+  ingredients: Array<{ name: string; amount: string }>;
+  instructions: string[];
+  prep_time: number;
+  cook_time: number;
+  servings: number;
+  nutrition: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
   };
+  image: string;
+  image_base64?: string;
 }
 
-export default function MealDetailPage({ params }: MealDetailPageProps) {
-  const meal = mockMeals[params.mealId];
-  const [servings, setServings] = useState(meal?.servings || 4);
-  const [activeTab, setActiveTab] = useState<"ingredients" | "nutrition">("ingredients");
+export default function MealDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const mealId = params.mealId as string;
+  
+  const [meal, setMeal] = useState<MealData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [servings, setServings] = useState(1);
+  const [error, setError] = useState("");
 
-  if (!meal) {
-    notFound();
-  }
-
-  const baseServings = meal.servings;
-  const servingMultiplier = servings / baseServings;
-
-  const adjustIngredientAmount = (amount: string) => {
-    const numberMatch = amount.match(/(\d+\.?\d*)/);
-    if (numberMatch) {
-      const originalNumber = parseFloat(numberMatch[1]);
-      const adjustedNumber = (originalNumber * servingMultiplier).toFixed(1).replace(/\.0$/, '');
-      return amount.replace(numberMatch[1], adjustedNumber);
+  useEffect(() => {
+    if (mealId) {
+      loadMealData();
     }
+  }, [mealId]);
+
+  const loadMealData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch the meal plan that contains this meal
+      const response = await fetch("/api/plan-ahead/retrieve");
+      const data = await response.json();
+      
+      if (data.status === "success" && data.mealPlan?.meals) {
+        // Parse mealId (format: "Monday-Breakfast")
+        const [day, mealType] = mealId.split("-");
+        
+        // Find the specific meal
+        const foundMeal = data.mealPlan.meals.find(
+          (m: MealData) => m.day === day && m.meal_type === mealType
+        );
+        
+        if (foundMeal) {
+          setMeal(foundMeal);
+          setServings(foundMeal.servings);
+        } else {
+          setError("Meal not found. Please generate a meal plan first.");
+        }
+      } else {
+        setError("No meal plan found. Please generate a meal plan first.");
+      }
+    } catch (error) {
+      console.error("Error loading meal:", error);
+      setError("Failed to load meal details.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const adjustServings = (newServings: number) => {
+    if (newServings < 1) return;
+    setServings(newServings);
+  };
+
+  const calculateIngredientAmount = (amount: string) => {
+    if (!meal) return amount;
+    
+    const ratio = servings / meal.servings;
+    
+    // Try to extract number from amount string
+    const numberMatch = amount.match(/^([\d.\/]+)\s*(.*)$/);
+    if (numberMatch) {
+      const originalAmount = eval(numberMatch[1]); // Handle fractions like "1/2"
+      const unit = numberMatch[2];
+      const newAmount = (originalAmount * ratio).toFixed(1).replace(/\.0$/, "");
+      return `${newAmount} ${unit}`;
+    }
+    
     return amount;
   };
 
+  const calculateNutrition = (value: number) => {
+    if (!meal) return value;
+    const ratio = servings / meal.servings;
+    return Math.round(value * ratio);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading recipe...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !meal) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto px-6">
+          <h2 className="text-2xl font-bold mb-4">Recipe Not Found</h2>
+          <p className="text-muted-foreground mb-6">
+            {error || "This recipe doesn't exist. Please generate your meal plan first."}
+          </p>
+          <button
+            onClick={() => router.push("/plan-ahead")}
+            className="bg-primary text-primary-foreground px-6 py-3 rounded-full hover:bg-primary/90 transition-all"
+          >
+            Go to Plan Ahead
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const imageUrl = meal.image || 
+                   (meal.image_base64 ? `data:image/png;base64,${meal.image_base64}` : null) || 
+                   "/placeholder-meal.jpg";
+
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-20 py-8">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-[1400px] mx-auto px-6 py-8">
         {/* Back Button */}
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 hover:opacity-70 mb-8 transition-opacity"
-          style={{
-            fontFamily: '"General Sans", sans-serif',
-            fontSize: '15px',
-            color: 'rgb(39, 39, 42)'
-          }}>
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
+        >
+          <ChevronLeft className="w-5 h-5" />
+          <span>Back to Plan</span>
+        </button>
 
-          <ArrowLeft className="w-4 h-4" />
-          Back to Week
-        </Link>
-
-        {/* Hero Section - Desktop/Tablet: Image Right, Content Left */}
-        <div className="grid md:grid-cols-2 gap-8 lg:gap-12 mb-16">
-          {/* Left Side - Content */}
-          <div className="flex flex-col justify-center order-2 md:order-1">
-            <h1 className="!font-bold !not-italic !text-[42px]">
-              {meal.name}
-            </h1>
-            
-            <p className="!font-normal">
-              {meal.description}
-            </p>
-
-            {/* Rating, Notes, Duration - Inline */}
-            <div className="flex items-center gap-6 mb-6">
-              <div className="flex items-center gap-1">
-                <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                <span style={{
-                  fontFamily: '"Right Grotesk Wide", sans-serif',
-                  fontSize: '16px',
-                  fontWeight: 500,
-                  color: 'rgb(39, 39, 42)'
-                }}>
-                  4.5
+        {/* Recipe Layout: 60% Left | 40% Right */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+          {/* Left Panel: Recipe Details (60%) */}
+          <div className="lg:col-span-3">
+            {/* Header */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-8"
+            >
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                <span className="px-2 py-1 bg-secondary rounded-full text-xs font-medium">
+                  {meal.day}
                 </span>
+                <span>•</span>
+                <span>{meal.meal_type}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <MessageCircle className="w-5 h-5 text-gray-600" />
-                <span style={{
-                  fontFamily: '"General Sans", sans-serif',
-                  fontSize: '15px',
-                  color: 'rgb(82, 82, 91)'
-                }}>
-                  2 Notes
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-gray-600" />
-                <span style={{
-                  fontFamily: '"General Sans", sans-serif',
-                  fontSize: '15px',
-                  color: 'rgb(82, 82, 91)'
-                }}>
-                  {(meal.prepTime || 0) + (meal.cookTime || 0)} mins cook
-                </span>
-              </div>
-            </div>
+              <h1 className="text-4xl font-bold mb-4" style={{ fontFamily: '"Right Grotesk Spatial", sans-serif' }}>
+                {meal.name}
+              </h1>
+              <p className="text-lg text-muted-foreground">{meal.description}</p>
+            </motion.div>
 
-            {/* Buttons */}
-            <div className="flex gap-4">
-              <button
-                className="flex items-center gap-2 px-6 py-3 bg-black text-white hover:bg-gray-800 transition-colors"
-                style={{
-                  fontFamily: '"Right Grotesk Wide", sans-serif',
-                  fontSize: '16px',
-                  fontWeight: 500,
-                  borderRadius: '33px'
-                }}>
+            {/* Quick Stats */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="flex flex-wrap gap-4 mb-8"
+            >
+              <div className="flex items-center gap-2 text-sm">
+                <Clock className="w-5 h-5 text-primary" />
+                <span className="font-medium">Prep:</span>
+                <span className="text-muted-foreground">{meal.prep_time} min</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Clock className="w-5 h-5 text-primary" />
+                <span className="font-medium">Cook:</span>
+                <span className="text-muted-foreground">{meal.cook_time} min</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Users className="w-5 h-5 text-primary" />
+                <span className="font-medium">Servings:</span>
+                <span className="text-muted-foreground">{meal.servings}</span>
+              </div>
+            </motion.div>
 
-                <Bookmark className="w-4 h-4" />
-                Save
-              </button>
-            </div>
+            {/* Instructions */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-card border border-border rounded-lg p-6"
+            >
+              <h2 className="text-2xl font-semibold mb-6" style={{ fontFamily: '"Right Grotesk Wide", sans-serif' }}>
+                Instructions
+              </h2>
+              <ol className="space-y-4">
+                {meal.instructions.map((instruction, index) => (
+                  <li key={index} className="flex gap-4">
+                    <span className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-semibold text-sm">
+                      {index + 1}
+                    </span>
+                    <p className="text-muted-foreground pt-1">{instruction}</p>
+                  </li>
+                ))}
+              </ol>
+            </motion.div>
           </div>
 
-          {/* Right Side - Image */}
-          <div className="order-1 md:order-2">
-            <div className="relative w-full aspect-[4/3] overflow-hidden" style={{ borderRadius: '33px' }}>
+          {/* Right Panel: Image, Ingredients, Nutrition (40%) */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Meal Image */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="relative w-full aspect-square rounded-2xl overflow-hidden"
+            >
               <Image
-                src={meal.image}
+                src={imageUrl}
                 alt={meal.name}
                 fill
-                className="object-contain"
-                priority />
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 40vw"
+                priority
+              />
+            </motion.div>
 
-            </div>
-          </div>
-        </div>
-
-        {/* Recipe Details Section - Desktop/Tablet: Instructions Left, Ingredients/Nutrition Right */}
-        <div className="grid md:grid-cols-[1.5fr_1fr] gap-8 lg:gap-12">
-          {/* Left Column - Step-by-Step Instructions */}
-          <div>
-            <h2 style={{
-              fontFamily: '"Right Grotesk Spatial", sans-serif',
-              fontWeight: 500,
-              fontSize: '30px',
-              lineHeight: '36px',
-              color: 'rgb(39, 39, 42)',
-              marginBottom: '24px'
-            }}>
-              Step-by-Step Instructions
-            </h2>
-
-            <div className="space-y-6">
-              {meal.instructions.map((instruction, index) =>
-              <div key={index} className="flex gap-4">
-                  <div
-                  className="flex-shrink-0 flex items-center justify-center"
-                  style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '50%',
-                    backgroundColor: 'rgb(39, 39, 42)',
-                    color: 'white',
-                    fontFamily: '"Right Grotesk Wide", sans-serif',
-                    fontSize: '16px',
-                    fontWeight: 500
-                  }}>
-
-                    {index + 1}
-                  </div>
-                  <div className="flex-1 pt-2">
-                    <p style={{
-                    fontFamily: '"Right Grotesk Wide", sans-serif',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    color: 'rgb(82, 82, 91)',
-                    marginBottom: '8px'
-                  }}>
-                      Step {index + 1}
-                    </p>
-                    <p style={{
-                    fontFamily: '"General Sans", sans-serif',
-                    fontSize: '15px',
-                    lineHeight: '21px',
-                    color: 'rgb(39, 39, 42)'
-                  }}>
-                      {instruction}
-                    </p>
-                  </div>
+            {/* Serving Adjuster */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="bg-card border border-border rounded-lg p-4"
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Servings</span>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => adjustServings(servings - 1)}
+                    className="w-8 h-8 rounded-full bg-secondary hover:bg-secondary/80 flex items-center justify-center transition-colors"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <span className="text-xl font-semibold w-8 text-center">{servings}</span>
+                  <button
+                    onClick={() => adjustServings(servings + 1)}
+                    className="w-8 h-8 rounded-full bg-secondary hover:bg-secondary/80 flex items-center justify-center transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
                 </div>
-              )}
-            </div>
-          </div>
+              </div>
+            </motion.div>
 
-          {/* Right Column - Ingredients + Nutrition with Tabs */}
-          <div>
-            {/* Toggle Tabs */}
-            <div className="flex gap-2 mb-6 sticky top-0 py-2 z-10" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
-              <button
-                onClick={() => setActiveTab("ingredients")}
-                className="flex-1 py-3 transition-all"
-                style={{
-                  fontFamily: '"Right Grotesk Wide", sans-serif',
-                  fontSize: '16px',
-                  fontWeight: 500,
-                  borderRadius: '33px',
-                  backgroundColor: activeTab === "ingredients" ? 'rgb(39, 39, 42)' : 'rgb(244, 244, 245)',
-                  color: activeTab === "ingredients" ? 'white' : 'rgb(82, 82, 91)'
-                }}>
-
+            {/* Ingredients */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="bg-card border border-border rounded-lg p-6"
+            >
+              <h3 className="text-xl font-semibold mb-4" style={{ fontFamily: '"Right Grotesk Wide", sans-serif' }}>
                 Ingredients
-              </button>
-              <button
-                onClick={() => setActiveTab("nutrition")}
-                className="flex-1 py-3 transition-all"
-                style={{
-                  fontFamily: '"Right Grotesk Wide", sans-serif',
-                  fontSize: '16px',
-                  fontWeight: 500,
-                  borderRadius: '33px',
-                  backgroundColor: activeTab === "nutrition" ? 'rgb(39, 39, 42)' : 'rgb(244, 244, 245)',
-                  color: activeTab === "nutrition" ? 'white' : 'rgb(82, 82, 91)'
-                }}>
+              </h3>
+              <ul className="space-y-3">
+                {meal.ingredients.map((ingredient, index) => (
+                  <li key={index} className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{ingredient.name}</span>
+                    <span className="font-medium">{calculateIngredientAmount(ingredient.amount)}</span>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
 
+            {/* Nutrition */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="bg-card border border-border rounded-lg p-6"
+            >
+              <h3 className="text-xl font-semibold mb-4" style={{ fontFamily: '"Right Grotesk Wide", sans-serif' }}>
                 Nutrition
-              </button>
-            </div>
-
-            {/* Ingredients Tab */}
-            {activeTab === "ingredients" &&
-            <div>
-                {/* Serving Size Selector */}
-                <div className="mb-6 p-4 bg-gray-50" style={{ borderRadius: '20px' }}>
-                  <p style={{
-                  fontFamily: '"General Sans", sans-serif',
-                  fontSize: '15px',
-                  color: 'rgb(82, 82, 91)',
-                  marginBottom: '12px'
-                }}>
-                    Serving Size
-                  </p>
-                  <div className="flex items-center gap-4">
-                    <button
-                    onClick={() => setServings(Math.max(1, servings - 1))}
-                    className="w-10 h-10 flex items-center justify-center bg-white border-2 border-gray-300 hover:border-black transition-colors"
-                    style={{ borderRadius: '50%' }}>
-
-                      <Minus className="w-4 h-4" />
-                    </button>
-                    <span style={{
-                    fontFamily: '"Right Grotesk Wide", sans-serif',
-                    fontSize: '24px',
-                    fontWeight: 500,
-                    color: 'rgb(39, 39, 42)',
-                    minWidth: '60px',
-                    textAlign: 'center'
-                  }}>
-                      {servings}
-                    </span>
-                    <button
-                    onClick={() => setServings(servings + 1)}
-                    className="w-10 h-10 flex items-center justify-center bg-white border-2 border-gray-300 hover:border-black transition-colors"
-                    style={{ borderRadius: '50%' }}>
-
-                      <Plus className="w-4 h-4" />
-                    </button>
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Flame className="w-5 h-5 text-orange-500" />
+                    <span className="text-sm text-muted-foreground">Calories</span>
                   </div>
+                  <span className="font-semibold">{calculateNutrition(meal.nutrition.calories)}</span>
                 </div>
-
-                {/* Ingredients List */}
-                <ul className="space-y-4">
-                  {meal.ingredients.map((ingredient, index) =>
-                <li key={index} className="flex items-start gap-3 pb-4 border-b border-gray-200">
-                      <div className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0" />
-                      <div className="flex-1">
-                        <span style={{
-                      fontFamily: '"Right Grotesk Wide", sans-serif',
-                      fontSize: '15px',
-                      fontWeight: 500,
-                      color: 'rgb(39, 39, 42)'
-                    }}>
-                          {adjustIngredientAmount(ingredient.amount)}
-                        </span>
-                        <span style={{
-                      fontFamily: '"General Sans", sans-serif',
-                      fontSize: '15px',
-                      color: 'rgb(82, 82, 91)',
-                      marginLeft: '8px'
-                    }}>
-                          {ingredient.name}
-                        </span>
-                      </div>
-                    </li>
-                )}
-                </ul>
-              </div>
-            }
-
-            {/* Nutrition Tab */}
-            {activeTab === "nutrition" &&
-            <div>
-                <p style={{
-                fontFamily: '"General Sans", sans-serif',
-                fontSize: '15px',
-                color: 'rgb(82, 82, 91)',
-                marginBottom: '16px'
-              }}>
-                  Per serving ({Math.round(meal.nutrition.calories / baseServings)} kcal)
-                </p>
-
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center pb-4 border-b border-gray-200">
-                    <span style={{
-                    fontFamily: '"General Sans", sans-serif',
-                    fontSize: '15px',
-                    color: 'rgb(39, 39, 42)'
-                  }}>
-                      Calories
-                    </span>
-                    <span style={{
-                    fontFamily: '"Right Grotesk Wide", sans-serif',
-                    fontSize: '16px',
-                    fontWeight: 500,
-                    color: 'rgb(39, 39, 42)'
-                  }}>
-                      {Math.round(meal.nutrition.calories / baseServings)} kcal
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center pb-4 border-b border-gray-200">
-                    <span style={{
-                    fontFamily: '"General Sans", sans-serif',
-                    fontSize: '15px',
-                    color: 'rgb(39, 39, 42)'
-                  }}>
-                      Protein
-                    </span>
-                    <span style={{
-                    fontFamily: '"Right Grotesk Wide", sans-serif',
-                    fontSize: '16px',
-                    fontWeight: 500,
-                    color: 'rgb(39, 39, 42)'
-                  }}>
-                      {Math.round(meal.nutrition.protein / baseServings)}g
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center pb-4 border-b border-gray-200">
-                    <span style={{
-                    fontFamily: '"General Sans", sans-serif',
-                    fontSize: '15px',
-                    color: 'rgb(39, 39, 42)'
-                  }}>
-                      Carbohydrates
-                    </span>
-                    <span style={{
-                    fontFamily: '"Right Grotesk Wide", sans-serif',
-                    fontSize: '16px',
-                    fontWeight: 500,
-                    color: 'rgb(39, 39, 42)'
-                  }}>
-                      {Math.round(meal.nutrition.carbs / baseServings)}g
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center pb-4 border-b border-gray-200">
-                    <span style={{
-                    fontFamily: '"General Sans", sans-serif',
-                    fontSize: '15px',
-                    color: 'rgb(39, 39, 42)'
-                  }}>
-                      Fat
-                    </span>
-                    <span style={{
-                    fontFamily: '"Right Grotesk Wide", sans-serif',
-                    fontSize: '16px',
-                    fontWeight: 500,
-                    color: 'rgb(39, 39, 42)'
-                  }}>
-                      {Math.round(meal.nutrition.fat / baseServings)}g
-                    </span>
-                  </div>
+                <div className="h-px bg-border"></div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Protein</span>
+                  <span className="font-medium">{calculateNutrition(meal.nutrition.protein)}g</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Carbs</span>
+                  <span className="font-medium">{calculateNutrition(meal.nutrition.carbs)}g</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Fat</span>
+                  <span className="font-medium">{calculateNutrition(meal.nutrition.fat)}g</span>
                 </div>
               </div>
-            }
-          </div>
-        </div>
-
-        {/* Leave a Note Section */}
-        <div className="mt-16 max-w-4xl">
-          <h2 style={{
-            fontFamily: '"Right Grotesk Spatial", sans-serif',
-            fontWeight: 500,
-            fontSize: '30px',
-            lineHeight: '36px',
-            color: 'rgb(39, 39, 42)',
-            marginBottom: '24px'
-          }}>
-            Leave a note
-          </h2>
-
-          <div className="mb-12 p-6 border-2 border-gray-200" style={{ backgroundColor: 'rgb(255, 255, 255)', borderRadius: '33px' }}>
-            <textarea
-              placeholder="Tell us what you think..."
-              rows={4}
-              className="w-full resize-none outline-none"
-              style={{
-                fontFamily: '"General Sans", sans-serif',
-                fontSize: '15px',
-                color: 'rgb(39, 39, 42)',
-                border: 'none',
-                padding: 0
-              }} />
-
-            <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
-              <button
-                className="flex items-center gap-2 text-gray-400 hover:text-gray-600 transition-colors"
-                style={{
-                  fontFamily: '"General Sans", sans-serif',
-                  fontSize: '14px'
-                }}>
-
-                <ImageIcon className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-
-          <p style={{
-            fontFamily: '"General Sans", sans-serif',
-            fontSize: '15px',
-            color: 'rgb(82, 82, 91)',
-            textAlign: 'center',
-            marginBottom: '32px'
-          }}>
-            You need to be logged in to add a note
-          </p>
-
-          {/* Notes Section */}
-          <h3 style={{
-            fontFamily: '"Right Grotesk Spatial", sans-serif',
-            fontWeight: 500,
-            fontSize: '30px',
-            lineHeight: '36px',
-            color: 'rgb(39, 39, 42)',
-            marginBottom: '24px'
-          }}>
-            Notes (2)
-          </h3>
-
-          <div className="space-y-6">
-            {/* Comment 1 */}
-            <div className="pb-6 border-b border-gray-200">
-              <div className="flex gap-4">
-                <div
-                  className="flex-shrink-0 flex items-center justify-center bg-black text-white"
-                  style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '50%',
-                    fontFamily: '"Right Grotesk Wide", sans-serif',
-                    fontSize: '18px',
-                    fontWeight: 500
-                  }}>
-
-                  R
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span style={{
-                      fontFamily: '"Right Grotesk Wide", sans-serif',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      color: 'rgb(39, 39, 42)'
-                    }}>
-                      Ryan J.
-                    </span>
-                    <span style={{
-                      fontFamily: '"General Sans", sans-serif',
-                      fontSize: '14px',
-                      color: 'rgb(120, 120, 120)'
-                    }}>
-                      a month ago
-                    </span>
-                  </div>
-                  <p style={{
-                    fontFamily: '"General Sans", sans-serif',
-                    fontSize: '15px',
-                    lineHeight: '21px',
-                    color: 'rgb(39, 39, 42)',
-                    marginBottom: '12px'
-                  }}>
-                    soo good!!
-                  </p>
-                  <div className="flex items-center gap-4">
-                    <button className="flex items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors">
-                      <Heart className="w-4 h-4" />
-                      <span style={{
-                        fontFamily: '"General Sans", sans-serif',
-                        fontSize: '14px'
-                      }}>
-                        0
-                      </span>
-                    </button>
-                    <button className="flex items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors">
-                      <MessageCircle className="w-4 h-4" />
-                      <span style={{
-                        fontFamily: '"General Sans", sans-serif',
-                        fontSize: '14px'
-                      }}>
-                        Reply
-                      </span>
-                    </button>
-                    <button className="flex items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors">
-                      <Flag className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Comment 2 */}
-            <div className="pb-6 border-b border-gray-200">
-              <div className="flex gap-4">
-                <div
-                  className="flex-shrink-0 flex items-center justify-center bg-black text-white"
-                  style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '50%',
-                    fontFamily: '"Right Grotesk Wide", sans-serif',
-                    fontSize: '18px',
-                    fontWeight: 500
-                  }}>
-
-                  D
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span style={{
-                      fontFamily: '"Right Grotesk Wide", sans-serif',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      color: 'rgb(39, 39, 42)'
-                    }}>
-                      Duyen L.
-                    </span>
-                    <span style={{
-                      fontFamily: '"General Sans", sans-serif',
-                      fontSize: '14px',
-                      color: 'rgb(120, 120, 120)'
-                    }}>
-                      2 months ago
-                    </span>
-                  </div>
-                  <p style={{
-                    fontFamily: '"General Sans", sans-serif',
-                    fontSize: '15px',
-                    lineHeight: '21px',
-                    color: 'rgb(39, 39, 42)',
-                    marginBottom: '12px'
-                  }}>
-                    my gf loves this. me too ofc
-                  </p>
-                  <div className="flex items-center gap-4">
-                    <button className="flex items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors">
-                      <Heart className="w-4 h-4" />
-                      <span style={{
-                        fontFamily: '"General Sans", sans-serif',
-                        fontSize: '14px'
-                      }}>
-                        1
-                      </span>
-                    </button>
-                    <button className="flex items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors">
-                      <MessageCircle className="w-4 h-4" />
-                      <span style={{
-                        fontFamily: '"General Sans", sans-serif',
-                        fontSize: '14px'
-                      }}>
-                        Reply
-                      </span>
-                    </button>
-                    <button className="flex items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors">
-                      <Flag className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>
-    </div>);
-
+    </div>
+  );
 }

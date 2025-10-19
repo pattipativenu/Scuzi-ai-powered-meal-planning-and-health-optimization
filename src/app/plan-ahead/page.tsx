@@ -195,23 +195,38 @@ export default function PlanAheadPage() {
   const totalCalories = meals.reduce((sum, m) => sum + (m.nutrition?.calories || 0), 0);
 
   // Convert GeneratedMeal to Meal format for MealCard
-  const convertToMeal = (meal: GeneratedMeal): Meal => ({
-    id: `${meal.day}-${meal.meal_type}`,
-    name: meal.name,
-    description: meal.description,
-    image: meal.image,
-    category: meal.meal_type.toLowerCase() as "breakfast" | "lunch" | "snack" | "dinner",
-    prepTime: meal.prep_time,
-    cookTime: meal.cook_time,
-    servings: meal.servings,
-    ingredients: meal.ingredients.map((ing) => ({
-      name: ing.name,
-      amount: ing.amount,
-      category: "cupboard" as const,
-    })),
-    instructions: meal.instructions,
-    nutrition: meal.nutrition,
-  });
+  const convertToMeal = (meal: GeneratedMeal): Meal => {
+    // Handle both image_base64 (from generate-images) and image (from lambda-store/retrieve)
+    let imageUrl = meal.image;
+    
+    // If image_base64 exists but no image URL, convert to data URL
+    if (!imageUrl && (meal as any).image_base64) {
+      imageUrl = `data:image/png;base64,${(meal as any).image_base64}`;
+    }
+    
+    // Fallback to placeholder if no image
+    if (!imageUrl) {
+      imageUrl = "/placeholder-meal.jpg";
+    }
+    
+    return {
+      id: `${meal.day}-${meal.meal_type}`,
+      name: meal.name,
+      description: meal.description,
+      image: imageUrl,
+      category: meal.meal_type.toLowerCase() as "breakfast" | "lunch" | "snack" | "dinner",
+      prepTime: meal.prep_time,
+      cookTime: meal.cook_time,
+      servings: meal.servings,
+      ingredients: meal.ingredients.map((ing) => ({
+        name: ing.name,
+        amount: ing.amount,
+        category: "cupboard" as const,
+      })),
+      instructions: meal.instructions,
+      nutrition: meal.nutrition,
+    };
+  };
 
   return (
     <div className="min-h-screen bg-background">
