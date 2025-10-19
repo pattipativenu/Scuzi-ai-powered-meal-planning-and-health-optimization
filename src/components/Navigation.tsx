@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Search, Camera, Upload, ArrowLeft } from "lucide-react";
+import { Search, Camera, Upload, ArrowLeft, User, LogOut } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { WhoopMiniMetrics } from "@/components/WhoopMiniMetrics";
+import { authClient, useSession } from "@/lib/auth-client";
+import { toast } from "sonner";
+import { useWhoopConnect } from "@/hooks/useWhoopConnect";
 
 // Animation variants for the menu
 const perspective = {
@@ -108,6 +111,22 @@ const MenuButton = ({ isActive, toggleMenu }: { isActive: boolean; toggleMenu: (
 
 // Nav component
 const Nav = ({ setMenuOpen }: { setMenuOpen: (open: boolean) => void }) => {
+  const { data: session, isPending, refetch } = useSession();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    const { error } = await authClient.signOut();
+    if (error?.code) {
+      toast.error(error.code);
+    } else {
+      localStorage.removeItem("bearer_token");
+      refetch();
+      setMenuOpen(false);
+      router.push("/");
+      toast.success("Signed out successfully");
+    }
+  };
+
   return (
     <div className="flex flex-col justify-between h-full box-border p-[100px_40px_50px_40px]" style={{ color: "rgb(17, 24, 39)" }}>
       <div className="flex flex-col gap-[10px]">
@@ -134,6 +153,75 @@ const Nav = ({ setMenuOpen }: { setMenuOpen: (open: boolean) => void }) => {
             </motion.a>
           </div>
         ))}
+
+        {/* Auth Section */}
+        <div className="mt-8 pt-8" style={{ borderTop: "1px solid rgba(0,0,0,0.1)" }}>
+          {!isPending && session?.user ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center">
+                  <User className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <p style={{
+                    fontFamily: '"Right Grotesk Wide", sans-serif',
+                    fontSize: "16px",
+                    fontWeight: 500,
+                    color: "rgb(17, 24, 39)"
+                  }}>
+                    {session.user.name}
+                  </p>
+                  <p style={{
+                    fontFamily: '"General Sans", sans-serif',
+                    fontSize: "14px",
+                    color: "rgb(107, 114, 128)"
+                  }}>
+                    {session.user.email}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 transition-colors w-full justify-center"
+                style={{
+                  fontFamily: '"Right Grotesk Wide", sans-serif',
+                  fontSize: "14px",
+                  fontWeight: 500
+                }}
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <Link
+                href="/login"
+                onClick={() => setMenuOpen(false)}
+                className="block px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 transition-colors text-center"
+                style={{
+                  fontFamily: '"Right Grotesk Wide", sans-serif',
+                  fontSize: "14px",
+                  fontWeight: 500
+                }}
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/register"
+                onClick={() => setMenuOpen(false)}
+                className="block px-4 py-2 rounded-lg border-2 border-black text-black hover:bg-gray-50 transition-colors text-center"
+                style={{
+                  fontFamily: '"Right Grotesk Wide", sans-serif',
+                  fontSize: "14px",
+                  fontWeight: 500
+                }}
+              >
+                Create Account
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
       <motion.div className="flex flex-wrap">
         {footerLinks.map((link, i) => (
@@ -168,6 +256,9 @@ export function Navigation() {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  
+  // Add WHOOP connection hook
+  const { connect, isLoading: whoopLoading } = useWhoopConnect();
 
   const placeholders = [
     "Have leftovers? I can make a meal.",
@@ -205,6 +296,10 @@ export function Navigation() {
 
   const handleGoBack = () => {
     router.push('/');
+  };
+
+  const handleWhoopConnect = async () => {
+    await connect();
   };
 
   const isOnChatPage = pathname === '/chat';
@@ -360,15 +455,19 @@ export function Navigation() {
       <div style={{ backgroundColor: "rgb(250, 250, 250)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3 h-20">
-            {/* WHOOP Connect Button */}
-            <Link href="/connect" className="flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white hover:bg-gray-800 transition-colors flex-shrink-0">
+            {/* WHOOP Connect Button - FIXED */}
+            <button 
+              onClick={handleWhoopConnect}
+              disabled={whoopLoading}
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white hover:bg-gray-800 transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
               </svg>
               <span style={{ fontFamily: '"Right Grotesk Wide", sans-serif', fontWeight: 500, fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.3px", whiteSpace: "nowrap" }}>
-                WHOOP CONNECT
+                {whoopLoading ? "CONNECTING..." : "WHOOP CONNECT"}
               </span>
-            </Link>
+            </button>
 
             {/* WHOOP Mini Metrics - Constrained width */}
             <div className="hidden lg:flex flex-1 justify-center overflow-hidden max-w-2xl mx-auto">
