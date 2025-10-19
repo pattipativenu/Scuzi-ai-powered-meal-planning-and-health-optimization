@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { BedrockRuntimeClient, ConverseCommand } from "@aws-sdk/client-bedrock-runtime";
 import { startOfWeek, format } from "date-fns";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, QueryCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 
 // ============================================
 // AWS BEDROCK CLIENT WITH BEARER TOKEN
@@ -49,11 +49,60 @@ const dynamoClient = new DynamoDBClient({
 
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
+// ============================================
+// FETCH MEALS FROM LIBRARY
+// ============================================
+async function fetchMealsFromLibrary() {
+  try {
+    const scanCommand = new ScanCommand({
+      TableName: "meals_library",
+      Limit: 100,
+    });
+    
+    const response = await docClient.send(scanCommand);
+    return response.Items || [];
+  } catch (error) {
+    console.error("Error fetching meals from library:", error);
+    return [];
+  }
+}
+
+// ============================================
+// SELECT RANDOM MEALS FROM LIBRARY
+// ============================================
+function selectRandomMealsFromLibrary(libraryMeals: any[], count: number, mealType: string) {
+  const filtered = libraryMeals.filter(m => m.mealType === mealType);
+  const shuffled = [...filtered].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
+}
+
+// ============================================
+// CONVERT LIBRARY MEAL TO PLAN FORMAT
+// ============================================
+function convertLibraryMealToPlanFormat(libraryMeal: any, day: string) {
+  return {
+    day,
+    meal_type: libraryMeal.mealType.charAt(0).toUpperCase() + libraryMeal.mealType.slice(1),
+    name: libraryMeal.name,
+    description: libraryMeal.description,
+    image_prompt: `${libraryMeal.description} - ${libraryMeal.name}, beautifully plated on a white dish, natural lighting, high resolution, appetizing food photography`,
+    ingredients: libraryMeal.ingredients.map((ing: any) => ({
+      name: ing.name,
+      amount: `${ing.quantity}${ing.unit}`
+    })),
+    instructions: libraryMeal.instructions,
+    prep_time: libraryMeal.prepTime,
+    cook_time: libraryMeal.cookTime,
+    servings: libraryMeal.servings,
+    nutrition: libraryMeal.nutrition
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { dietaryPreferences } = await request.json();
 
-    // Step 1: Fetch WHOOP data from the last 7-14 days
+    // Step 1: Fetch WHOOP data
     const whoopResponse = await fetch(
       `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/whoop/historical-data?limit=14`,
       { headers: { "Content-Type": "application/json" } }
@@ -65,28 +114,12 @@ export async function POST(request: NextRequest) {
 
     const whoopData = await whoopResponse.json();
     
-    // Step 2: Fetch existing meals from current week
-    const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-    const weekId = format(currentWeekStart, "yyyy-MM-dd");
-    
-    let existingMeals = [];
-    try {
-      const existingMealsQuery = new QueryCommand({
-        TableName: process.env.DYNAMODB_MEALPLAN_TABLE || "MealPlanData",
-        KeyConditionExpression: "week_id = :weekId",
-        ExpressionAttributeValues: {
-          ":weekId": weekId,
-        },
-      });
-      const existingMealsResponse = await docClient.send(existingMealsQuery);
-      if (existingMealsResponse.Items && existingMealsResponse.Items.length > 0) {
-        existingMeals = existingMealsResponse.Items[0].meals || [];
-      }
-    } catch (error) {
-      console.log("No existing meals found, generating fresh meal plan");
-    }
+    // Step 2: Fetch meals from library
+    console.log("[GENERATE] Fetching meals from library...");
+    const libraryMeals = await fetchMealsFromLibrary();
+    console.log(`[GENERATE] Found ${libraryMeals.length} meals in library`);
 
-    // Step 3: Analyze WHOOP data and prepare prompt
+    // Step 3: Analyze WHOOP data
     const whoopSummary = {
       avgRecovery: Math.round(
         whoopData.data.reduce((sum: number, d: any) => sum + (d.recovery_score || 0), 0) / whoopData.data.length
@@ -106,8 +139,41 @@ export async function POST(request: NextRequest) {
       ),
     };
 
-    // Step 4: Generate meals with Claude 3.5 Sonnet V2
-    const systemPrompt = `You are an expert AI nutritionist and meal planner integrated with WHOOP health data.
+    // Step 4: Determine strategy - use library meals or generate new ones
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    const mealTypes = ["breakfast", "lunch", "snacks", "dinner"];
+    
+    let generatedMeals: any[] = [];
+    
+    // Check if we have enough meals in library (at least 4 of each type)
+    const hasEnoughMeals = mealTypes.every(type => {
+      const count = libraryMeals.filter(m => m.mealType === type).length;
+      return count >= 4;
+    });
+
+    if (hasEnoughMeals && libraryMeals.length >= 28) {
+      // Strategy A: Use meals from library
+      console.log("[GENERATE] Using meals from library (enough meals available)");
+      
+      days.forEach(day => {
+        mealTypes.forEach(mealType => {
+          const selectedMeals = selectRandomMealsFromLibrary(libraryMeals, 1, mealType);
+          if (selectedMeals.length > 0) {
+            generatedMeals.push(convertLibraryMealToPlanFormat(selectedMeals[0], day));
+          }
+        });
+      });
+      
+      console.log(`[GENERATE] Selected ${generatedMeals.length} meals from library`);
+    } else {
+      // Strategy B: Generate new meals with Claude (use library as reference)
+      console.log("[GENERATE] Generating new meals with Claude (insufficient library meals)");
+      
+      const libraryContext = libraryMeals.length > 0 
+        ? `\n\nREFERENCE MEALS FROM LIBRARY (use as inspiration):\n${libraryMeals.slice(0, 10).map(m => `- ${m.name}: ${m.description}`).join('\n')}`
+        : '';
+
+      const systemPrompt = `You are an expert AI nutritionist and meal planner integrated with WHOOP health data.
 
 WHOOP Data Summary (Last 14 Days):
 - Average Recovery: ${whoopSummary.avgRecovery}%
@@ -116,23 +182,20 @@ WHOOP Data Summary (Last 14 Days):
 - Average Day Strain: ${whoopSummary.avgStrain}
 - Average Daily Calories: ${whoopSummary.avgCalories} kcal
 
-${dietaryPreferences ? `Dietary Preferences: ${dietaryPreferences}` : ''}
+${dietaryPreferences ? `Dietary Preferences: ${dietaryPreferences}` : ''}${libraryContext}
 
 CRITICAL REQUIREMENTS:
 1. Generate EXACTLY 28 meals total: 4 meals per day × 7 days (Monday through Sunday)
 2. Each day MUST have: Breakfast, Lunch, Snack, and Dinner
 3. EVERY meal must include a descriptive "image_prompt" field for image generation
 4. Ensure meal variety - no repeated meals across the week
-5. Adjust calories based on WHOOP metrics:
-   - If recovery is low (<50%): Focus on anti-inflammatory, nutrient-dense meals
-   - If strain is high (>15): Increase protein and carbs for recovery
-   - Match daily calories to user's average burn rate
+5. Focus on high-protein, gut-healthy, recovery-focused meals
+6. Adjust calories based on WHOOP metrics
 
 IMAGE PROMPT GUIDELINES:
 - Be specific about the dish appearance, plating, and main ingredients
 - Include details like "served in a white ceramic bowl" or "plated on white dish"
 - Mention key visual elements (garnish, sauce placement, protein presentation)
-- Example: "Creamy overnight oats with mixed berries in a glass jar, topped with chia seeds and honey drizzle, natural lighting"
 
 Return ONLY valid JSON in this exact format:
 {
@@ -140,59 +203,58 @@ Return ONLY valid JSON in this exact format:
     {
       "day": "Monday",
       "meal_type": "Breakfast",
-      "name": "Overnight Recovery Oats",
-      "description": "Nutrient-dense overnight oats with anti-inflammatory ingredients",
-      "image_prompt": "Creamy overnight oats with blueberries and sliced almonds in a glass jar, topped with chia seeds, honey drizzle, and fresh mint, served on white background, natural daylight, appetizing, high resolution",
-      "ingredients": [{"name": "Rolled oats", "amount": "50g"}, {"name": "Almond milk", "amount": "200ml"}],
-      "instructions": ["Combine oats and milk in a jar", "Refrigerate overnight", "Top with berries and serve"],
+      "name": "Meal Name",
+      "description": "Brief description",
+      "image_prompt": "Detailed visual description for image generation",
+      "ingredients": [{"name": "Ingredient", "amount": "50g"}],
+      "instructions": ["Step 1", "Step 2"],
       "prep_time": 10,
       "cook_time": 0,
       "servings": 1,
-      "nutrition": {"calories": 425, "protein": 15, "carbs": 65, "fat": 12}
+      "nutrition": {"calories": 400, "protein": 20, "carbs": 40, "fat": 15}
     }
   ]
-}
+}`;
 
-VERIFICATION: Before responding, count your meals to ensure exactly 28 total (7 days × 4 meal types).`;
-
-    const command = new ConverseCommand({
-      modelId: "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
-      messages: [
-        {
-          role: "user",
-          content: [{ text: "Generate a complete 7-day meal plan (28 meals total) with EXACTLY 4 meals per day: Breakfast, Lunch, Snack, and Dinner for each day from Monday to Sunday. Include detailed image_prompt for each meal." }],
+      const command = new ConverseCommand({
+        modelId: "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+        messages: [
+          {
+            role: "user",
+            content: [{ text: "Generate a complete 7-day meal plan (28 meals total) with EXACTLY 4 meals per day: Breakfast, Lunch, Snack, and Dinner for each day from Monday to Sunday. Include detailed image_prompt for each meal." }],
+          },
+        ],
+        system: [{ text: systemPrompt }],
+        inferenceConfig: {
+          maxTokens: 8192,
+          temperature: 0.7,
         },
-      ],
-      system: [{ text: systemPrompt }],
-      inferenceConfig: {
-        maxTokens: 8192,
-        temperature: 0.7,
-      },
-    });
+      });
 
-    const response = await client.send(command);
-    const rawText = response.output?.message?.content?.[0]?.text || "";
+      const response = await client.send(command);
+      const rawText = response.output?.message?.content?.[0]?.text || "";
 
-    // Parse JSON response
-    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("Failed to parse Claude response");
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error("Failed to parse Claude response");
+      }
+
+      const mealPlan = JSON.parse(jsonMatch[0]);
+      generatedMeals = mealPlan.meals;
     }
-
-    const mealPlan = JSON.parse(jsonMatch[0]);
     
-    // Verify we have exactly 28 meals
-    if (!mealPlan.meals || mealPlan.meals.length !== 28) {
-      console.warn(`Generated ${mealPlan.meals?.length || 0} meals instead of 28`);
+    if (generatedMeals.length !== 28) {
+      console.warn(`Generated ${generatedMeals.length} meals instead of 28`);
     }
 
-    console.log(`[GENERATE] Successfully generated ${mealPlan.meals.length} meals`);
+    console.log(`[GENERATE] Successfully prepared ${generatedMeals.length} meals`);
 
     return NextResponse.json({
       status: "success",
-      meals: mealPlan.meals,
+      meals: generatedMeals,
       whoopSummary,
-      message: `Generated ${mealPlan.meals.length} meals`,
+      usedLibrary: hasEnoughMeals && libraryMeals.length >= 28,
+      message: `Generated ${generatedMeals.length} meals`,
     });
   } catch (error) {
     console.error("Error generating meals:", error);

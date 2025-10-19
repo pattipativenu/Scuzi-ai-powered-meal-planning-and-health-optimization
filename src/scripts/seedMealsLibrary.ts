@@ -12,71 +12,294 @@ const client = new DynamoDBClient({
 
 const docClient = DynamoDBDocumentClient.from(client);
 
-// 56 Meals: 14 Breakfast, 14 Lunch, 14 Snacks, 14 Dinner
-// Based on WHOOP health data: High protein, balanced macros, recovery-focused
+// 56 Meals from PDF: 14 Breakfast, 14 Lunch, 14 Snacks, 14 Dinner
+// Based on WHOOP health data: High protein, gut-healthy, recovery-focused
 const meals = [
   // ========== BREAKFAST (14) ==========
   {
     id: uuidv4(),
-    name: "Protein-Packed Scrambled Eggs with Avocado",
+    name: "Blueberry Almond Overnight Oats",
     mealType: "breakfast",
-    description: "Fluffy scrambled eggs with creamy avocado and whole grain toast",
+    description: "Fiber & Probiotic Power Bowl - Make-ahead breakfast with fiber-rich oats, chia seeds, and Greek yogurt",
     prepTime: 5,
-    cookTime: 10,
+    cookTime: 0,
     servings: 1,
     ingredients: [
-      { name: "eggs", quantity: 3, unit: "whole", category: "fridge" },
-      { name: "avocado", quantity: 0.5, unit: "whole", category: "cupboard" },
-      { name: "whole grain bread", quantity: 2, unit: "slices", category: "cupboard" },
-      { name: "butter", quantity: 1, unit: "tbsp", category: "fridge" },
-      { name: "salt", quantity: 0.25, unit: "tsp", category: "cupboard" },
-      { name: "black pepper", quantity: 0.125, unit: "tsp", category: "cupboard" }
+      { name: "rolled oats", quantity: 0.5, unit: "cup", category: "cupboard" },
+      { name: "milk", quantity: 1, unit: "cup", category: "fridge" },
+      { name: "Greek yogurt", quantity: 0.25, unit: "cup", category: "fridge" },
+      { name: "chia seeds", quantity: 1, unit: "tbsp", category: "cupboard" },
+      { name: "almond butter", quantity: 1, unit: "tbsp", category: "cupboard" },
+      { name: "blueberries", quantity: 0.5, unit: "cup", category: "fridge" },
+      { name: "honey", quantity: 1, unit: "tsp", category: "cupboard" },
+      { name: "cinnamon", quantity: 0.25, unit: "tsp", category: "cupboard" }
     ],
     instructions: [
-      "Crack eggs into a bowl and whisk with salt and pepper",
-      "Heat butter in a non-stick pan over medium heat",
-      "Pour eggs into pan and gently stir with a spatula",
-      "Cook until eggs are soft and fluffy, about 3-4 minutes",
-      "Toast bread slices until golden brown",
-      "Slice avocado and mash lightly with a fork",
-      "Serve eggs with avocado on toast"
+      "In a jar or bowl, combine oats, milk, yogurt, chia seeds, almond butter, and cinnamon. Stir well.",
+      "Cover and refrigerate overnight (or at least 6 hours) to let oats soften.",
+      "In the morning, stir the mixture. Top with blueberries and drizzle honey if desired.",
+      "Enjoy cold, or warm it up briefly if you prefer a warm breakfast."
     ],
     nutrition: {
-      calories: 520,
-      protein: 28,
-      carbs: 35,
-      fat: 30,
-      fiber: 9,
-      sugar: 3,
-      sodium: 580
+      calories: 380,
+      protein: 20,
+      carbs: 50,
+      fat: 12,
+      fiber: 12,
+      sugar: 18,
+      sodium: 85
     },
-    tags: ["high-protein", "quick", "recovery"],
+    tags: ["high-protein", "high-fiber", "make-ahead", "probiotic", "gut-healthy"],
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
   {
     id: uuidv4(),
-    name: "Greek Yogurt Parfait with Berries and Granola",
+    name: "Spinach & Feta Omelette with Whole Grain Toast",
     mealType: "breakfast",
-    description: "Creamy Greek yogurt layered with fresh berries and crunchy granola",
+    description: "Green Omelette for Muscle & Gut - Perfect protein with all essential amino acids including glutamine for intestinal repair",
+    prepTime: 5,
+    cookTime: 8,
+    servings: 1,
+    ingredients: [
+      { name: "eggs", quantity: 2, unit: "whole", category: "fridge" },
+      { name: "spinach", quantity: 1, unit: "cup", category: "fridge" },
+      { name: "feta cheese", quantity: 2, unit: "tbsp", category: "fridge" },
+      { name: "cherry tomatoes", quantity: 4, unit: "whole", category: "fridge" },
+      { name: "olive oil", quantity: 1, unit: "tsp", category: "cupboard" },
+      { name: "whole grain bread", quantity: 1, unit: "slice", category: "cupboard" }
+    ],
+    instructions: [
+      "In a bowl, beat the eggs with a pinch of salt and pepper.",
+      "Heat olive oil in a non-stick pan over medium. Add spinach and sauté 1 minute until wilted.",
+      "Pour beaten eggs into the pan. Cook until the bottom sets, then sprinkle feta and tomatoes on one side. Fold the omelette in half over the fillings.",
+      "Cook another 1-2 minutes until eggs are fully set. Slide onto a plate.",
+      "Serve with a slice of whole grain toast on the side."
+    ],
+    nutrition: {
+      calories: 300,
+      protein: 18,
+      carbs: 20,
+      fat: 16,
+      fiber: 4,
+      sugar: 3,
+      sodium: 520
+    },
+    tags: ["high-protein", "quick", "gut-healthy", "leafy-greens"],
+    imageUrl: "",
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: uuidv4(),
+    name: "Banana Almond Chia Smoothie",
+    mealType: "breakfast",
+    description: "Gut-Friendly Energy Smoothie - Quick smoothie with prebiotic fiber from banana and protein for muscle repair",
+    prepTime: 5,
+    cookTime: 0,
+    servings: 1,
+    ingredients: [
+      { name: "banana", quantity: 1, unit: "whole", category: "cupboard" },
+      { name: "Greek yogurt", quantity: 0.5, unit: "cup", category: "fridge" },
+      { name: "almond butter", quantity: 1, unit: "tbsp", category: "cupboard" },
+      { name: "chia seeds", quantity: 1, unit: "tsp", category: "cupboard" },
+      { name: "spinach", quantity: 1, unit: "cup", category: "fridge" },
+      { name: "almond milk", quantity: 1, unit: "cup", category: "fridge" },
+      { name: "honey", quantity: 1, unit: "tsp", category: "cupboard" }
+    ],
+    instructions: [
+      "Add banana, yogurt, almond butter, chia seeds, and spinach to a blender. Pour in the almond milk.",
+      "Blend on high until completely smooth. If too thick, add a bit more liquid; if too thin, add ice or more banana.",
+      "Taste and add honey for sweetness if desired. Blend again briefly.",
+      "Pour into a glass and enjoy immediately."
+    ],
+    nutrition: {
+      calories: 350,
+      protein: 20,
+      carbs: 40,
+      fat: 14,
+      fiber: 8,
+      sugar: 22,
+      sodium: 120
+    },
+    tags: ["quick", "no-cook", "probiotic", "prebiotic", "high-protein"],
+    imageUrl: "",
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: uuidv4(),
+    name: "Avocado & Cottage Cheese Power Toast",
+    mealType: "breakfast",
+    description: "Creamy Gut-Nourishing Toast - Cottage cheese with live cultures and fiber-rich avocado for digestive support",
+    prepTime: 5,
+    cookTime: 3,
+    servings: 1,
+    ingredients: [
+      { name: "whole grain bread", quantity: 2, unit: "slices", category: "cupboard" },
+      { name: "cottage cheese", quantity: 0.5, unit: "cup", category: "fridge" },
+      { name: "avocado", quantity: 0.5, unit: "whole", category: "cupboard" },
+      { name: "cherry tomatoes", quantity: 4, unit: "whole", category: "fridge" },
+      { name: "lemon juice", quantity: 1, unit: "tsp", category: "fridge" },
+      { name: "red chili flakes", quantity: 0.125, unit: "tsp", category: "cupboard" }
+    ],
+    instructions: [
+      "Toast the whole grain bread to your liking.",
+      "Spread cottage cheese on the toast. Season lightly with salt and pepper.",
+      "Layer avocado slices on top of the cottage cheese. Drizzle with a little lemon juice.",
+      "Top with sliced cherry tomatoes. Sprinkle chili flakes if using, plus a bit more salt/pepper to taste.",
+      "Serve immediately and enjoy open-faced."
+    ],
+    nutrition: {
+      calories: 330,
+      protein: 17,
+      carbs: 30,
+      fat: 16,
+      fiber: 8,
+      sugar: 4,
+      sodium: 480
+    },
+    tags: ["high-protein", "high-fiber", "probiotic", "quick"],
+    imageUrl: "",
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: uuidv4(),
+    name: "Protein Pancakes with Berries & Kefir",
+    mealType: "breakfast",
+    description: "Fluffy Probiotic Pancakes for Recovery - Protein-rich with kefir for probiotics and berries for antioxidants",
+    prepTime: 10,
+    cookTime: 15,
+    servings: 2,
+    ingredients: [
+      { name: "oat flour", quantity: 0.5, unit: "cup", category: "cupboard" },
+      { name: "protein powder", quantity: 1, unit: "scoop", category: "cupboard" },
+      { name: "baking powder", quantity: 1, unit: "tsp", category: "cupboard" },
+      { name: "cinnamon", quantity: 0.5, unit: "tsp", category: "cupboard" },
+      { name: "egg", quantity: 1, unit: "whole", category: "fridge" },
+      { name: "Greek yogurt", quantity: 0.25, unit: "cup", category: "fridge" },
+      { name: "milk", quantity: 0.5, unit: "cup", category: "fridge" },
+      { name: "mixed berries", quantity: 1, unit: "cup", category: "fridge" },
+      { name: "kefir", quantity: 0.5, unit: "cup", category: "fridge" }
+    ],
+    instructions: [
+      "In a bowl, whisk together flour, protein powder, baking powder, and cinnamon.",
+      "In another bowl, beat the egg, then mix in Greek yogurt and milk.",
+      "Pour wet ingredients into dry and stir until just combined. Let the batter sit for 5 minutes to thicken.",
+      "Heat a non-stick skillet over medium heat and add a little oil. Pour batter (~1/4 cup per pancake) onto the pan. Cook 2-3 minutes until bubbles form on top, then flip and cook another 1-2 minutes until golden.",
+      "Serve pancakes topped with kefir or Greek yogurt and a handful of mixed berries. Drizzle with honey or syrup if desired."
+    ],
+    nutrition: {
+      calories: 400,
+      protein: 25,
+      carbs: 45,
+      fat: 12,
+      fiber: 7,
+      sugar: 15,
+      sodium: 320
+    },
+    tags: ["high-protein", "probiotic", "recovery", "weekend-brunch"],
+    imageUrl: "",
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: uuidv4(),
+    name: "Turmeric Tofu Scramble with Vegetables",
+    mealType: "breakfast",
+    description: "Plant-Powered Anti-Inflammatory Scramble - Fermented soy protein with turmeric and ginger for reduced inflammation",
+    prepTime: 10,
+    cookTime: 12,
+    servings: 1,
+    ingredients: [
+      { name: "firm tofu", quantity: 150, unit: "g", category: "fridge" },
+      { name: "turmeric powder", quantity: 0.5, unit: "tsp", category: "cupboard" },
+      { name: "fresh ginger", quantity: 1, unit: "tsp", category: "fridge" },
+      { name: "garlic", quantity: 1, unit: "clove", category: "cupboard" },
+      { name: "bell pepper", quantity: 0.5, unit: "whole", category: "fridge" },
+      { name: "onion", quantity: 0.25, unit: "whole", category: "cupboard" },
+      { name: "spinach", quantity: 1, unit: "cup", category: "fridge" },
+      { name: "olive oil", quantity: 2, unit: "tsp", category: "cupboard" },
+      { name: "black pepper", quantity: 0.125, unit: "tsp", category: "cupboard" }
+    ],
+    instructions: [
+      "Heat 1 teaspoon of olive oil in a skillet over medium heat. Sauté onion and bell pepper for 3-4 minutes until softened. Add minced garlic and ginger, cooking 30 seconds until fragrant.",
+      "Crumble the tofu with your hands or a fork into bite-sized pieces. Push veggies to the side of the pan and add another teaspoon of olive oil. Add crumbled tofu.",
+      "Sprinkle turmeric and black pepper over tofu. Stir to coat evenly. Cook for 5-7 minutes, stirring occasionally.",
+      "Add spinach and stir until wilted, about 1-2 minutes. Season with salt to taste.",
+      "Serve hot with whole grain toast or as is."
+    ],
+    nutrition: {
+      calories: 280,
+      protein: 18,
+      carbs: 16,
+      fat: 16,
+      fiber: 5,
+      sugar: 6,
+      sodium: 320
+    },
+    tags: ["vegan", "anti-inflammatory", "high-protein", "gut-healthy"],
+    imageUrl: "",
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: uuidv4(),
+    name: "Sweet Potato & Black Bean Breakfast Bowl",
+    mealType: "breakfast",
+    description: "Fiber-Rich Recovery Bowl - Complex carbs and plant protein with prebiotic fiber for gut bacteria",
+    prepTime: 10,
+    cookTime: 25,
+    servings: 2,
+    ingredients: [
+      { name: "sweet potato", quantity: 2, unit: "medium", category: "cupboard" },
+      { name: "black beans", quantity: 1, unit: "cup", category: "cupboard" },
+      { name: "eggs", quantity: 2, unit: "whole", category: "fridge" },
+      { name: "avocado", quantity: 1, unit: "whole", category: "cupboard" },
+      { name: "spinach", quantity: 2, unit: "cups", category: "fridge" },
+      { name: "lime", quantity: 0.5, unit: "whole", category: "fridge" },
+      { name: "cumin", quantity: 0.5, unit: "tsp", category: "cupboard" },
+      { name: "olive oil", quantity: 1, unit: "tbsp", category: "cupboard" }
+    ],
+    instructions: [
+      "Preheat oven to 425°F (220°C). Peel and cube sweet potatoes.",
+      "Toss sweet potatoes with olive oil, cumin, salt, and pepper. Roast for 25 minutes until tender.",
+      "Warm black beans in a small pot. Sauté spinach until wilted.",
+      "Fry or scramble eggs to your liking.",
+      "Divide roasted sweet potatoes between bowls. Top with black beans, spinach, and eggs.",
+      "Add sliced avocado and squeeze lime juice over everything. Serve hot."
+    ],
+    nutrition: {
+      calories: 420,
+      protein: 18,
+      carbs: 52,
+      fat: 16,
+      fiber: 14,
+      sugar: 10,
+      sodium: 380
+    },
+    tags: ["high-fiber", "vegetarian", "recovery", "gut-healthy"],
+    imageUrl: "",
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: uuidv4(),
+    name: "Greek Yogurt Parfait with Granola & Berries",
+    mealType: "breakfast",
+    description: "Probiotic Protein Parfait - Layers of Greek yogurt with live cultures, fiber-rich granola, and antioxidant berries",
     prepTime: 5,
     cookTime: 0,
     servings: 1,
     ingredients: [
       { name: "Greek yogurt", quantity: 1.5, unit: "cups", category: "fridge" },
-      { name: "mixed berries", quantity: 1, unit: "cup", category: "fridge" },
       { name: "granola", quantity: 0.5, unit: "cup", category: "cupboard" },
+      { name: "mixed berries", quantity: 1, unit: "cup", category: "fridge" },
       { name: "honey", quantity: 1, unit: "tbsp", category: "cupboard" },
       { name: "chia seeds", quantity: 1, unit: "tbsp", category: "cupboard" }
     ],
     instructions: [
-      "In a glass or bowl, add half of the Greek yogurt",
-      "Layer half of the berries on top",
-      "Add remaining yogurt",
-      "Top with remaining berries",
-      "Sprinkle granola and chia seeds on top",
-      "Drizzle with honey",
-      "Serve immediately"
+      "In a glass or bowl, add half of the Greek yogurt.",
+      "Layer half of the berries on top.",
+      "Add remaining yogurt.",
+      "Top with remaining berries.",
+      "Sprinkle granola and chia seeds on top.",
+      "Drizzle with honey and serve immediately."
     ],
     nutrition: {
       calories: 420,
@@ -87,173 +310,15 @@ const meals = [
       sugar: 32,
       sodium: 120
     },
-    tags: ["no-cook", "high-protein", "quick", "antioxidants"],
+    tags: ["no-cook", "high-protein", "quick", "probiotic"],
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
   {
     id: uuidv4(),
-    name: "Overnight Oats with Banana and Almond Butter",
+    name: "Salmon & Cream Cheese Bagel",
     mealType: "breakfast",
-    description: "Creamy overnight oats with natural sweetness from banana",
-    prepTime: 5,
-    cookTime: 0,
-    servings: 1,
-    ingredients: [
-      { name: "rolled oats", quantity: 0.5, unit: "cup", category: "cupboard" },
-      { name: "milk", quantity: 1, unit: "cup", category: "fridge" },
-      { name: "banana", quantity: 1, unit: "whole", category: "cupboard" },
-      { name: "almond butter", quantity: 2, unit: "tbsp", category: "cupboard" },
-      { name: "honey", quantity: 1, unit: "tbsp", category: "cupboard" },
-      { name: "cinnamon", quantity: 0.5, unit: "tsp", category: "cupboard" },
-      { name: "chia seeds", quantity: 1, unit: "tbsp", category: "cupboard" }
-    ],
-    instructions: [
-      "In a jar or container, combine oats, milk, chia seeds, and cinnamon",
-      "Stir well to combine",
-      "Cover and refrigerate overnight (or at least 4 hours)",
-      "In the morning, slice banana",
-      "Top oats with banana slices and almond butter",
-      "Drizzle with honey",
-      "Stir and enjoy cold or heat in microwave for 1 minute"
-    ],
-    nutrition: {
-      calories: 485,
-      protein: 15,
-      carbs: 68,
-      fat: 18,
-      fiber: 11,
-      sugar: 28,
-      sodium: 95
-    },
-    tags: ["no-cook", "make-ahead", "fiber-rich"],
-    imageUrl: "",
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: uuidv4(),
-    name: "Spinach and Feta Omelet",
-    mealType: "breakfast",
-    description: "Fluffy omelet packed with spinach and tangy feta cheese",
-    prepTime: 5,
-    cookTime: 8,
-    servings: 1,
-    ingredients: [
-      { name: "eggs", quantity: 3, unit: "whole", category: "fridge" },
-      { name: "spinach", quantity: 1, unit: "cup", category: "fridge" },
-      { name: "feta cheese", quantity: 0.25, unit: "cup", category: "fridge" },
-      { name: "olive oil", quantity: 1, unit: "tbsp", category: "cupboard" },
-      { name: "salt", quantity: 0.25, unit: "tsp", category: "cupboard" },
-      { name: "black pepper", quantity: 0.125, unit: "tsp", category: "cupboard" }
-    ],
-    instructions: [
-      "Whisk eggs with salt and pepper in a bowl",
-      "Heat olive oil in a non-stick pan over medium heat",
-      "Add spinach and sauté until wilted, about 2 minutes",
-      "Remove spinach and set aside",
-      "Pour eggs into the same pan",
-      "As eggs set, lift edges to let uncooked egg flow underneath",
-      "When eggs are almost set, add spinach and feta to one half",
-      "Fold omelet in half and cook for 1 more minute",
-      "Slide onto plate and serve"
-    ],
-    nutrition: {
-      calories: 340,
-      protein: 24,
-      carbs: 4,
-      fat: 26,
-      fiber: 1,
-      sugar: 2,
-      sodium: 720
-    },
-    tags: ["high-protein", "low-carb", "quick", "vegetarian"],
-    imageUrl: "",
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: uuidv4(),
-    name: "Protein Smoothie Bowl",
-    mealType: "breakfast",
-    description: "Thick and creamy smoothie bowl topped with fresh fruits and nuts",
-    prepTime: 10,
-    cookTime: 0,
-    servings: 1,
-    ingredients: [
-      { name: "banana", quantity: 1, unit: "whole", category: "freezer" },
-      { name: "protein powder", quantity: 1, unit: "scoop", category: "cupboard" },
-      { name: "spinach", quantity: 1, unit: "cup", category: "freezer" },
-      { name: "almond milk", quantity: 0.5, unit: "cup", category: "fridge" },
-      { name: "strawberries", quantity: 0.5, unit: "cup", category: "fridge" },
-      { name: "almonds", quantity: 0.25, unit: "cup", category: "cupboard" },
-      { name: "coconut flakes", quantity: 2, unit: "tbsp", category: "cupboard" }
-    ],
-    instructions: [
-      "Add frozen banana, protein powder, spinach, and almond milk to blender",
-      "Blend until thick and smooth (add more milk if too thick)",
-      "Pour into a bowl",
-      "Slice fresh strawberries",
-      "Top with strawberries, almonds, and coconut flakes",
-      "Serve immediately with a spoon"
-    ],
-    nutrition: {
-      calories: 425,
-      protein: 32,
-      carbs: 42,
-      fat: 14,
-      fiber: 9,
-      sugar: 20,
-      sodium: 180
-    },
-    tags: ["high-protein", "recovery", "antioxidants", "no-cook"],
-    imageUrl: "",
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: uuidv4(),
-    name: "Whole Wheat Pancakes with Blueberries",
-    mealType: "breakfast",
-    description: "Fluffy whole wheat pancakes studded with fresh blueberries",
-    prepTime: 10,
-    cookTime: 15,
-    servings: 2,
-    ingredients: [
-      { name: "whole wheat flour", quantity: 1.5, unit: "cups", category: "cupboard" },
-      { name: "baking powder", quantity: 2, unit: "tsp", category: "cupboard" },
-      { name: "eggs", quantity: 2, unit: "whole", category: "fridge" },
-      { name: "milk", quantity: 1.25, unit: "cups", category: "fridge" },
-      { name: "honey", quantity: 2, unit: "tbsp", category: "cupboard" },
-      { name: "blueberries", quantity: 1, unit: "cup", category: "fridge" },
-      { name: "butter", quantity: 2, unit: "tbsp", category: "fridge" }
-    ],
-    instructions: [
-      "In a bowl, mix flour and baking powder",
-      "In another bowl, whisk eggs, milk, and honey",
-      "Pour wet ingredients into dry ingredients and mix until just combined",
-      "Gently fold in blueberries",
-      "Heat a griddle or pan over medium heat and add butter",
-      "Pour 1/4 cup batter for each pancake",
-      "Cook until bubbles form on surface, about 3 minutes",
-      "Flip and cook until golden brown, about 2 minutes",
-      "Serve warm with additional honey or maple syrup"
-    ],
-    nutrition: {
-      calories: 420,
-      protein: 16,
-      carbs: 68,
-      fat: 10,
-      fiber: 8,
-      sugar: 22,
-      sodium: 380
-    },
-    tags: ["family-friendly", "fiber-rich", "weekend-brunch"],
-    imageUrl: "",
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: uuidv4(),
-    name: "Smoked Salmon and Cream Cheese Bagel",
-    mealType: "breakfast",
-    description: "Classic bagel with smoked salmon, cream cheese, and capers",
+    description: "Omega-3 Protein Power - Smoked salmon with cream cheese for protein and anti-inflammatory omega-3s",
     prepTime: 5,
     cookTime: 3,
     servings: 1,
@@ -266,13 +331,13 @@ const meals = [
       { name: "lemon", quantity: 0.25, unit: "whole", category: "fridge" }
     ],
     instructions: [
-      "Slice bagel in half and toast until golden",
-      "Spread cream cheese on both halves",
-      "Layer smoked salmon on bottom half",
-      "Thinly slice red onion and add on top",
-      "Sprinkle capers over salmon",
-      "Squeeze fresh lemon juice over everything",
-      "Top with other bagel half or serve open-faced"
+      "Slice bagel in half and toast until golden.",
+      "Spread cream cheese on both halves.",
+      "Layer smoked salmon on bottom half.",
+      "Thinly slice red onion and add on top.",
+      "Sprinkle capers over salmon.",
+      "Squeeze fresh lemon juice over everything.",
+      "Top with other bagel half or serve open-faced."
     ],
     nutrition: {
       calories: 420,
@@ -289,42 +354,38 @@ const meals = [
   },
   {
     id: uuidv4(),
-    name: "Veggie-Loaded Breakfast Burrito",
+    name: "Quinoa Breakfast Bowl with Cinnamon & Berries",
     mealType: "breakfast",
-    description: "Hearty breakfast burrito with scrambled eggs and vegetables",
-    prepTime: 10,
-    cookTime: 12,
+    description: "Complete Protein Grain Bowl - Warm quinoa with all essential amino acids, fiber, and antioxidant berries",
+    prepTime: 5,
+    cookTime: 15,
     servings: 1,
     ingredients: [
-      { name: "whole wheat tortilla", quantity: 1, unit: "large", category: "cupboard" },
-      { name: "eggs", quantity: 2, unit: "whole", category: "fridge" },
-      { name: "bell pepper", quantity: 0.5, unit: "whole", category: "fridge" },
-      { name: "onion", quantity: 0.25, unit: "whole", category: "cupboard" },
-      { name: "black beans", quantity: 0.5, unit: "cup", category: "cupboard" },
-      { name: "cheddar cheese", quantity: 0.25, unit: "cup", category: "fridge" },
-      { name: "salsa", quantity: 2, unit: "tbsp", category: "fridge" }
+      { name: "quinoa", quantity: 0.5, unit: "cup", category: "cupboard" },
+      { name: "almond milk", quantity: 1, unit: "cup", category: "fridge" },
+      { name: "mixed berries", quantity: 0.75, unit: "cup", category: "fridge" },
+      { name: "pecans", quantity: 0.25, unit: "cup", category: "cupboard" },
+      { name: "maple syrup", quantity: 1, unit: "tbsp", category: "cupboard" },
+      { name: "cinnamon", quantity: 0.5, unit: "tsp", category: "cupboard" }
     ],
     instructions: [
-      "Dice bell pepper and onion",
-      "Heat a pan with oil and sauté vegetables until soft, about 5 minutes",
-      "Push vegetables to side and scramble eggs in the same pan",
-      "Add black beans and heat through",
-      "Warm tortilla in microwave for 20 seconds",
-      "Place egg mixture in center of tortilla",
-      "Top with cheese and salsa",
-      "Fold in sides and roll tightly",
-      "Optional: Toast burrito in pan for crispy exterior"
+      "Rinse quinoa under cold water.",
+      "In a pot, combine quinoa and almond milk. Bring to a boil, then reduce heat to low.",
+      "Simmer covered for 12-15 minutes until liquid is absorbed. Fluff with a fork.",
+      "Transfer to a bowl.",
+      "Top with mixed berries and pecans.",
+      "Drizzle with maple syrup and sprinkle cinnamon. Serve warm."
     ],
     nutrition: {
-      calories: 485,
-      protein: 26,
-      carbs: 52,
+      calories: 450,
+      protein: 14,
+      carbs: 62,
       fat: 18,
-      fiber: 12,
-      sugar: 6,
-      sodium: 720
+      fiber: 10,
+      sugar: 18,
+      sodium: 85
     },
-    tags: ["high-protein", "fiber-rich", "portable"],
+    tags: ["high-protein", "high-fiber", "gluten-free", "vegan"],
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -332,7 +393,7 @@ const meals = [
     id: uuidv4(),
     name: "Chia Seed Pudding with Mango",
     mealType: "breakfast",
-    description: "Creamy chia pudding topped with sweet tropical mango",
+    description: "Tropical Fiber Powerhouse - Chia seeds rich in omega-3s and prebiotic fiber with sweet mango",
     prepTime: 5,
     cookTime: 0,
     servings: 1,
@@ -345,13 +406,11 @@ const meals = [
       { name: "coconut flakes", quantity: 1, unit: "tbsp", category: "cupboard" }
     ],
     instructions: [
-      "In a jar or bowl, combine chia seeds, coconut milk, honey, and vanilla",
-      "Stir well to prevent clumping",
-      "Cover and refrigerate for at least 4 hours or overnight",
-      "Stir pudding before serving",
-      "Dice fresh mango",
-      "Top pudding with mango and coconut flakes",
-      "Serve chilled"
+      "In a jar or bowl, combine chia seeds, coconut milk, honey, and vanilla. Stir well to prevent clumping.",
+      "Cover and refrigerate for at least 4 hours or overnight.",
+      "Stir pudding before serving.",
+      "Dice fresh mango.",
+      "Top pudding with mango and coconut flakes. Serve chilled."
     ],
     nutrition: {
       calories: 380,
@@ -368,88 +427,46 @@ const meals = [
   },
   {
     id: uuidv4(),
-    name: "Sweet Potato Hash with Eggs",
+    name: "Veggie-Loaded Breakfast Burrito",
     mealType: "breakfast",
-    description: "Savory sweet potato hash topped with perfectly cooked eggs",
+    description: "Protein & Fiber Wrap - Scrambled eggs with fiber-rich black beans and colorful vegetables",
     prepTime: 10,
-    cookTime: 20,
-    servings: 2,
-    ingredients: [
-      { name: "sweet potato", quantity: 2, unit: "medium", category: "cupboard" },
-      { name: "eggs", quantity: 4, unit: "whole", category: "fridge" },
-      { name: "bell pepper", quantity: 1, unit: "whole", category: "fridge" },
-      { name: "onion", quantity: 0.5, unit: "whole", category: "cupboard" },
-      { name: "olive oil", quantity: 2, unit: "tbsp", category: "cupboard" },
-      { name: "paprika", quantity: 1, unit: "tsp", category: "cupboard" },
-      { name: "salt", quantity: 0.5, unit: "tsp", category: "cupboard" },
-      { name: "black pepper", quantity: 0.25, unit: "tsp", category: "cupboard" }
-    ],
-    instructions: [
-      "Peel and dice sweet potatoes into 1/2 inch cubes",
-      "Dice bell pepper and onion",
-      "Heat olive oil in a large skillet over medium-high heat",
-      "Add sweet potatoes and cook for 10 minutes, stirring occasionally",
-      "Add bell pepper, onion, paprika, salt, and pepper",
-      "Cook until vegetables are tender, about 8 more minutes",
-      "Make 4 wells in the hash and crack an egg into each",
-      "Cover and cook until eggs are set, about 5 minutes",
-      "Serve immediately"
-    ],
-    nutrition: {
-      calories: 385,
-      protein: 18,
-      carbs: 44,
-      fat: 15,
-      fiber: 7,
-      sugar: 10,
-      sodium: 480
-    },
-    tags: ["high-protein", "nutrient-dense", "recovery"],
-    imageUrl: "",
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: uuidv4(),
-    name: "Almond Butter Toast with Banana",
-    mealType: "breakfast",
-    description: "Simple and delicious toast with almond butter and banana",
-    prepTime: 5,
-    cookTime: 3,
+    cookTime: 12,
     servings: 1,
     ingredients: [
-      { name: "whole grain bread", quantity: 2, unit: "slices", category: "cupboard" },
-      { name: "almond butter", quantity: 3, unit: "tbsp", category: "cupboard" },
-      { name: "banana", quantity: 1, unit: "whole", category: "cupboard" },
-      { name: "honey", quantity: 1, unit: "tsp", category: "cupboard" },
-      { name: "cinnamon", quantity: 0.25, unit: "tsp", category: "cupboard" }
+      { name: "whole wheat tortilla", quantity: 1, unit: "large", category: "cupboard" },
+      { name: "eggs", quantity: 2, unit: "whole", category: "fridge" },
+      { name: "bell pepper", quantity: 0.5, unit: "whole", category: "fridge" },
+      { name: "onion", quantity: 0.25, unit: "whole", category: "cupboard" },
+      { name: "black beans", quantity: 0.5, unit: "cup", category: "cupboard" },
+      { name: "cheddar cheese", quantity: 0.25, unit: "cup", category: "fridge" },
+      { name: "salsa", quantity: 2, unit: "tbsp", category: "fridge" }
     ],
     instructions: [
-      "Toast bread until golden brown",
-      "Spread almond butter evenly on each slice",
-      "Slice banana into rounds",
-      "Arrange banana slices on toast",
-      "Drizzle with honey",
-      "Sprinkle cinnamon on top",
-      "Serve immediately"
+      "Dice bell pepper and onion. Heat a pan with oil and sauté vegetables until soft, about 5 minutes.",
+      "Push vegetables to side and scramble eggs in the same pan. Add black beans and heat through.",
+      "Warm tortilla in microwave for 20 seconds.",
+      "Place egg mixture in center of tortilla. Top with cheese and salsa.",
+      "Fold in sides and roll tightly. Optional: Toast burrito in pan for crispy exterior."
     ],
     nutrition: {
-      calories: 445,
-      protein: 14,
-      carbs: 58,
-      fat: 20,
-      fiber: 10,
-      sugar: 22,
-      sodium: 280
+      calories: 485,
+      protein: 26,
+      carbs: 52,
+      fat: 18,
+      fiber: 12,
+      sugar: 6,
+      sodium: 720
     },
-    tags: ["quick", "no-cook", "energy-boost"],
+    tags: ["high-protein", "high-fiber", "portable"],
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
   {
     id: uuidv4(),
-    name: "Cottage Cheese with Pineapple and Walnuts",
+    name: "Cottage Cheese with Pineapple & Walnuts",
     mealType: "breakfast",
-    description: "Protein-rich cottage cheese with sweet pineapple and crunchy walnuts",
+    description: "Tropical Protein Bowl - Probiotic-rich cottage cheese with anti-inflammatory walnuts and pineapple",
     prepTime: 5,
     cookTime: 0,
     servings: 1,
@@ -461,14 +478,10 @@ const meals = [
       { name: "mint", quantity: 5, unit: "leaves", category: "fridge" }
     ],
     instructions: [
-      "Place cottage cheese in a bowl",
-      "Dice pineapple into bite-sized chunks",
-      "Roughly chop walnuts",
-      "Top cottage cheese with pineapple",
-      "Sprinkle walnuts over top",
-      "Drizzle with honey",
-      "Garnish with fresh mint leaves",
-      "Serve immediately"
+      "Place cottage cheese in a bowl.",
+      "Dice pineapple into bite-sized chunks. Roughly chop walnuts.",
+      "Top cottage cheese with pineapple. Sprinkle walnuts over top.",
+      "Drizzle with honey. Garnish with fresh mint leaves. Serve immediately."
     ],
     nutrition: {
       calories: 420,
@@ -479,47 +492,7 @@ const meals = [
       sugar: 28,
       sodium: 680
     },
-    tags: ["high-protein", "no-cook", "quick", "recovery"],
-    imageUrl: "",
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: uuidv4(),
-    name: "Quinoa Breakfast Bowl",
-    mealType: "breakfast",
-    description: "Warm quinoa bowl with cinnamon, berries, and nuts",
-    prepTime: 5,
-    cookTime: 15,
-    servings: 1,
-    ingredients: [
-      { name: "quinoa", quantity: 0.5, unit: "cup", category: "cupboard" },
-      { name: "almond milk", quantity: 1, unit: "cup", category: "fridge" },
-      { name: "mixed berries", quantity: 0.75, unit: "cup", category: "fridge" },
-      { name: "pecans", quantity: 0.25, unit: "cup", category: "cupboard" },
-      { name: "maple syrup", quantity: 1, unit: "tbsp", category: "cupboard" },
-      { name: "cinnamon", quantity: 0.5, unit: "tsp", category: "cupboard" }
-    ],
-    instructions: [
-      "Rinse quinoa under cold water",
-      "In a pot, combine quinoa and almond milk",
-      "Bring to a boil, then reduce heat to low",
-      "Simmer covered for 12-15 minutes until liquid is absorbed",
-      "Fluff with a fork",
-      "Transfer to a bowl",
-      "Top with mixed berries and pecans",
-      "Drizzle with maple syrup and sprinkle cinnamon",
-      "Serve warm"
-    ],
-    nutrition: {
-      calories: 450,
-      protein: 14,
-      carbs: 62,
-      fat: 18,
-      fiber: 10,
-      sugar: 18,
-      sodium: 85
-    },
-    tags: ["high-protein", "fiber-rich", "gluten-free"],
+    tags: ["high-protein", "no-cook", "quick", "probiotic"],
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -527,7 +500,7 @@ const meals = [
     id: uuidv4(),
     name: "Breakfast Egg Muffins with Vegetables",
     mealType: "breakfast",
-    description: "Portable egg muffins loaded with colorful vegetables",
+    description: "Portable Protein Bites - Make-ahead egg muffins loaded with fiber-rich vegetables",
     prepTime: 15,
     cookTime: 20,
     servings: 6,
@@ -536,21 +509,15 @@ const meals = [
       { name: "bell pepper", quantity: 1, unit: "whole", category: "fridge" },
       { name: "spinach", quantity: 2, unit: "cups", category: "fridge" },
       { name: "cherry tomatoes", quantity: 1, unit: "cup", category: "fridge" },
-      { name: "cheddar cheese", quantity: 0.5, unit: "cup", category: "fridge" },
-      { name: "salt", quantity: 0.5, unit: "tsp", category: "cupboard" },
-      { name: "black pepper", quantity: 0.25, unit: "tsp", category: "cupboard" }
+      { name: "cheddar cheese", quantity: 0.5, unit: "cup", category: "fridge" }
     ],
     instructions: [
-      "Preheat oven to 375°F (190°C)",
-      "Grease a 12-cup muffin tin or use liners",
-      "Dice bell pepper and halve cherry tomatoes",
-      "Chop spinach",
-      "In a bowl, whisk eggs with salt and pepper",
-      "Stir in vegetables and cheese",
-      "Pour mixture evenly into muffin cups (fill 3/4 full)",
-      "Bake for 18-20 minutes until set and lightly golden",
-      "Let cool for 5 minutes before removing from tin",
-      "Store leftovers in fridge for up to 5 days"
+      "Preheat oven to 375°F (190°C). Grease a 12-cup muffin tin or use liners.",
+      "Dice bell pepper and halve cherry tomatoes. Chop spinach.",
+      "In a bowl, whisk eggs with salt and pepper. Stir in vegetables and cheese.",
+      "Pour mixture evenly into muffin cups (fill 3/4 full).",
+      "Bake for 18-20 minutes until set and lightly golden. Let cool for 5 minutes before removing from tin.",
+      "Store leftovers in fridge for up to 5 days."
     ],
     nutrition: {
       calories: 160,
@@ -571,7 +538,7 @@ const meals = [
     id: uuidv4(),
     name: "Grilled Chicken Caesar Salad",
     mealType: "lunch",
-    description: "Classic Caesar salad with tender grilled chicken breast",
+    description: "Classic high-protein Caesar salad with tender grilled chicken breast and romaine lettuce",
     prepTime: 10,
     cookTime: 15,
     servings: 1,
@@ -585,15 +552,11 @@ const meals = [
       { name: "lemon", quantity: 0.5, unit: "whole", category: "fridge" }
     ],
     instructions: [
-      "Season chicken breast with salt, pepper, and olive oil",
-      "Grill chicken over medium-high heat for 6-7 minutes per side",
-      "Let chicken rest for 5 minutes, then slice",
-      "Chop romaine lettuce and place in a large bowl",
-      "Add Caesar dressing and toss to coat",
-      "Top with sliced chicken",
-      "Sprinkle with parmesan cheese and croutons",
-      "Squeeze fresh lemon juice over salad",
-      "Serve immediately"
+      "Season chicken breast with salt, pepper, and olive oil.",
+      "Grill chicken over medium-high heat for 6-7 minutes per side. Let rest for 5 minutes, then slice.",
+      "Chop romaine lettuce and place in a large bowl. Add Caesar dressing and toss to coat.",
+      "Top with sliced chicken. Sprinkle with parmesan cheese and croutons.",
+      "Squeeze fresh lemon juice over salad. Serve immediately."
     ],
     nutrition: {
       calories: 520,
@@ -612,7 +575,7 @@ const meals = [
     id: uuidv4(),
     name: "Mediterranean Quinoa Bowl",
     mealType: "lunch",
-    description: "Colorful quinoa bowl with Mediterranean vegetables and feta",
+    description: "Colorful quinoa bowl with Mediterranean vegetables, feta cheese, and olives",
     prepTime: 15,
     cookTime: 20,
     servings: 2,
@@ -627,15 +590,11 @@ const meals = [
       { name: "lemon juice", quantity: 2, unit: "tbsp", category: "fridge" }
     ],
     instructions: [
-      "Cook quinoa according to package directions",
-      "Let quinoa cool to room temperature",
-      "Halve cherry tomatoes, dice cucumber, and thinly slice red onion",
-      "In a large bowl, combine quinoa and all vegetables",
-      "Add feta cheese and olives",
-      "Whisk together olive oil and lemon juice",
-      "Pour dressing over bowl and toss gently",
-      "Season with salt and pepper to taste",
-      "Serve at room temperature or chilled"
+      "Cook quinoa according to package directions. Let cool to room temperature.",
+      "Halve cherry tomatoes, dice cucumber, and thinly slice red onion.",
+      "In a large bowl, combine quinoa and all vegetables. Add feta cheese and olives.",
+      "Whisk together olive oil and lemon juice. Pour dressing over bowl and toss gently.",
+      "Season with salt and pepper to taste. Serve at room temperature or chilled."
     ],
     nutrition: {
       calories: 485,
@@ -654,7 +613,7 @@ const meals = [
     id: uuidv4(),
     name: "Turkey and Avocado Wrap",
     mealType: "lunch",
-    description: "Fresh wrap with sliced turkey, avocado, and crisp vegetables",
+    description: "Fresh wrap with sliced turkey, creamy avocado, and crisp vegetables",
     prepTime: 10,
     cookTime: 0,
     servings: 1,
@@ -668,16 +627,11 @@ const meals = [
       { name: "mustard", quantity: 1, unit: "tbsp", category: "cupboard" }
     ],
     instructions: [
-      "Lay tortilla flat on a clean surface",
-      "Spread mustard in the center",
-      "Layer turkey slices on tortilla",
-      "Slice avocado and arrange on turkey",
-      "Add lettuce leaves",
-      "Slice tomato and add on top",
-      "Thinly slice red onion and add",
-      "Fold in sides of tortilla",
-      "Roll tightly from bottom to top",
-      "Cut in half diagonally and serve"
+      "Lay tortilla flat on a clean surface. Spread mustard in the center.",
+      "Layer turkey slices on tortilla. Slice avocado and arrange on turkey.",
+      "Add lettuce leaves. Slice tomato and add on top. Thinly slice red onion and add.",
+      "Fold in sides of tortilla. Roll tightly from bottom to top.",
+      "Cut in half diagonally and serve."
     ],
     nutrition: {
       calories: 420,
@@ -710,17 +664,12 @@ const meals = [
       { name: "garlic", quantity: 2, unit: "cloves", category: "cupboard" }
     ],
     instructions: [
-      "Cook brown rice according to package directions",
-      "Preheat oven to 400°F (200°C)",
-      "Mince garlic and grate ginger",
-      "Mix teriyaki sauce with garlic and ginger",
-      "Place salmon on a baking sheet lined with parchment",
-      "Brush salmon with teriyaki mixture",
-      "Bake for 12-15 minutes until salmon flakes easily",
-      "Steam broccoli for 5-7 minutes until tender-crisp",
-      "Divide rice and broccoli between plates",
-      "Top with salmon and sprinkle sesame seeds",
-      "Serve immediately"
+      "Cook brown rice according to package directions.",
+      "Preheat oven to 400°F (200°C). Mince garlic and grate ginger.",
+      "Mix teriyaki sauce with garlic and ginger. Place salmon on a baking sheet lined with parchment. Brush salmon with teriyaki mixture.",
+      "Bake for 12-15 minutes until salmon flakes easily.",
+      "Steam broccoli for 5-7 minutes until tender-crisp.",
+      "Divide rice and broccoli between plates. Top with salmon and sprinkle sesame seeds. Serve immediately."
     ],
     nutrition: {
       calories: 540,
@@ -754,18 +703,11 @@ const meals = [
       { name: "cumin", quantity: 1, unit: "tsp", category: "cupboard" }
     ],
     instructions: [
-      "Preheat oven to 425°F (220°C)",
-      "Peel and cube sweet potatoes",
-      "Toss sweet potatoes with oil, cumin, salt, and pepper",
-      "Roast for 25 minutes until tender and caramelized",
-      "Cook brown rice according to package directions",
-      "Warm black beans and corn",
-      "Divide rice between bowls",
-      "Top with roasted sweet potatoes, black beans, and corn",
-      "Slice avocado and add to bowls",
-      "Squeeze lime juice over everything",
-      "Garnish with fresh cilantro",
-      "Serve immediately"
+      "Preheat oven to 425°F (220°C). Peel and cube sweet potatoes.",
+      "Toss sweet potatoes with oil, cumin, salt, and pepper. Roast for 25 minutes until tender and caramelized.",
+      "Cook brown rice according to package directions. Warm black beans and corn.",
+      "Divide rice between bowls. Top with roasted sweet potatoes, black beans, and corn.",
+      "Slice avocado and add to bowls. Squeeze lime juice over everything. Garnish with fresh cilantro. Serve immediately."
     ],
     nutrition: {
       calories: 510,
@@ -776,7 +718,7 @@ const meals = [
       sugar: 12,
       sodium: 420
     },
-    tags: ["vegetarian", "vegan-option", "fiber-rich", "meal-prep"],
+    tags: ["vegetarian", "vegan-option", "high-fiber", "meal-prep"],
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -784,7 +726,7 @@ const meals = [
     id: uuidv4(),
     name: "Greek Chicken Gyro with Tzatziki",
     mealType: "lunch",
-    description: "Tender marinated chicken wrapped in pita with cool tzatziki",
+    description: "Tender marinated chicken wrapped in pita with cool tzatziki sauce",
     prepTime: 20,
     cookTime: 15,
     servings: 2,
@@ -799,16 +741,10 @@ const meals = [
       { name: "red onion", quantity: 0.5, unit: "whole", category: "cupboard" }
     ],
     instructions: [
-      "Mince 2 garlic cloves and mix with oregano, lemon juice, and olive oil",
-      "Marinate chicken in this mixture for at least 15 minutes",
-      "For tzatziki: grate cucumber and squeeze out excess water",
-      "Mix yogurt, cucumber, minced garlic, lemon juice, and dill",
-      "Grill chicken over medium-high heat for 6-7 minutes per side",
-      "Let chicken rest, then slice",
-      "Warm pita bread",
-      "Spread tzatziki on pita",
-      "Add sliced chicken and onion",
-      "Roll up and serve"
+      "Mince 2 garlic cloves and mix with oregano, lemon juice, and olive oil. Marinate chicken in this mixture for at least 15 minutes.",
+      "For tzatziki: grate cucumber and squeeze out excess water. Mix yogurt, cucumber, minced garlic, lemon juice, and dill.",
+      "Grill chicken over medium-high heat for 6-7 minutes per side. Let rest, then slice.",
+      "Warm pita bread. Spread tzatziki on pita. Add sliced chicken and onion. Roll up and serve."
     ],
     nutrition: {
       calories: 520,
@@ -827,7 +763,7 @@ const meals = [
     id: uuidv4(),
     name: "Thai Peanut Noodle Bowl with Chicken",
     mealType: "lunch",
-    description: "Flavorful noodles with creamy peanut sauce and vegetables",
+    description: "Flavorful noodles with creamy peanut sauce and colorful vegetables",
     prepTime: 15,
     cookTime: 15,
     servings: 2,
@@ -842,16 +778,10 @@ const meals = [
       { name: "peanuts", quantity: 0.25, unit: "cup", category: "cupboard" }
     ],
     instructions: [
-      "Cook rice noodles according to package directions",
-      "Slice chicken into thin strips",
-      "Stir-fry chicken in a wok or large pan until cooked through",
-      "Julienne bell pepper and carrots",
-      "Add vegetables to pan and stir-fry for 3-4 minutes",
-      "Mix peanut butter, soy sauce, lime juice, and a splash of water",
-      "Add cooked noodles to pan",
-      "Pour peanut sauce over noodles and toss to coat",
-      "Divide into bowls",
-      "Top with crushed peanuts and serve"
+      "Cook rice noodles according to package directions. Slice chicken into thin strips.",
+      "Stir-fry chicken in a wok or large pan until cooked through. Julienne bell pepper and carrots. Add vegetables to pan and stir-fry for 3-4 minutes.",
+      "Mix peanut butter, soy sauce, lime juice, and a splash of water. Add cooked noodles to pan.",
+      "Pour peanut sauce over noodles and toss to coat. Divide into bowls. Top with crushed peanuts and serve."
     ],
     nutrition: {
       calories: 565,
@@ -870,7 +800,7 @@ const meals = [
     id: uuidv4(),
     name: "Caprese Sandwich with Balsamic Glaze",
     mealType: "lunch",
-    description: "Fresh mozzarella, tomato, and basil sandwich with balsamic",
+    description: "Fresh mozzarella, tomato, and basil sandwich with balsamic glaze",
     prepTime: 10,
     cookTime: 5,
     servings: 1,
@@ -880,21 +810,13 @@ const meals = [
       { name: "tomato", quantity: 1, unit: "large", category: "fridge" },
       { name: "basil", quantity: 10, unit: "leaves", category: "fridge" },
       { name: "balsamic glaze", quantity: 2, unit: "tbsp", category: "cupboard" },
-      { name: "olive oil", quantity: 1, unit: "tbsp", category: "cupboard" },
-      { name: "salt", quantity: 0.25, unit: "tsp", category: "cupboard" }
+      { name: "olive oil", quantity: 1, unit: "tbsp", category: "cupboard" }
     ],
     instructions: [
-      "Slice ciabatta roll in half horizontally",
-      "Lightly toast the bread",
-      "Drizzle olive oil on both sides",
-      "Slice mozzarella and tomato into thick slices",
-      "Layer mozzarella on bottom half of bread",
-      "Add tomato slices on top",
-      "Season with salt and pepper",
-      "Add fresh basil leaves",
-      "Drizzle balsamic glaze over everything",
-      "Top with other half of bread",
-      "Cut in half and serve"
+      "Slice ciabatta roll in half horizontally. Lightly toast the bread. Drizzle olive oil on both sides.",
+      "Slice mozzarella and tomato into thick slices. Layer mozzarella on bottom half of bread. Add tomato slices on top.",
+      "Season with salt and pepper. Add fresh basil leaves. Drizzle balsamic glaze over everything.",
+      "Top with other half of bread. Cut in half and serve."
     ],
     nutrition: {
       calories: 480,
@@ -913,7 +835,7 @@ const meals = [
     id: uuidv4(),
     name: "Tuna Poke Bowl",
     mealType: "lunch",
-    description: "Fresh tuna poke with rice, edamame, and seaweed salad",
+    description: "Fresh tuna poke with sushi rice, edamame, and seaweed salad",
     prepTime: 15,
     cookTime: 15,
     servings: 2,
@@ -928,16 +850,10 @@ const meals = [
       { name: "sesame seeds", quantity: 2, unit: "tbsp", category: "cupboard" }
     ],
     instructions: [
-      "Cook sushi rice according to package directions",
-      "Dice tuna into 1/2 inch cubes",
-      "In a bowl, mix soy sauce and sesame oil",
-      "Add tuna and marinate for 10 minutes",
-      "Cook edamame according to package directions",
-      "Dice cucumber and slice avocado",
-      "Divide rice between bowls",
-      "Top with marinated tuna, edamame, cucumber, and avocado",
-      "Sprinkle with sesame seeds",
-      "Serve immediately"
+      "Cook sushi rice according to package directions. Dice tuna into 1/2 inch cubes.",
+      "In a bowl, mix soy sauce and sesame oil. Add tuna and marinate for 10 minutes.",
+      "Cook edamame according to package directions. Dice cucumber and slice avocado.",
+      "Divide rice between bowls. Top with marinated tuna, edamame, cucumber, and avocado. Sprinkle with sesame seeds. Serve immediately."
     ],
     nutrition: {
       calories: 580,
@@ -971,17 +887,10 @@ const meals = [
       { name: "sesame oil", quantity: 2, unit: "tbsp", category: "cupboard" }
     ],
     instructions: [
-      "Slice chicken into thin strips",
-      "Cut broccoli into florets, slice bell pepper",
-      "Mince garlic and grate ginger",
-      "Heat sesame oil in a wok over high heat",
-      "Add chicken and stir-fry for 5-6 minutes until cooked",
-      "Remove chicken and set aside",
-      "Add vegetables and stir-fry for 4-5 minutes",
-      "Add garlic and ginger, stir-fry for 1 minute",
-      "Return chicken to wok",
-      "Add soy sauce and toss everything together",
-      "Serve over rice or noodles"
+      "Slice chicken into thin strips. Cut broccoli into florets, slice bell pepper. Mince garlic and grate ginger.",
+      "Heat sesame oil in a wok over high heat. Add chicken and stir-fry for 5-6 minutes until cooked. Remove chicken and set aside.",
+      "Add vegetables and stir-fry for 4-5 minutes. Add garlic and ginger, stir-fry for 1 minute.",
+      "Return chicken to wok. Add soy sauce and toss everything together. Serve over rice or noodles."
     ],
     nutrition: {
       calories: 320,
@@ -1015,17 +924,10 @@ const meals = [
       { name: "cumin", quantity: 1, unit: "tsp", category: "cupboard" }
     ],
     instructions: [
-      "Rinse lentils and set aside",
-      "Dice carrots, celery, and onion",
-      "Mince garlic",
-      "Heat oil in a large pot over medium heat",
-      "Sauté onion, carrots, and celery for 5 minutes",
-      "Add garlic and cumin, cook for 1 minute",
-      "Add lentils, broth, and diced tomatoes",
-      "Bring to a boil, then reduce to simmer",
-      "Cook for 25-30 minutes until lentils are tender",
-      "Season with salt and pepper",
-      "Serve hot with crusty bread"
+      "Rinse lentils and set aside. Dice carrots, celery, and onion. Mince garlic.",
+      "Heat oil in a large pot over medium heat. Sauté onion, carrots, and celery for 5 minutes. Add garlic and cumin, cook for 1 minute.",
+      "Add lentils, broth, and diced tomatoes. Bring to a boil, then reduce to simmer.",
+      "Cook for 25-30 minutes until lentils are tender. Season with salt and pepper. Serve hot with crusty bread."
     ],
     nutrition: {
       calories: 290,
@@ -1059,16 +961,10 @@ const meals = [
       { name: "garlic powder", quantity: 0.5, unit: "tsp", category: "cupboard" }
     ],
     instructions: [
-      "Pat shrimp dry and season with chili powder, garlic powder, salt",
-      "Shred cabbage for slaw",
-      "Mix sour cream with lime juice and zest for crema",
-      "Heat a pan over medium-high heat",
-      "Cook shrimp for 2-3 minutes per side until pink",
-      "Warm tortillas in a dry pan",
-      "Assemble tacos: tortilla, cabbage slaw, shrimp",
-      "Drizzle with lime crema",
-      "Garnish with fresh cilantro",
-      "Serve with lime wedges"
+      "Pat shrimp dry and season with chili powder, garlic powder, salt. Shred cabbage for slaw.",
+      "Mix sour cream with lime juice and zest for crema. Heat a pan over medium-high heat. Cook shrimp for 2-3 minutes per side until pink.",
+      "Warm tortillas in a dry pan. Assemble tacos: tortilla, cabbage slaw, shrimp. Drizzle with lime crema.",
+      "Garnish with fresh cilantro. Serve with lime wedges."
     ],
     nutrition: {
       calories: 445,
@@ -1102,16 +998,10 @@ const meals = [
       { name: "tomato", quantity: 1, unit: "medium", category: "fridge" }
     ],
     instructions: [
-      "Drain and rinse chickpeas",
-      "Mash chickpeas with a fork (leave some chunks)",
-      "Finely dice celery and red onion",
-      "Mix mashed chickpeas, celery, onion, mayo, and lemon juice",
-      "Season with salt, pepper, and a pinch of paprika",
-      "Toast bread if desired",
-      "Spread chickpea salad on bread",
-      "Add lettuce and sliced tomato",
-      "Top with other slice of bread",
-      "Cut in half and serve"
+      "Drain and rinse chickpeas. Mash chickpeas with a fork (leave some chunks). Finely dice celery and red onion.",
+      "Mix mashed chickpeas, celery, onion, mayo, and lemon juice. Season with salt, pepper, and a pinch of paprika.",
+      "Toast bread if desired. Spread chickpea salad on bread. Add lettuce and sliced tomato. Top with other slice of bread.",
+      "Cut in half and serve."
     ],
     nutrition: {
       calories: 420,
@@ -1122,7 +1012,7 @@ const meals = [
       sugar: 8,
       sodium: 620
     },
-    tags: ["vegetarian", "vegan-option", "no-cook", "fiber-rich"],
+    tags: ["vegetarian", "vegan-option", "no-cook", "high-fiber"],
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1144,16 +1034,9 @@ const meals = [
       { name: "red onion", quantity: 0.25, unit: "whole", category: "cupboard" }
     ],
     instructions: [
-      "Cook quinoa according to package directions",
-      "Boil or pressure cook chicken until fully cooked",
-      "Shred chicken with two forks",
-      "Mix shredded chicken with BBQ sauce",
-      "Make slaw: toss coleslaw mix with vinegar, salt, and pepper",
-      "Warm corn",
-      "Divide quinoa between bowls",
-      "Top with BBQ chicken, slaw, and corn",
-      "Garnish with sliced red onion",
-      "Serve immediately"
+      "Cook quinoa according to package directions. Boil or pressure cook chicken until fully cooked. Shred chicken with two forks.",
+      "Mix shredded chicken with BBQ sauce. Make slaw: toss coleslaw mix with vinegar, salt, and pepper. Warm corn.",
+      "Divide quinoa between bowls. Top with BBQ chicken, slaw, and corn. Garnish with sliced red onion. Serve immediately."
     ],
     nutrition: {
       calories: 520,
@@ -1183,10 +1066,10 @@ const meals = [
       { name: "peanut butter", quantity: 2, unit: "tbsp", category: "cupboard" }
     ],
     instructions: [
-      "Wash and core apple",
-      "Slice apple into 8-10 wedges",
-      "Arrange on a plate",
-      "Serve with peanut butter for dipping"
+      "Wash and core apple.",
+      "Slice apple into 8-10 wedges.",
+      "Arrange on a plate.",
+      "Serve with peanut butter for dipping."
     ],
     nutrition: {
       calories: 265,
@@ -1217,12 +1100,12 @@ const meals = [
       { name: "cucumber", quantity: 0.5, unit: "whole", category: "fridge" }
     ],
     instructions: [
-      "Cut carrots into sticks",
-      "Cut celery into sticks",
-      "Slice bell pepper into strips",
-      "Cut cucumber into sticks",
-      "Arrange vegetables on a plate",
-      "Serve with hummus for dipping"
+      "Cut carrots into sticks.",
+      "Cut celery into sticks.",
+      "Slice bell pepper into strips.",
+      "Cut cucumber into sticks.",
+      "Arrange vegetables on a plate.",
+      "Serve with hummus for dipping."
     ],
     nutrition: {
       calories: 220,
@@ -1251,10 +1134,10 @@ const meals = [
       { name: "mixed nuts", quantity: 0.25, unit: "cup", category: "cupboard" }
     ],
     instructions: [
-      "Scoop Greek yogurt into a bowl",
-      "Drizzle honey on top",
-      "Sprinkle mixed nuts over yogurt",
-      "Enjoy immediately"
+      "Scoop Greek yogurt into a bowl.",
+      "Drizzle honey on top.",
+      "Sprinkle mixed nuts over yogurt.",
+      "Enjoy immediately."
     ],
     nutrition: {
       calories: 310,
@@ -1286,11 +1169,11 @@ const meals = [
       { name: "vanilla extract", quantity: 1, unit: "tsp", category: "cupboard" }
     ],
     instructions: [
-      "In a large bowl, mix all ingredients together",
-      "Refrigerate mixture for 30 minutes",
-      "Roll mixture into 12 balls using your hands",
-      "Store in an airtight container in the fridge",
-      "Enjoy as needed (1-2 balls per serving)"
+      "In a large bowl, mix all ingredients together.",
+      "Refrigerate mixture for 30 minutes.",
+      "Roll mixture into 12 balls using your hands.",
+      "Store in an airtight container in the fridge.",
+      "Enjoy as needed (1-2 balls per serving)."
     ],
     nutrition: {
       calories: 140,
@@ -1318,10 +1201,10 @@ const meals = [
       { name: "almond butter", quantity: 2, unit: "tbsp", category: "cupboard" }
     ],
     instructions: [
-      "Peel banana",
-      "Slice banana lengthwise",
-      "Spread almond butter on banana",
-      "Enjoy immediately"
+      "Peel banana.",
+      "Slice banana lengthwise.",
+      "Spread almond butter on banana.",
+      "Enjoy immediately."
     ],
     nutrition: {
       calories: 290,
@@ -1349,14 +1232,14 @@ const meals = [
       { name: "everything bagel seasoning", quantity: 0.5, unit: "tsp", category: "cupboard" }
     ],
     instructions: [
-      "Place eggs in a pot and cover with cold water",
-      "Bring to a boil over high heat",
-      "Once boiling, remove from heat and cover",
-      "Let sit for 10-12 minutes",
-      "Transfer eggs to ice bath",
-      "Peel eggs once cooled",
-      "Sprinkle with everything bagel seasoning",
-      "Enjoy immediately or store in fridge"
+      "Place eggs in a pot and cover with cold water.",
+      "Bring to a boil over high heat.",
+      "Once boiling, remove from heat and cover.",
+      "Let sit for 10-12 minutes.",
+      "Transfer eggs to ice bath.",
+      "Peel eggs once cooled.",
+      "Sprinkle with everything bagel seasoning.",
+      "Enjoy immediately or store in fridge."
     ],
     nutrition: {
       calories: 140,
@@ -1384,10 +1267,10 @@ const meals = [
       { name: "whole grain crackers", quantity: 10, unit: "pieces", category: "cupboard" }
     ],
     instructions: [
-      "Slice cheddar cheese",
-      "Arrange crackers on a plate",
-      "Place cheese on crackers or serve alongside",
-      "Enjoy immediately"
+      "Slice cheddar cheese.",
+      "Arrange crackers on a plate.",
+      "Place cheese on crackers or serve alongside.",
+      "Enjoy immediately."
     ],
     nutrition: {
       calories: 280,
@@ -1415,13 +1298,13 @@ const meals = [
       { name: "sea salt", quantity: 0.5, unit: "tsp", category: "cupboard" }
     ],
     instructions: [
-      "Boil water in a pot",
-      "Add frozen edamame",
-      "Cook for 5 minutes",
-      "Drain and transfer to a bowl",
-      "Sprinkle with sea salt",
-      "Toss to coat",
-      "Serve warm"
+      "Boil water in a pot.",
+      "Add frozen edamame.",
+      "Cook for 5 minutes.",
+      "Drain and transfer to a bowl.",
+      "Sprinkle with sea salt.",
+      "Toss to coat.",
+      "Serve warm."
     ],
     nutrition: {
       calories: 190,
@@ -1452,14 +1335,14 @@ const meals = [
       { name: "red pepper flakes", quantity: 0.125, unit: "tsp", category: "cupboard" }
     ],
     instructions: [
-      "Toast bread until golden brown",
-      "Mash avocado with lemon juice, salt, and pepper",
-      "Spread avocado on toast",
-      "Halve cherry tomatoes",
-      "Top toast with tomatoes",
-      "Sprinkle with red pepper flakes",
-      "Cut each toast into 4 pieces",
-      "Serve immediately"
+      "Toast bread until golden brown.",
+      "Mash avocado with lemon juice, salt, and pepper.",
+      "Spread avocado on toast.",
+      "Halve cherry tomatoes.",
+      "Top toast with tomatoes.",
+      "Sprinkle with red pepper flakes.",
+      "Cut each toast into 4 pieces.",
+      "Serve immediately."
     ],
     nutrition: {
       calories: 245,
@@ -1490,10 +1373,10 @@ const meals = [
       { name: "ice", quantity: 0.5, unit: "cup", category: "freezer" }
     ],
     instructions: [
-      "Add all ingredients to a blender",
-      "Blend until smooth",
-      "Pour into a glass",
-      "Enjoy immediately"
+      "Add all ingredients to a blender.",
+      "Blend until smooth.",
+      "Pour into a glass.",
+      "Enjoy immediately."
     ],
     nutrition: {
       calories: 280,
@@ -1523,10 +1406,10 @@ const meals = [
       { name: "honey", quantity: 0.5, unit: "tsp", category: "cupboard" }
     ],
     instructions: [
-      "Spread cottage cheese on rice cakes",
-      "Top with fresh blueberries",
-      "Drizzle with honey",
-      "Enjoy immediately"
+      "Spread cottage cheese on rice cakes.",
+      "Top with fresh blueberries.",
+      "Drizzle with honey.",
+      "Enjoy immediately."
     ],
     nutrition: {
       calories: 185,
@@ -1554,9 +1437,9 @@ const meals = [
       { name: "almonds", quantity: 0.25, unit: "cup", category: "cupboard" }
     ],
     instructions: [
-      "Break dark chocolate into pieces",
-      "Portion almonds",
-      "Enjoy together as a snack"
+      "Break dark chocolate into pieces.",
+      "Portion almonds.",
+      "Enjoy together as a snack."
     ],
     nutrition: {
       calories: 260,
@@ -1585,10 +1468,10 @@ const meals = [
       { name: "everything bagel seasoning", quantity: 0.5, unit: "tsp", category: "cupboard" }
     ],
     instructions: [
-      "Wash celery and cut into 3-inch pieces",
-      "Fill celery grooves with cream cheese",
-      "Sprinkle with everything bagel seasoning",
-      "Arrange on a plate and serve"
+      "Wash celery and cut into 3-inch pieces.",
+      "Fill celery grooves with cream cheese.",
+      "Sprinkle with everything bagel seasoning.",
+      "Arrange on a plate and serve."
     ],
     nutrition: {
       calories: 135,
@@ -1619,13 +1502,13 @@ const meals = [
       { name: "salt", quantity: 0.5, unit: "tsp", category: "cupboard" }
     ],
     instructions: [
-      "Preheat oven to 400°F (200°C)",
-      "Drain and rinse chickpeas, pat very dry",
-      "Toss chickpeas with olive oil and seasonings",
-      "Spread on a baking sheet in a single layer",
-      "Roast for 25-30 minutes, shaking pan halfway through",
-      "Let cool (they will get crunchier)",
-      "Store in an airtight container for up to 3 days"
+      "Preheat oven to 400°F (200°C).",
+      "Drain and rinse chickpeas, pat very dry.",
+      "Toss chickpeas with olive oil and seasonings.",
+      "Spread on a baking sheet in a single layer.",
+      "Roast for 25-30 minutes, shaking pan halfway through.",
+      "Let cool (they will get crunchier).",
+      "Store in an airtight container for up to 3 days."
     ],
     nutrition: {
       calories: 160,
@@ -1660,16 +1543,10 @@ const meals = [
       { name: "rosemary", quantity: 2, unit: "sprigs", category: "fridge" }
     ],
     instructions: [
-      "Preheat oven to 425°F (220°C)",
-      "Cut vegetables into bite-sized pieces",
-      "Toss vegetables with olive oil, minced garlic, salt, and pepper",
-      "Spread vegetables on a baking sheet",
-      "Roast for 20-25 minutes until tender and caramelized",
-      "Season steak with salt, pepper, and rosemary",
-      "Heat a grill or cast-iron pan over high heat",
-      "Grill steak 4-5 minutes per side for medium-rare",
-      "Let steak rest for 5 minutes before slicing",
-      "Serve steak with roasted vegetables"
+      "Preheat oven to 425°F (220°C). Cut vegetables into bite-sized pieces.",
+      "Toss vegetables with olive oil, minced garlic, salt, and pepper. Spread vegetables on a baking sheet. Roast for 20-25 minutes until tender and caramelized.",
+      "Season steak with salt, pepper, and rosemary. Heat a grill or cast-iron pan over high heat. Grill steak 4-5 minutes per side for medium-rare.",
+      "Let steak rest for 5 minutes before slicing. Serve steak with roasted vegetables."
     ],
     nutrition: {
       calories: 520,
@@ -1702,15 +1579,10 @@ const meals = [
       { name: "garlic", quantity: 3, unit: "cloves", category: "cupboard" }
     ],
     instructions: [
-      "Preheat oven to 400°F (200°C)",
-      "Cook quinoa according to package directions",
-      "Place salmon on a baking sheet lined with parchment",
-      "Trim asparagus and arrange around salmon",
-      "Drizzle everything with olive oil",
-      "Season salmon with dill, minced garlic, lemon zest, salt, and pepper",
-      "Bake for 15-18 minutes until salmon flakes easily",
-      "Squeeze fresh lemon juice over salmon and asparagus",
-      "Serve over quinoa"
+      "Preheat oven to 400°F (200°C). Cook quinoa according to package directions.",
+      "Place salmon on a baking sheet lined with parchment. Trim asparagus and arrange around salmon. Drizzle everything with olive oil.",
+      "Season salmon with dill, minced garlic, lemon zest, salt, and pepper. Bake for 15-18 minutes until salmon flakes easily.",
+      "Squeeze fresh lemon juice over salmon and asparagus. Serve over quinoa."
     ],
     nutrition: {
       calories: 580,
@@ -1742,15 +1614,10 @@ const meals = [
       { name: "garlic powder", quantity: 1, unit: "tsp", category: "cupboard" }
     ],
     instructions: [
-      "Preheat oven to 425°F (220°C)",
-      "Peel and cube sweet potatoes",
-      "Toss sweet potatoes with olive oil, salt, and pepper",
-      "Roast for 25-30 minutes until caramelized",
-      "Season chicken with thyme, garlic powder, salt, and pepper",
-      "Heat a pan over medium-high heat with olive oil",
-      "Sear chicken 6-7 minutes per side until cooked through",
-      "Steam or sauté green beans until tender-crisp",
-      "Slice chicken and serve with sweet potato and green beans"
+      "Preheat oven to 425°F (220°C). Peel and cube sweet potatoes.",
+      "Toss sweet potatoes with olive oil, salt, and pepper. Roast for 25-30 minutes until caramelized.",
+      "Season chicken with thyme, garlic powder, salt, and pepper. Heat a pan over medium-high heat with olive oil. Sear chicken 6-7 minutes per side until cooked through.",
+      "Steam or sauté green beans until tender-crisp. Slice chicken and serve with sweet potato and green beans."
     ],
     nutrition: {
       calories: 495,
@@ -1784,15 +1651,10 @@ const meals = [
       { name: "sesame oil", quantity: 2, unit: "tbsp", category: "cupboard" }
     ],
     instructions: [
-      "Cook brown rice according to package directions",
-      "Cut broccoli into florets, julienne carrots",
-      "Heat sesame oil in a wok over high heat",
-      "Add shrimp and cook 2-3 minutes until pink, remove",
-      "Add vegetables to wok and stir-fry 5 minutes",
-      "Add minced ginger and garlic, cook 1 minute",
-      "Return shrimp to wok",
-      "Add soy sauce and toss everything together",
-      "Serve over brown rice"
+      "Cook brown rice according to package directions. Cut broccoli into florets, julienne carrots.",
+      "Heat sesame oil in a wok over high heat. Add shrimp and cook 2-3 minutes until pink, remove.",
+      "Add vegetables to wok and stir-fry 5 minutes. Add minced ginger and garlic, cook 1 minute. Return shrimp to wok.",
+      "Add soy sauce and toss everything together. Serve over brown rice."
     ],
     nutrition: {
       calories: 520,
@@ -1825,16 +1687,10 @@ const meals = [
       { name: "garlic", quantity: 3, unit: "cloves", category: "cupboard" }
     ],
     instructions: [
-      "Preheat oven to 400°F (200°C)",
-      "Mix ground turkey, breadcrumbs, egg, minced garlic, and half the parmesan",
-      "Form into 12 meatballs",
-      "Place on a baking sheet and bake for 20-25 minutes",
-      "Spiralize zucchini into noodles",
-      "Heat marinara sauce in a large pan",
-      "Add cooked meatballs to sauce",
-      "Sauté zucchini noodles in a separate pan for 2-3 minutes",
-      "Serve meatballs and sauce over zucchini noodles",
-      "Top with remaining parmesan"
+      "Preheat oven to 400°F (200°C). Mix ground turkey, breadcrumbs, egg, minced garlic, and half the parmesan. Form into 12 meatballs.",
+      "Place on a baking sheet and bake for 20-25 minutes. Spiralize zucchini into noodles.",
+      "Heat marinara sauce in a large pan. Add cooked meatballs to sauce. Sauté zucchini noodles in a separate pan for 2-3 minutes.",
+      "Serve meatballs and sauce over zucchini noodles. Top with remaining parmesan."
     ],
     nutrition: {
       calories: 420,
@@ -1868,16 +1724,10 @@ const meals = [
       { name: "sesame oil", quantity: 2, unit: "tbsp", category: "cupboard" }
     ],
     instructions: [
-      "Cook brown rice according to package directions",
-      "Slice beef thinly against the grain",
-      "Cut broccoli into florets",
-      "Heat sesame oil in a wok over high heat",
-      "Stir-fry beef for 3-4 minutes, remove and set aside",
-      "Add broccoli and stir-fry for 5 minutes",
-      "Add minced ginger and garlic, cook 1 minute",
-      "Return beef to wok",
-      "Add soy sauce and oyster sauce, toss to coat",
-      "Serve over brown rice"
+      "Cook brown rice according to package directions. Slice beef thinly against the grain. Cut broccoli into florets.",
+      "Heat sesame oil in a wok over high heat. Stir-fry beef for 3-4 minutes, remove and set aside.",
+      "Add broccoli and stir-fry for 5 minutes. Add minced ginger and garlic, cook 1 minute. Return beef to wok.",
+      "Add soy sauce and oyster sauce, toss to coat. Serve over brown rice."
     ],
     nutrition: {
       calories: 540,
@@ -1910,16 +1760,10 @@ const meals = [
       { name: "parmesan cheese", quantity: 0.25, unit: "cup", category: "fridge" }
     ],
     instructions: [
-      "Preheat oven to 425°F (220°C)",
-      "Cook quinoa according to package directions",
-      "Trim and halve Brussels sprouts",
-      "Toss Brussels sprouts with olive oil, minced garlic, salt, and pepper",
-      "Roast for 20-25 minutes until golden",
-      "Place cod on a baking sheet, season with lemon zest, salt, and pepper",
-      "Bake for 12-15 minutes until fish flakes easily",
-      "Toss Brussels sprouts with parmesan",
-      "Serve cod with Brussels sprouts over quinoa",
-      "Squeeze fresh lemon juice over everything"
+      "Preheat oven to 425°F (220°C). Cook quinoa according to package directions.",
+      "Trim and halve Brussels sprouts. Toss Brussels sprouts with olive oil, minced garlic, salt, and pepper. Roast for 20-25 minutes until golden.",
+      "Place cod on a baking sheet, season with lemon zest, salt, and pepper. Bake for 12-15 minutes until fish flakes easily.",
+      "Toss Brussels sprouts with parmesan. Serve cod with Brussels sprouts over quinoa. Squeeze fresh lemon juice over everything."
     ],
     nutrition: {
       calories: 520,
@@ -1953,17 +1797,10 @@ const meals = [
       { name: "fajita seasoning", quantity: 2, unit: "tbsp", category: "cupboard" }
     ],
     instructions: [
-      "Cook brown rice according to package directions",
-      "Slice chicken into strips",
-      "Season chicken with fajita seasoning",
-      "Slice bell peppers and onion into strips",
-      "Heat oil in a large skillet over high heat",
-      "Cook chicken for 6-7 minutes until cooked through, remove",
-      "Sauté peppers and onions until tender and charred",
-      "Warm black beans",
-      "Divide rice between bowls",
-      "Top with chicken, peppers, onions, and black beans",
-      "Add sliced avocado and lime wedges"
+      "Cook brown rice according to package directions. Slice chicken into strips. Season chicken with fajita seasoning.",
+      "Slice bell peppers and onion into strips. Heat oil in a large skillet over high heat. Cook chicken for 6-7 minutes until cooked through, remove.",
+      "Sauté peppers and onions until tender and charred. Warm black beans.",
+      "Divide rice between bowls. Top with chicken, peppers, onions, and black beans. Add sliced avocado and lime wedges."
     ],
     nutrition: {
       calories: 580,
@@ -1974,7 +1811,7 @@ const meals = [
       sugar: 8,
       sodium: 680
     },
-    tags: ["high-protein", "fiber-rich", "mexican-inspired"],
+    tags: ["high-protein", "high-fiber", "mexican-inspired"],
     imageUrl: "",
     createdAt: new Date().toISOString()
   },
@@ -1996,16 +1833,10 @@ const meals = [
       { name: "thyme", quantity: 2, unit: "tsp", category: "cupboard" }
     ],
     instructions: [
-      "Preheat oven to 400°F (200°C)",
-      "Peel and chop root vegetables into chunks",
-      "Toss vegetables with olive oil, thyme, salt, and pepper",
-      "Spread vegetables on a baking sheet",
-      "Season pork with rosemary, salt, and pepper",
-      "Sear pork in a hot pan for 2-3 minutes per side",
-      "Place pork on vegetables",
-      "Roast for 25-30 minutes until pork reaches 145°F",
-      "Let pork rest for 5 minutes before slicing",
-      "Serve sliced pork with roasted vegetables"
+      "Preheat oven to 400°F (200°C). Peel and chop root vegetables into chunks.",
+      "Toss vegetables with olive oil, thyme, salt, and pepper. Spread vegetables on a baking sheet.",
+      "Season pork with rosemary, salt, and pepper. Sear pork in a hot pan for 2-3 minutes per side. Place pork on vegetables.",
+      "Roast for 25-30 minutes until pork reaches 145°F. Let pork rest for 5 minutes before slicing. Serve sliced pork with roasted vegetables."
     ],
     nutrition: {
       calories: 440,
@@ -2039,17 +1870,10 @@ const meals = [
       { name: "brown rice", quantity: 2, unit: "cups", category: "cupboard" }
     ],
     instructions: [
-      "Cook brown rice according to package directions",
-      "Rinse lentils and set aside",
-      "Dice onion and mince ginger",
-      "Heat oil in a large pot over medium heat",
-      "Sauté onion until soft, about 5 minutes",
-      "Add curry powder and ginger, cook 1 minute",
-      "Add lentils, coconut milk, tomatoes, and 2 cups water",
-      "Bring to a boil, then simmer 20-25 minutes",
-      "Stir in spinach until wilted",
-      "Season with salt and pepper",
-      "Serve over brown rice"
+      "Cook brown rice according to package directions. Rinse lentils and set aside. Dice onion and mince ginger.",
+      "Heat oil in a large pot over medium heat. Sauté onion until soft, about 5 minutes. Add curry powder and ginger, cook 1 minute.",
+      "Add lentils, coconut milk, tomatoes, and 2 cups water. Bring to a boil, then simmer 20-25 minutes. Stir in spinach until wilted.",
+      "Season with salt and pepper. Serve over brown rice."
     ],
     nutrition: {
       calories: 480,
@@ -2082,16 +1906,10 @@ const meals = [
       { name: "chili powder", quantity: 1, unit: "tsp", category: "cupboard" }
     ],
     instructions: [
-      "Marinate chicken with lime juice, cumin, and chili powder for 15 minutes",
-      "Rice cauliflower in a food processor",
-      "Grill chicken over medium-high heat 6-7 minutes per side",
-      "Let chicken rest, then slice",
-      "Sauté cauliflower rice with oil for 5-7 minutes",
-      "Season with salt and pepper",
-      "Divide cauliflower rice between plates",
-      "Top with sliced chicken",
-      "Add sliced avocado",
-      "Garnish with cilantro and lime wedges"
+      "Marinate chicken with lime juice, cumin, and chili powder for 15 minutes. Rice cauliflower in a food processor.",
+      "Grill chicken over medium-high heat 6-7 minutes per side. Let chicken rest, then slice.",
+      "Sauté cauliflower rice with oil for 5-7 minutes. Season with salt and pepper.",
+      "Divide cauliflower rice between plates. Top with sliced chicken. Add sliced avocado. Garnish with cilantro and lime wedges."
     ],
     nutrition: {
       calories: 460,
@@ -2124,17 +1942,10 @@ const meals = [
       { name: "egg", quantity: 1, unit: "whole", category: "fridge" }
     ],
     instructions: [
-      "Preheat oven to 400°F (200°C)",
-      "Cook pasta according to package directions",
-      "Pound chicken breasts to even thickness",
-      "Set up breading station: flour, beaten egg, breadcrumbs mixed with parmesan",
-      "Bread each chicken breast",
-      "Place on a baking sheet and spray with oil",
-      "Bake for 20 minutes",
-      "Top each breast with marinara and mozzarella",
-      "Bake 10 more minutes until cheese melts",
-      "Toss pasta with remaining marinara",
-      "Serve chicken over pasta"
+      "Preheat oven to 400°F (200°C). Cook pasta according to package directions. Pound chicken breasts to even thickness.",
+      "Set up breading station: flour, beaten egg, breadcrumbs mixed with parmesan. Bread each chicken breast. Place on a baking sheet and spray with oil.",
+      "Bake for 20 minutes. Top each breast with marinara and mozzarella. Bake 10 more minutes until cheese melts.",
+      "Toss pasta with remaining marinara. Serve chicken over pasta."
     ],
     nutrition: {
       calories: 580,
@@ -2167,16 +1978,10 @@ const meals = [
       { name: "garlic", quantity: 4, unit: "cloves", category: "cupboard" }
     ],
     instructions: [
-      "Cook quinoa according to package directions",
-      "Season tuna with soy sauce and sesame seeds",
-      "Heat a pan over high heat with oil",
-      "Sear tuna 2-3 minutes per side (keep center rare)",
-      "Let tuna rest, then slice",
-      "In the same pan, sauté minced garlic for 30 seconds",
-      "Add spinach and sauté until wilted",
-      "Divide quinoa and spinach between plates",
-      "Top with sliced tuna",
-      "Squeeze lemon juice over everything"
+      "Cook quinoa according to package directions. Season tuna with soy sauce and sesame seeds.",
+      "Heat a pan over high heat with oil. Sear tuna 2-3 minutes per side (keep center rare). Let tuna rest, then slice.",
+      "In the same pan, sauté minced garlic for 30 seconds. Add spinach and sauté until wilted.",
+      "Divide quinoa and spinach between plates. Top with sliced tuna. Squeeze lemon juice over everything."
     ],
     nutrition: {
       calories: 520,
@@ -2209,17 +2014,10 @@ const meals = [
       { name: "italian seasoning", quantity: 2, unit: "tsp", category: "cupboard" }
     ],
     instructions: [
-      "Preheat oven to 375°F (190°C)",
-      "Cook brown rice according to package directions",
-      "Cut tops off peppers and remove seeds",
-      "Dice onion and sauté until soft",
-      "Add ground turkey and cook until browned",
-      "Stir in cooked rice, diced tomatoes, and italian seasoning",
-      "Stuff peppers with turkey mixture",
-      "Place in a baking dish with a little water in bottom",
-      "Cover with foil and bake for 30 minutes",
-      "Uncover, top with cheese, bake 10 more minutes",
-      "Serve hot"
+      "Preheat oven to 375°F (190°C). Cook brown rice according to package directions. Cut tops off peppers and remove seeds.",
+      "Dice onion and sauté until soft. Add ground turkey and cook until browned.",
+      "Stir in cooked rice, diced tomatoes, and italian seasoning. Stuff peppers with turkey mixture.",
+      "Place in a baking dish with a little water in bottom. Cover with foil and bake for 30 minutes. Uncover, top with cheese, bake 10 more minutes. Serve hot."
     ],
     nutrition: {
       calories: 420,
