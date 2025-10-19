@@ -94,13 +94,13 @@ export function AnimatedHeroSection() {
               Your home for easy, delicious meal prep recipes
             </h1>
             
-            <p className="!whitespace-pre-line">
+            <p className="!whitespace-pre-line !w-[443px] !h-[258px]">
 
 
 
 
 
-              Plan your week with confidence. 
+
 
             </p>
             
