@@ -94,7 +94,7 @@ export function AnimatedHeroSection() {
               Your home for easy, delicious meal prep recipes
             </h1>
             
-            <p className="!whitespace-pre-line !whitespace-pre-line !w-[443px] !h-[101px] !whitespace-pre-line">“AI-powered meals personalized for you, fueled by your WHOOP data.”
+            <p className="!whitespace-pre-line !whitespace-pre-line !w-[443px] !h-[101px] !whitespace-pre-line !font-(family-name:--font-open-sans) !text-[17px]">“AI-powered meals personalized for you, fueled by your WHOOP data.”
 
             </p>
             
