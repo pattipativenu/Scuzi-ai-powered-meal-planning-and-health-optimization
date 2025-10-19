@@ -20,14 +20,14 @@ export default function Home() {
   const getCurrentWeekDates = () => {
     const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
     return [
-      { day: "Monday", date: format(weekStart, "d MMM") },
-      { day: "Tuesday", date: format(addDays(weekStart, 1), "d MMM") },
-      { day: "Wednesday", date: format(addDays(weekStart, 2), "d MMM") },
-      { day: "Thursday", date: format(addDays(weekStart, 3), "d MMM") },
-      { day: "Friday", date: format(addDays(weekStart, 4), "d MMM") },
-      { day: "Saturday", date: format(addDays(weekStart, 5), "d MMM") },
-      { day: "Sunday", date: format(addDays(weekStart, 6), "d MMM") },
-    ];
+    { day: "Monday", date: format(weekStart, "d MMM") },
+    { day: "Tuesday", date: format(addDays(weekStart, 1), "d MMM") },
+    { day: "Wednesday", date: format(addDays(weekStart, 2), "d MMM") },
+    { day: "Thursday", date: format(addDays(weekStart, 3), "d MMM") },
+    { day: "Friday", date: format(addDays(weekStart, 4), "d MMM") },
+    { day: "Saturday", date: format(addDays(weekStart, 5), "d MMM") },
+    { day: "Sunday", date: format(addDays(weekStart, 6), "d MMM") }];
+
   };
 
   const daysOfWeek = getCurrentWeekDates();
@@ -38,9 +38,9 @@ export default function Home() {
     const meal = currentWeekMealsData.find(
       (m) => m.day === day && m.meal_type.toLowerCase() === mealType.toLowerCase()
     );
-    
+
     if (!meal) return null;
-    
+
     return {
       id: `${meal.day}-${meal.meal_type}`,
       name: meal.name,
@@ -53,10 +53,10 @@ export default function Home() {
       ingredients: meal.ingredients.map((ing) => ({
         name: ing.name,
         amount: ing.amount,
-        category: "cupboard" as const,
+        category: "cupboard" as const
       })),
       instructions: meal.instructions,
-      nutrition: meal.nutrition,
+      nutrition: meal.nutrition
     } as Meal;
   };
 
@@ -136,105 +136,105 @@ export default function Home() {
                 lineHeight: '24px',
                 color: 'rgb(39, 39, 42)'
               }}
-              className="hover:underline flex items-center gap-1 !font-semibold"
-            >
+              className="hover:underline flex items-center gap-1 !font-semibold">
+
               View Next Week Meals
               <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
 
           {/* Loading State */}
-          {mealsLoading && (
-            <div className="flex justify-center items-center py-20">
+          {mealsLoading &&
+          <div className="flex justify-center items-center py-20">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
             </div>
-          )}
+          }
 
           {/* No Meals State */}
-          {!mealsLoading && currentWeekMealsData.length === 0 && (
-            <div className="text-center py-20">
+          {!mealsLoading && currentWeekMealsData.length === 0 &&
+          <div className="text-center py-20">
               <p
-                style={{
-                  fontFamily: '"General Sans", sans-serif',
-                  fontSize: '15px',
-                  color: 'rgb(163, 163, 163)'
-                }}
-              >
+              style={{
+                fontFamily: '"General Sans", sans-serif',
+                fontSize: '15px',
+                color: 'rgb(163, 163, 163)'
+              }}>
+
                 No meals planned for this week yet. Generate meals in Plan Ahead!
               </p>
             </div>
-          )}
+          }
 
           {/* Desktop & Tablet: Vertical Days with Horizontal Meals */}
-          {!mealsLoading && currentWeekMealsData.length > 0 && (
-            <div className="hidden md:block space-y-10">
-              {daysOfWeek.map(({ day, date }) => (
-                <div key={day}>
+          {!mealsLoading && currentWeekMealsData.length > 0 &&
+          <div className="hidden md:block space-y-10">
+              {daysOfWeek.map(({ day, date }) =>
+            <div key={day}>
                   <h3
-                    className="mb-6"
-                    style={{
-                      fontFamily: '"Right Grotesk Wide", sans-serif',
-                      fontWeight: 500,
-                      fontSize: '16px',
-                      color: 'rgb(39, 39, 42)'
-                    }}
-                  >
+                className="mb-6"
+                style={{
+                  fontFamily: '"Right Grotesk Wide", sans-serif',
+                  fontWeight: 500,
+                  fontSize: '16px',
+                  color: 'rgb(39, 39, 42)'
+                }}>
+
                     {day}, {date}
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {mealTypes.map((mealType) => {
-                      const meal = getMealForDayAndType(day, mealType);
-                      return meal ? (
-                        <MealCard key={`${day}-${mealType}`} meal={meal} size="medium" />
-                      ) : (
-                        <div
-                          key={`${day}-${mealType}`}
-                          className="h-full min-h-[320px] bg-gray-100 rounded-[20px] flex items-center justify-center"
-                          style={{
-                            fontFamily: '"General Sans", sans-serif',
-                            fontSize: '15px',
-                            lineHeight: '21px',
-                            color: 'rgb(163, 163, 163)'
-                          }}
-                        >
+                  const meal = getMealForDayAndType(day, mealType);
+                  return meal ?
+                  <MealCard key={`${day}-${mealType}`} meal={meal} size="medium" /> :
+
+                  <div
+                    key={`${day}-${mealType}`}
+                    className="h-full min-h-[320px] bg-gray-100 rounded-[20px] flex items-center justify-center"
+                    style={{
+                      fontFamily: '"General Sans", sans-serif',
+                      fontSize: '15px',
+                      lineHeight: '21px',
+                      color: 'rgb(163, 163, 163)'
+                    }}>
+
                           No {mealType}
-                        </div>
-                      );
-                    })}
+                        </div>;
+
+                })}
                   </div>
                 </div>
-              ))}
+            )}
             </div>
-          )}
+          }
 
           {/* Mobile: Keep existing mobile layout */}
-          {!mealsLoading && currentWeekMealsData.length > 0 && (
-            <div className="md:hidden space-y-6">
-              {daysOfWeek.map(({ day, date }) => (
-                <div key={day}>
+          {!mealsLoading && currentWeekMealsData.length > 0 &&
+          <div className="md:hidden space-y-6">
+              {daysOfWeek.map(({ day, date }) =>
+            <div key={day}>
                   <h3 className="text-lg font-semibold mb-3 px-2">{day}, {date}</h3>
                   <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
                     {mealTypes.map((mealType) => {
-                      const meal = getMealForDayAndType(day, mealType);
-                      return meal ? (
-                        <div key={`${day}-${mealType}`} className="snap-start flex-shrink-0 w-64">
+                  const meal = getMealForDayAndType(day, mealType);
+                  return meal ?
+                  <div key={`${day}-${mealType}`} className="snap-start flex-shrink-0 w-64">
                           <MealCard meal={meal} size="medium" />
-                        </div>
-                      ) : null;
-                    })}
+                        </div> :
+                  null;
+                })}
                   </div>
                 </div>
-              ))}
+            )}
             </div>
-          )}
+          }
         </div>
       </section>
 
       {/* History Section - Real AI-Generated Content */}
       <section className="py-16" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
         <div className="max-w-[1400px] mx-auto px-6">
-          <h2 className="!font-bold mb-8">
-            Recent AI History
+          <h2 className="!font-bold mb-8 !whitespace-pre-line !text-[29px]">Recent Chat History
+
           </h2>
           
           {isLoading &&
@@ -271,12 +271,12 @@ export default function Home() {
               onClick={() => handleHistoryCardClick(item)}
               className="snap-start flex-shrink-0 w-[280px] bg-white rounded-[20px] shadow-md overflow-hidden hover:scale-[1.02] transition-transform cursor-pointer">
 
-                  {item.image_url ? (
+                  {item.image_url ?
               <img
                 src={item.image_url}
                 alt={item.title}
-                className="object-cover w-full h-[240px]" />
-              ) : (
+                className="object-cover w-full h-[240px]" /> :
+
               <div className="w-full h-[240px] bg-gradient-to-br from-yellow-400 to-yellow-600 flex flex-col items-center justify-center gap-2">
                       <span style={{
                   fontFamily: '"Right Grotesk Wide", sans-serif',
@@ -295,7 +295,7 @@ export default function Home() {
                         Image is not available
                       </p>
                     </div>
-              )}
+              }
                   <div className="p-4 space-y-2">
                     <div className="flex items-center gap-2 mb-2">
                       <span
@@ -576,8 +576,8 @@ export default function Home() {
       <HistoryDetailDialog
         item={selectedHistoryItem}
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
-      />
-    </div>
-  );
+        onOpenChange={setDialogOpen} />
+
+    </div>);
+
 }

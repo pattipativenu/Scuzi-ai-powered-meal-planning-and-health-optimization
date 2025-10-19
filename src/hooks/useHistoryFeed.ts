@@ -26,7 +26,12 @@ export function useHistoryFeed() {
       }
       
       const data = await res.json();
-      setHistory(data);
+      
+      // Filter out items older than 1 hour
+      const oneHourAgo = Date.now() - 3600000; // 1 hour = 3600000 milliseconds
+      const recentHistory = data.filter((item: HistoryItem) => item.timestamp >= oneHourAgo);
+      
+      setHistory(recentHistory);
     } catch (err) {
       console.error("Error fetching history:", err);
       setError(err instanceof Error ? err.message : "Unknown error");
@@ -38,8 +43,8 @@ export function useHistoryFeed() {
   useEffect(() => {
     fetchHistory();
     
-    // Refresh every 1 hour (3600000 ms)
-    const interval = setInterval(fetchHistory, 3600000);
+    // Refresh every 5 minutes to remove expired items
+    const interval = setInterval(fetchHistory, 300000);
     
     return () => clearInterval(interval);
   }, []);
