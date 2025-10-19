@@ -22,14 +22,25 @@ children: React.ReactNode;
   return (
     <html lang="en">
       <body className="antialiased">
-        <Navigation />
-        {children}
+        {/* Mobile-only: Fixed persistent layout structure */}
+        <div className="md:contents flex flex-col min-h-screen overflow-hidden">
+          {/* Top Navigation - Always visible */}
+          <div className="md:relative md:top-auto fixed top-0 left-0 right-0 z-50">
+            <Navigation />
+          </div>
+          
+          {/* Main Content Area - Scrollable with proper padding on mobile */}
+          <main className="md:flex-none flex-1 overflow-y-auto scrollbar-hide md:pb-0 pb-20">
+            {children}
+          </main>
+          
+          {/* Bottom Navigation - Mobile only, always visible */}
+          <BottomNavigation />
+        </div>
+        
         <Toaster richColors position="top-center" />
-        
         {!isOnChatPage && <FloatingAskScuzi />}
-        
-        <BottomNavigation />
       </body>
-    </html>);
-
+    </html>
+  );
 }

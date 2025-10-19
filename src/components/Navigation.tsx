@@ -307,7 +307,7 @@ export function Navigation() {
   const hasSearchQuery = searchQuery.length > 0;
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border">
+    <nav className="md:sticky md:top-0 z-50 border-b border-border">
       {/* Top Bar - Yellow Background */}
       <div style={{ backgroundColor: "rgb(209, 222, 38)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -558,6 +558,6 @@ export function Navigation() {
           </div>
         </div>
       </div>
-    </nav>);
-
+    </nav>
+  );
 }

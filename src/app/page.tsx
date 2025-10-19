@@ -116,7 +116,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen pb-20 md:pb-0" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
+    <div className="min-h-screen md:pt-0 pt-40 md:pb-0 pb-20" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
       {/* Hero Section */}
       <AnimatedHeroSection />
 
@@ -589,6 +589,6 @@ export default function Home() {
         open={dialogOpen}
         onOpenChange={setDialogOpen} />
 
-    </div>);
-
+    </div>
+  );
 }
