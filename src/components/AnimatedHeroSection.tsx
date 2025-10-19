@@ -105,7 +105,7 @@ export function AnimatedHeroSection() {
             </p>
             
             <Link
-              href="/plan-ahead"
+              href="/personalize"
               className="inline-flex items-center gap-2 bg-gray-900 text-white px-8 py-4 rounded-lg hover:bg-gray-800 transition-colors shadow-lg"
               style={{
                 fontFamily: '"Right Grotesk Wide", sans-serif',

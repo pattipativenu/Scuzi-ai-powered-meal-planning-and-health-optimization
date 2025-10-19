@@ -208,7 +208,7 @@ const Nav = ({ setMenuOpen }: { setMenuOpen: (open: boolean) => void }) => {
                 Sign In
               </Link>
               <Link
-                href="/register"
+                href="/personalize"
                 onClick={() => setMenuOpen(false)}
                 className="block px-4 py-2 rounded-lg border-2 border-black text-black hover:bg-gray-50 transition-colors text-center"
                 style={{
