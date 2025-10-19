@@ -6,77 +6,151 @@ import { useEffect, useState } from "react";
 interface WhoopMetric {
   label: string;
   value: string;
-  status: "positive" | "negative";
+  status: "good" | "moderate" | "bad";
 }
 
 export function WhoopMiniMetrics() {
-  const [metrics, setMetrics] = useState<WhoopMetric[]>([
-    { label: "Recovery", value: "+3%", status: "positive" },
-    { label: "Heart Rate", value: "-2 bpm", status: "negative" },
-    { label: "Sleep", value: "+0.5h", status: "positive" },
-    { label: "Strain", value: "+0.6", status: "positive" },
-  ]);
+  const [metrics, setMetrics] = useState<WhoopMetric[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchWhoopData();
   }, []);
 
+  const getRecoveryStatus = (value: number): "good" | "moderate" | "bad" => {
+    if (value >= 67) return "good";
+    if (value >= 34) return "moderate";
+    return "bad";
+  };
+
+  const getHRStatus = (value: number): "good" | "moderate" | "bad" => {
+    if (value <= 60) return "good";
+    if (value <= 70) return "moderate";
+    return "bad";
+  };
+
+  const getOxygenStatus = (value: number): "good" | "moderate" | "bad" => {
+    if (value >= 95) return "good";
+    if (value >= 90) return "moderate";
+    return "bad";
+  };
+
+  const getStrainStatus = (value: number): "good" | "moderate" | "bad" => {
+    if (value >= 14) return "good";
+    if (value >= 10) return "moderate";
+    return "bad";
+  };
+
+  const getSleepPerformanceStatus = (value: number): "good" | "moderate" | "bad" => {
+    if (value >= 85) return "good";
+    if (value >= 70) return "moderate";
+    return "bad";
+  };
+
+  const getSleepDebtStatus = (value: number): "good" | "moderate" | "bad" => {
+    if (value <= 60) return "good";
+    if (value <= 120) return "moderate";
+    return "bad";
+  };
+
   const fetchWhoopData = async () => {
     try {
-      const response = await fetch("/api/whoop/historical-data?limit=2");
+      const response = await fetch("/api/whoop/historical-data?limit=10");
       const data = await response.json();
 
-      if (data.status === "success" && data.data.length >= 2) {
-        const latest = data.data[0];
-        const previous = data.data[1];
+      if (data.status === "success" && data.data.length > 0) {
+        // Find October 17th data
+        const oct17Data = data.data.find((record: any) => {
+          const cycleDate = new Date(record.cycle_start_time);
+          return cycleDate.getDate() === 17 && cycleDate.getMonth() === 9; // October is month 9
+        });
 
+        const latest = oct17Data || data.data[0];
         const calculatedMetrics: WhoopMetric[] = [];
 
-        // Recovery
-        if (latest.recovery_score_percent !== null && previous.recovery_score_percent !== null) {
-          const recoveryDelta = latest.recovery_score_percent - previous.recovery_score_percent;
+        // Recovery Score
+        if (latest.recovery_score_percent !== null) {
           calculatedMetrics.push({
             label: "Recovery",
-            value: `${recoveryDelta > 0 ? "+" : ""}${recoveryDelta}%`,
-            status: recoveryDelta >= 0 ? "positive" : "negative",
+            value: `${Math.round(latest.recovery_score_percent)}%`,
+            status: getRecoveryStatus(latest.recovery_score_percent),
           });
         }
 
-        // Heart Rate (Resting)
-        if (latest.resting_heart_rate_bpm !== null && previous.resting_heart_rate_bpm !== null) {
-          const hrDelta = latest.resting_heart_rate_bpm - previous.resting_heart_rate_bpm;
+        // Resting Heart Rate
+        if (latest.resting_heart_rate_bpm !== null) {
           calculatedMetrics.push({
-            label: "Heart Rate",
-            value: `${hrDelta > 0 ? "+" : ""}${hrDelta} bpm`,
-            status: hrDelta <= 0 ? "positive" : "negative", // Lower HR is better
+            label: "Resting HR",
+            value: `${Math.round(latest.resting_heart_rate_bpm)} bpm`,
+            status: getHRStatus(latest.resting_heart_rate_bpm),
           });
         }
 
-        // Sleep (in hours)
-        if (latest.asleep_duration_min !== null && previous.asleep_duration_min !== null) {
-          const sleepDeltaMin = latest.asleep_duration_min - previous.asleep_duration_min;
-          const sleepDeltaHours = (sleepDeltaMin / 60).toFixed(1);
+        // Body Oxygen
+        if (latest.blood_oxygen_percent !== null) {
           calculatedMetrics.push({
-            label: "Sleep",
-            value: `${sleepDeltaMin > 0 ? "+" : ""}${sleepDeltaHours}h`,
-            status: sleepDeltaMin >= 0 ? "positive" : "negative",
+            label: "Blood O₂",
+            value: `${Math.round(latest.blood_oxygen_percent)}%`,
+            status: getOxygenStatus(latest.blood_oxygen_percent),
           });
         }
 
-        // Strain
-        if (latest.day_strain !== null && previous.day_strain !== null) {
-          const strainDelta = parseFloat(latest.day_strain) - parseFloat(previous.day_strain);
+        // Daily Strain
+        if (latest.day_strain !== null) {
           calculatedMetrics.push({
             label: "Strain",
-            value: `${strainDelta > 0 ? "+" : ""}${strainDelta.toFixed(1)}`,
-            status: strainDelta >= 0 ? "positive" : "negative",
+            value: parseFloat(latest.day_strain).toFixed(1),
+            status: getStrainStatus(parseFloat(latest.day_strain)),
           });
         }
 
-        if (calculatedMetrics.length > 0) {
-          setMetrics(calculatedMetrics);
+        // Energy Burned (Calories)
+        if (latest.energy_burned_cal !== null) {
+          calculatedMetrics.push({
+            label: "Calories",
+            value: `${Math.round(latest.energy_burned_cal)} kcal`,
+            status: latest.energy_burned_cal >= 2500 ? "good" : latest.energy_burned_cal >= 2000 ? "moderate" : "bad",
+          });
         }
+
+        // Max Heart Rate
+        if (latest.max_hr_bpm !== null) {
+          calculatedMetrics.push({
+            label: "Max HR",
+            value: `${Math.round(latest.max_hr_bpm)} bpm`,
+            status: latest.max_hr_bpm >= 160 ? "good" : latest.max_hr_bpm >= 140 ? "moderate" : "bad",
+          });
+        }
+
+        // Average Heart Rate
+        if (latest.average_hr_bpm !== null) {
+          calculatedMetrics.push({
+            label: "Avg HR",
+            value: `${Math.round(latest.average_hr_bpm)} bpm`,
+            status: latest.average_hr_bpm <= 75 ? "good" : latest.average_hr_bpm <= 85 ? "moderate" : "bad",
+          });
+        }
+
+        // Sleep Performance
+        if (latest.sleep_performance_percent !== null) {
+          calculatedMetrics.push({
+            label: "Sleep Quality",
+            value: `${Math.round(latest.sleep_performance_percent)}%`,
+            status: getSleepPerformanceStatus(latest.sleep_performance_percent),
+          });
+        }
+
+        // Sleep Debt
+        if (latest.sleep_debt_min !== null) {
+          const sleepDebtHours = (latest.sleep_debt_min / 60).toFixed(1);
+          calculatedMetrics.push({
+            label: "Sleep Debt",
+            value: `${sleepDebtHours}h`,
+            status: getSleepDebtStatus(latest.sleep_debt_min),
+          });
+        }
+
+        setMetrics(calculatedMetrics);
       }
     } catch (error) {
       console.error("Error fetching WHOOP data:", error);
@@ -88,6 +162,47 @@ export function WhoopMiniMetrics() {
   // Duplicate metrics 3 times for seamless infinite scroll
   const scrollingMetrics = [...metrics, ...metrics, ...metrics];
 
+  const getStatusColor = (status: "good" | "moderate" | "bad") => {
+    switch (status) {
+      case "good":
+        return "#16A34A"; // Green
+      case "moderate":
+        return "#F97316"; // Orange
+      case "bad":
+        return "#DC2626"; // Red
+    }
+  };
+
+  const getStatusArrow = (status: "good" | "moderate" | "bad") => {
+    switch (status) {
+      case "good":
+        return "▲";
+      case "moderate":
+        return "▶"; // Right arrow for moderate
+      case "bad":
+        return "▼";
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="overflow-hidden max-w-full">
+        <div className="flex items-center gap-2 px-3 py-1">
+          <span
+            style={{
+              fontFamily: '"Right Grotesk Wide", sans-serif',
+              fontWeight: 500,
+              fontSize: "14px",
+              color: "rgb(107, 114, 128)",
+            }}
+          >
+            Loading WHOOP data...
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-hidden max-w-full">
       <motion.div
@@ -97,9 +212,8 @@ export function WhoopMiniMetrics() {
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
         {scrollingMetrics.map((metric, index) => {
-          const isPositive = metric.status === "positive";
-          const textColor = isPositive ? "#16A34A" : "#DC2626";
-          const arrow = isPositive ? "▲" : "▼";
+          const color = getStatusColor(metric.status);
+          const arrow = getStatusArrow(metric.status);
 
           return (
             <div
@@ -112,7 +226,7 @@ export function WhoopMiniMetrics() {
                   fontWeight: 500,
                   fontSize: "14px",
                   lineHeight: "20px",
-                  color: textColor,
+                  color: color,
                 }}
               >
                 {arrow} {metric.value}
