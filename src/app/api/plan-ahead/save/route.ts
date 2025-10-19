@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const command = new PutCommand({
       TableName: process.env.DYNAMODB_MEALPLAN_TABLE || "MealPlanData",
       Item: {
-        week_id: `next_${nextWeekId}`, // Store as next week
+        week_id: nextWeekId, // Consistent format without prefix
         meals,
         whoopSummary,
         dietaryPreferences: dietaryPreferences || "",
