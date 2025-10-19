@@ -63,21 +63,20 @@ export default function PlanAheadPage() {
     setIsGenerating(true);
     setError("");
     setMealProgress(0);
-    setGenerationStep("Analyzing your WHOOP data...");
+    setGenerationStep("Loading meals from library...");
 
     try {
-      // Step 1: Generate meals with Claude
-      setGenerationStep("Creating personalized meal plan with AI...");
+      // Step 1: Generate meals from library (already has images)
+      setGenerationStep("Selecting optimal meals from your library...");
       setMealProgress(5);
       
-      const generateResponse = await fetch("/api/plan-ahead/generate", {
+      const generateResponse = await fetch("/api/plan-ahead/generate-from-library", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dietaryPreferences: "" }),
       });
 
       if (!generateResponse.ok) {
-        throw new Error("Failed to generate meals");
+        throw new Error("Failed to generate meals from library");
       }
 
       const generateData = await generateResponse.json();
@@ -86,50 +85,31 @@ export default function PlanAheadPage() {
         throw new Error(generateData.message || "Failed to generate meals");
       }
 
-      setMealProgress(10);
-
-      // Step 2: Generate images with Titan
-      setGenerationStep(`Generating ${generateData.meals.length} meal images...`);
+      // Simulate progress for better UX
+      setMealProgress(15);
+      await new Promise(resolve => setTimeout(resolve, 300));
       
-      const imageProgressInterval = setInterval(() => {
-        setMealProgress((prev) => Math.min(prev + 1, 22));
-      }, 300);
+      setGenerationStep("Optimizing meal variety and nutrition...");
+      setMealProgress(20);
+      await new Promise(resolve => setTimeout(resolve, 300));
       
-      const imageResponse = await fetch("/api/plan-ahead/generate-images", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ meals: generateData.meals }),
-      });
-
-      clearInterval(imageProgressInterval);
-
-      if (!imageResponse.ok) {
-        throw new Error("Failed to generate images");
-      }
-
-      const imageData = await imageResponse.json();
-      
-      if (imageData.status !== "success") {
-        throw new Error(imageData.message || "Failed to generate images");
-      }
-
       setMealProgress(MAX_MEALS);
       
-      // Step 3: Display meals immediately
-      setMeals(imageData.meals);
-      setGenerationStep("Meals generated successfully!");
+      // Step 2: Display meals immediately
+      setMeals(generateData.meals);
+      setGenerationStep("Meal plan ready!");
       
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 800));
       
       setGenerationStep("");
       setIsGenerating(false);
 
-      // Step 4: Store to DB/S3 in the background
-      storeMealsInBackground(imageData.meals, generateData.whoopSummary);
+      // Step 3: Store to DB in the background
+      storeMealsInBackground(generateData.meals, "Generated from meals library");
       
     } catch (error) {
       console.error("Error generating meals:", error);
-      setError(error instanceof Error ? error.message : "Failed to generate meals");
+      setError(error instanceof Error ? error.message : "Failed to generate meals from library");
       setIsGenerating(false);
       setGenerationStep("");
       setMealProgress(0);
