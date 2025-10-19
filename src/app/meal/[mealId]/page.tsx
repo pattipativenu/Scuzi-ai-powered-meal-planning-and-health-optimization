@@ -46,15 +46,31 @@ export default function MealDetailPage() {
     try {
       setLoading(true);
       
-      // Fetch the meal plan that contains this meal
+      // First check localStorage for immediate access
+      const cachedMeals = localStorage.getItem("currentMealPlan");
+      if (cachedMeals) {
+        const meals = JSON.parse(cachedMeals) as MealData[];
+        const [day, mealType] = mealId.split("-");
+        
+        const foundMeal = meals.find(
+          (m: MealData) => m.day === day && m.meal_type === mealType
+        );
+        
+        if (foundMeal) {
+          setMeal(foundMeal);
+          setServings(foundMeal.servings);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Fall back to API if not in cache
       const response = await fetch("/api/plan-ahead/retrieve");
       const data = await response.json();
       
       if (data.status === "success" && data.mealPlan?.meals) {
-        // Parse mealId (format: "Monday-Breakfast")
         const [day, mealType] = mealId.split("-");
         
-        // Find the specific meal
         const foundMeal = data.mealPlan.meals.find(
           (m: MealData) => m.day === day && m.meal_type === mealType
         );
@@ -86,10 +102,9 @@ export default function MealDetailPage() {
     
     const ratio = servings / meal.servings;
     
-    // Try to extract number from amount string
     const numberMatch = amount.match(/^([\d.\/]+)\s*(.*)$/);
     if (numberMatch) {
-      const originalAmount = eval(numberMatch[1]); // Handle fractions like "1/2"
+      const originalAmount = eval(numberMatch[1]);
       const unit = numberMatch[2];
       const newAmount = (originalAmount * ratio).toFixed(1).replace(/\.0$/, "");
       return `${newAmount} ${unit}`;

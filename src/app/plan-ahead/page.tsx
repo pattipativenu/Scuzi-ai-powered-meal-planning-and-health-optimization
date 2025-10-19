@@ -48,11 +48,22 @@ export default function PlanAheadPage() {
 
   const loadExistingMealPlan = async () => {
     try {
+      // First check localStorage for immediate access
+      const cachedMeals = localStorage.getItem("currentMealPlan");
+      if (cachedMeals) {
+        const parsed = JSON.parse(cachedMeals);
+        setMeals(parsed);
+        return;
+      }
+
+      // Fall back to API
       const response = await fetch("/api/plan-ahead/retrieve");
       const data = await response.json();
       
       if (data.status === "success" && data.mealPlan?.meals) {
         setMeals(data.mealPlan.meals);
+        // Cache to localStorage
+        localStorage.setItem("currentMealPlan", JSON.stringify(data.mealPlan.meals));
       }
     } catch (error) {
       console.error("Error loading meal plan:", error);
@@ -95,8 +106,10 @@ export default function PlanAheadPage() {
       
       setMealProgress(MAX_MEALS);
       
-      // Step 2: Display meals immediately
+      // Step 2: Display meals immediately AND cache to localStorage
       setMeals(generateData.meals);
+      localStorage.setItem("currentMealPlan", JSON.stringify(generateData.meals));
+      
       setGenerationStep("Meal plan ready!");
       
       await new Promise(resolve => setTimeout(resolve, 800));
