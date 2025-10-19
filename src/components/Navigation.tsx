@@ -330,7 +330,7 @@ export function Navigation() {
                 {/* Mobile: Centered SCUZI only */}
                 <div className="md:hidden flex items-center justify-center w-full">
                   <Link href="/" className="flex items-center gap-2 font-semibold text-lg" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
-                    <span className="!not-italic !whitespace-pre-line !font-extrabold !text-[35px]">SCUZI</span>
+                    <span className="!not-italic !whitespace-pre-line !font-extrabold !text-[35px] !whitespace-pre-line">Scuzi</span>
                   </Link>
                 </div>
               </>
