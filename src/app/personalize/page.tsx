@@ -418,8 +418,7 @@ export default function PersonalizePage() {
         <div className="flex items-center justify-between pt-8">
           <button
             onClick={handleBack}
-            disabled={currentStep === 0}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl border-2 border-gray-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-2 px-6 py-3 rounded-xl border-2 border-gray-300 hover:bg-gray-50 transition-colors"
             style={{
               fontFamily: '"Right Grotesk Wide", sans-serif',
               fontSize: "14px",
