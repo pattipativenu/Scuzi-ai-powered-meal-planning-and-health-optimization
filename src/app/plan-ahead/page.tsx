@@ -34,7 +34,7 @@ export default function PlanAheadPage() {
   const [error, setError] = useState("");
   const [expandedDays, setExpandedDays] = useState<string[]>(["Monday"]);
   const [mealProgress, setMealProgress] = useState(0);
-  const [currentDay, setCurrentDay] = useState("");
+  const [isStoring, setIsStoring] = useState(false);
   const { insights } = useWhoopInsights();
 
   const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -59,112 +59,86 @@ export default function PlanAheadPage() {
     }
   };
 
-  // Generate images for a batch of meals
-  const generateImagesForMeals = async (mealsToGenerate: GeneratedMeal[]) => {
-    try {
-      const imageResponse = await fetch("/api/plan-ahead/generate-images", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ meals: mealsToGenerate }),
-      });
-
-      if (!imageResponse.ok) {
-        console.error("Failed to generate images");
-        return mealsToGenerate;
-      }
-
-      const imageData = await imageResponse.json();
-      
-      if (imageData.status === "success") {
-        return imageData.meals;
-      }
-      
-      return mealsToGenerate;
-    } catch (error) {
-      console.error("Error generating images:", error);
-      return mealsToGenerate;
-    }
-  };
-
   const handleGenerateMeals = async () => {
     setIsGenerating(true);
     setError("");
     setMealProgress(0);
-    setMeals([]);
     setGenerationStep("Analyzing your WHOOP data...");
 
-    const allGeneratedMeals: GeneratedMeal[] = [];
-    let whoopSummary = "";
-
     try {
-      // Generate meals day-by-day
-      for (let dayIndex = 0; dayIndex < daysOfWeek.length; dayIndex++) {
-        const day = daysOfWeek[dayIndex];
-        setCurrentDay(day);
-        setGenerationStep(`Generating meals for ${day}...`);
-        
-        // Step 1: Generate 4 meals for this day
-        const generateResponse = await fetch("/api/plan-ahead/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            dietaryPreferences: "",
-            dayIndex 
-          }),
-        });
+      // Step 1: Generate meals with Claude
+      setGenerationStep("Creating personalized meal plan with AI...");
+      setMealProgress(5);
+      
+      const generateResponse = await fetch("/api/plan-ahead/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dietaryPreferences: "" }),
+      });
 
-        if (!generateResponse.ok) {
-          throw new Error(`Failed to generate meals for ${day}`);
-        }
-
-        const generateData = await generateResponse.json();
-        
-        if (generateData.status !== "success") {
-          throw new Error(generateData.message || `Failed to generate meals for ${day}`);
-        }
-
-        if (dayIndex === 0) {
-          whoopSummary = generateData.whoopSummary || "";
-        }
-
-        // Step 2: Generate images for this day's meals
-        setGenerationStep(`Creating meal images for ${day}...`);
-        const mealsWithImages = await generateImagesForMeals(generateData.meals);
-        
-        allGeneratedMeals.push(...mealsWithImages);
-        
-        // Update progress
-        const currentProgress = (dayIndex + 1) * 4;
-        setMealProgress(currentProgress);
-        
-        // Update UI with new meals
-        setMeals([...allGeneratedMeals]);
-        
-        console.log(`✓ Completed ${day}: ${currentProgress}/${MAX_MEALS} meals`);
+      if (!generateResponse.ok) {
+        throw new Error("Failed to generate meals");
       }
 
-      setGenerationStep("All meals generated successfully!");
-      setCurrentDay("");
+      const generateData = await generateResponse.json();
+      
+      if (generateData.status !== "success") {
+        throw new Error(generateData.message || "Failed to generate meals");
+      }
+
+      setMealProgress(10);
+
+      // Step 2: Generate images with Titan
+      setGenerationStep(`Generating ${generateData.meals.length} meal images...`);
+      
+      const imageProgressInterval = setInterval(() => {
+        setMealProgress((prev) => Math.min(prev + 1, 22));
+      }, 300);
+      
+      const imageResponse = await fetch("/api/plan-ahead/generate-images", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ meals: generateData.meals }),
+      });
+
+      clearInterval(imageProgressInterval);
+
+      if (!imageResponse.ok) {
+        throw new Error("Failed to generate images");
+      }
+
+      const imageData = await imageResponse.json();
+      
+      if (imageData.status !== "success") {
+        throw new Error(imageData.message || "Failed to generate images");
+      }
+
+      setMealProgress(MAX_MEALS);
+      
+      // Step 3: Display meals immediately
+      setMeals(imageData.meals);
+      setGenerationStep("Meals generated successfully!");
       
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       setGenerationStep("");
       setIsGenerating(false);
 
-      // Store to DB/S3 in the background
-      storeMealsInBackground(allGeneratedMeals, whoopSummary);
+      // Step 4: Store to DB/S3 in the background
+      storeMealsInBackground(imageData.meals, generateData.whoopSummary);
       
     } catch (error) {
       console.error("Error generating meals:", error);
       setError(error instanceof Error ? error.message : "Failed to generate meals");
       setIsGenerating(false);
       setGenerationStep("");
-      setCurrentDay("");
       setMealProgress(0);
     }
   };
 
   const storeMealsInBackground = async (mealsToStore: GeneratedMeal[], whoopSummary: string) => {
+    setIsStoring(true);
+    
     try {
       // Store via Lambda
       const lambdaResponse = await fetch("/api/plan-ahead/lambda-store", {
@@ -199,6 +173,8 @@ export default function PlanAheadPage() {
       }
     } catch (error) {
       console.error("Error storing meals in background:", error);
+    } finally {
+      setIsStoring(false);
     }
   };
 
@@ -220,12 +196,15 @@ export default function PlanAheadPage() {
 
   // Convert GeneratedMeal to Meal format for MealCard
   const convertToMeal = (meal: GeneratedMeal): Meal => {
+    // Handle both image_base64 (from generate-images) and image (from lambda-store/retrieve)
     let imageUrl = meal.image;
     
+    // If image_base64 exists but no image URL, convert to data URL
     if (!imageUrl && (meal as any).image_base64) {
       imageUrl = `data:image/png;base64,${(meal as any).image_base64}`;
     }
     
+    // Fallback to placeholder if no image
     if (!imageUrl) {
       imageUrl = "/placeholder-meal.jpg";
     }
@@ -291,55 +270,14 @@ export default function PlanAheadPage() {
           </button>
         </div>
 
-        {/* Loading State with Progress */}
+        {/* Loading State with WHOOP Insights */}
         {isGenerating && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <div className="bg-card border border-border rounded-lg p-8">
-              <div className="flex items-center gap-4 mb-6">
-                <Sparkles className="w-8 h-8 text-primary animate-pulse" />
-                <div>
-                  <h3 className="text-xl font-semibold mb-1">{generationStep}</h3>
-                  {currentDay && (
-                    <p className="text-sm text-muted-foreground">
-                      🍽 Generating meals: {mealProgress} / {MAX_MEALS} completed
-                    </p>
-                  )}
-                </div>
-              </div>
-              
-              {/* Progress Bar */}
-              <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
-                <motion.div
-                  className="h-full bg-primary"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${(mealProgress / MAX_MEALS) * 100}%` }}
-                  transition={{ duration: 0.5 }}
-                />
-              </div>
-              
-              {/* WHOOP Insights */}
-              {insights && (
-                <div className="mt-6 grid grid-cols-3 gap-4">
-                  <div className="bg-muted/50 rounded-lg p-4">
-                    <p className="text-xs text-muted-foreground mb-1">Recovery</p>
-                    <p className="text-2xl font-bold">{insights.recovery}%</p>
-                  </div>
-                  <div className="bg-muted/50 rounded-lg p-4">
-                    <p className="text-xs text-muted-foreground mb-1">Sleep</p>
-                    <p className="text-2xl font-bold">{insights.sleep}h</p>
-                  </div>
-                  <div className="bg-muted/50 rounded-lg p-4">
-                    <p className="text-xs text-muted-foreground mb-1">Strain</p>
-                    <p className="text-2xl font-bold">{insights.strain}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </motion.div>
+          <HealthInsightsLoader
+            insights={insights}
+            progress={mealProgress}
+            totalMeals={MAX_MEALS}
+            isComplete={mealProgress >= MAX_MEALS}
+          />
         )}
 
         {/* Error State */}
@@ -373,7 +311,7 @@ export default function PlanAheadPage() {
         )}
 
         {/* Meals Display */}
-        {meals.length > 0 && (
+        {meals.length > 0 && !isGenerating && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
