@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  const hideNavigation = pathname === "/personalize";
+  const hideNavigation = pathname.startsWith("/personalize");
 
   return (
     <html lang="en">

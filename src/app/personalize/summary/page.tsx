@@ -52,9 +52,12 @@ export default function PersonalizeSummaryPage() {
 
   // Handle redirect for authenticated users
   const handleContinue = () => {
-    if (session?.user) {
-      router.push("/");
-    }
+    router.push("/");
+  };
+
+  // Handle skip
+  const handleSkip = () => {
+    router.push("/");
   };
 
   // Handle Google sign-in
@@ -349,23 +352,31 @@ export default function PersonalizeSummaryPage() {
                 Continue with Email
               </Link>
 
-              {/* Sign In Link */}
-              <div className="text-center">
-                <p
+              {/* Sign In and Skip Links */}
+              <div className="flex items-center justify-center gap-4">
+                <Link 
+                  href="/login" 
+                  className="text-black hover:underline"
                   style={{
                     fontFamily: '"General Sans", sans-serif',
                     fontSize: "14px",
-                    color: "rgb(107, 114, 128)",
+                    fontWeight: 500,
                   }}
                 >
-                  Already have an account?{" "}
-                  <Link 
-                    href="/login" 
-                    className="text-black font-medium hover:underline"
-                  >
-                    Sign In
-                  </Link>
-                </p>
+                  Already have an account? Sign In
+                </Link>
+                <span style={{ color: "rgb(209, 213, 219)" }}>|</span>
+                <button
+                  onClick={handleSkip}
+                  className="text-gray-600 hover:text-black transition-colors"
+                  style={{
+                    fontFamily: '"General Sans", sans-serif',
+                    fontSize: "14px",
+                    fontWeight: 500,
+                  }}
+                >
+                  Skip for now
+                </button>
               </div>
             </div>
           ) : (
