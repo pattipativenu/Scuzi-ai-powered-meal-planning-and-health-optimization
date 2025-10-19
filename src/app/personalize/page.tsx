@@ -12,123 +12,123 @@ type Question = {
   title: string;
   subtitle?: string;
   type: "multi-select" | "single-select";
-  options: Array<{ emoji: string; label: string; value: string }>;
+  options: Array<{emoji: string;label: string;value: string;}>;
   field: string;
 };
 
 // All 8 questions
 const questions: Question[] = [
-  {
-    id: 1,
-    title: "What's most important to you?",
-    subtitle: "This helps us understand what you're aiming for.",
-    type: "multi-select",
-    field: "user_goal",
-    options: [
-      { emoji: "💤", label: "Better Sleep", value: "better_sleep" },
-      { emoji: "🔥", label: "Build Muscle", value: "build_muscle" },
-      { emoji: "🏃", label: "Fat Loss", value: "fat_loss" },
-      { emoji: "⚡", label: "More Energy", value: "more_energy" },
-      { emoji: "❤️", label: "Improve Gut Health", value: "gut_health" },
-      { emoji: "🧘", label: "Balanced Diet", value: "balanced_diet" },
-    ],
-  },
-  {
-    id: 2,
-    title: "Do you have any allergies or dietary restrictions?",
-    subtitle: "Select all that apply.",
-    type: "multi-select",
-    field: "user_allergies",
-    options: [
-      { emoji: "🥛", label: "Dairy", value: "dairy" },
-      { emoji: "🥜", label: "Nuts", value: "nuts" },
-      { emoji: "🌾", label: "Gluten", value: "gluten" },
-      { emoji: "🍳", label: "Eggs", value: "eggs" },
-      { emoji: "🍤", label: "Shellfish", value: "shellfish" },
-      { emoji: "🧀", label: "Soy", value: "soy" },
-      { emoji: "🚫", label: "None", value: "none" },
-    ],
-  },
-  {
-    id: 3,
-    title: "Which cuisines do you love?",
-    subtitle: "We'll make sure your meals match your taste.",
-    type: "multi-select",
-    field: "preferred_cuisines",
-    options: [
-      { emoji: "🍝", label: "Italian", value: "italian" },
-      { emoji: "🍛", label: "Indian", value: "indian" },
-      { emoji: "🍣", label: "Japanese", value: "japanese" },
-      { emoji: "🥡", label: "Chinese", value: "chinese" },
-      { emoji: "🌮", label: "Mexican", value: "mexican" },
-      { emoji: "🥗", label: "Mediterranean", value: "mediterranean" },
-      { emoji: "🍔", label: "American", value: "american" },
-      { emoji: "🌍", label: "Fusion", value: "fusion" },
-    ],
-  },
-  {
-    id: 4,
-    title: "How do you prefer to prepare your meals?",
-    type: "single-select",
-    field: "prep_style",
-    options: [
-      { emoji: "👨‍🍳", label: "From Scratch", value: "from_scratch" },
-      { emoji: "🕒", label: "Quick & Simple", value: "quick_simple" },
-      { emoji: "🥣", label: "Mix of Both", value: "mix_both" },
-      { emoji: "🚫", label: "Ready-to-Eat Only", value: "ready_to_eat" },
-    ],
-  },
-  {
-    id: 5,
-    title: "What kitchen equipment do you usually have access to?",
-    type: "multi-select",
-    field: "equipment",
-    options: [
-      { emoji: "🔪", label: "Stove", value: "stove" },
-      { emoji: "🧑‍🍳", label: "Oven", value: "oven" },
-      { emoji: "🧊", label: "Refrigerator", value: "refrigerator" },
-      { emoji: "🍳", label: "Air Fryer", value: "air_fryer" },
-      { emoji: "🥤", label: "Blender", value: "blender" },
-      { emoji: "🍲", label: "Microwave", value: "microwave" },
-    ],
-  },
-  {
-    id: 6,
-    title: "How many meals do you want us to plan per day?",
-    type: "single-select",
-    field: "meals_per_day",
-    options: [
-      { emoji: "🍽️", label: "3 Meals", value: "3" },
-      { emoji: "🍴", label: "4 Meals", value: "4" },
-      { emoji: "🥗", label: "5+ Meals", value: "5" },
-    ],
-  },
-  {
-    id: 7,
-    title: "Do you follow any specific diet?",
-    type: "single-select",
-    field: "diet_type",
-    options: [
-      { emoji: "🥦", label: "Vegetarian", value: "vegetarian" },
-      { emoji: "🥩", label: "Non-Veg", value: "non_veg" },
-      { emoji: "🐟", label: "Pescatarian", value: "pescatarian" },
-      { emoji: "🌱", label: "Vegan", value: "vegan" },
-      { emoji: "⚖️", label: "No Preference", value: "no_preference" },
-    ],
-  },
-  {
-    id: 8,
-    title: "How active are you daily?",
-    type: "single-select",
-    field: "activity_level",
-    options: [
-      { emoji: "🧘", label: "Sedentary", value: "sedentary" },
-      { emoji: "🚶", label: "Lightly Active", value: "lightly_active" },
-      { emoji: "🏋️", label: "Moderately Active", value: "moderately_active" },
-      { emoji: "🏃‍♂️", label: "Very Active", value: "very_active" },
-    ],
-  },
-];
+{
+  id: 1,
+  title: "What's most important to you?",
+  subtitle: "This helps us understand what you're aiming for.",
+  type: "multi-select",
+  field: "user_goal",
+  options: [
+  { emoji: "💤", label: "Better Sleep", value: "better_sleep" },
+  { emoji: "🔥", label: "Build Muscle", value: "build_muscle" },
+  { emoji: "🏃", label: "Fat Loss", value: "fat_loss" },
+  { emoji: "⚡", label: "More Energy", value: "more_energy" },
+  { emoji: "❤️", label: "Improve Gut Health", value: "gut_health" },
+  { emoji: "🧘", label: "Balanced Diet", value: "balanced_diet" }]
+
+},
+{
+  id: 2,
+  title: "Do you have any allergies or dietary restrictions?",
+  subtitle: "Select all that apply.",
+  type: "multi-select",
+  field: "user_allergies",
+  options: [
+  { emoji: "🥛", label: "Dairy", value: "dairy" },
+  { emoji: "🥜", label: "Nuts", value: "nuts" },
+  { emoji: "🌾", label: "Gluten", value: "gluten" },
+  { emoji: "🍳", label: "Eggs", value: "eggs" },
+  { emoji: "🍤", label: "Shellfish", value: "shellfish" },
+  { emoji: "🧀", label: "Soy", value: "soy" },
+  { emoji: "", label: "None", value: "none" }]
+
+},
+{
+  id: 3,
+  title: "Which cuisines do you love?",
+  subtitle: "We'll make sure your meals match your taste.",
+  type: "multi-select",
+  field: "preferred_cuisines",
+  options: [
+  { emoji: "🍝", label: "Italian", value: "italian" },
+  { emoji: "🍛", label: "Indian", value: "indian" },
+  { emoji: "🍣", label: "Japanese", value: "japanese" },
+  { emoji: "🥡", label: "Chinese", value: "chinese" },
+  { emoji: "🌮", label: "Mexican", value: "mexican" },
+  { emoji: "🥗", label: "Mediterranean", value: "mediterranean" },
+  { emoji: "🍔", label: "American", value: "american" },
+  { emoji: "🌍", label: "Fusion", value: "fusion" }]
+
+},
+{
+  id: 4,
+  title: "How do you prefer to prepare your meals?",
+  type: "single-select",
+  field: "prep_style",
+  options: [
+  { emoji: "👨‍🍳", label: "From Scratch", value: "from_scratch" },
+  { emoji: "🕒", label: "Quick & Simple", value: "quick_simple" },
+  { emoji: "🥣", label: "Mix of Both", value: "mix_both" },
+  { emoji: "🚫", label: "", value: "ready_to_eat" }]
+
+},
+{
+  id: 5,
+  title: "What kitchen equipment do you usually have access to?",
+  type: "multi-select",
+  field: "equipment",
+  options: [
+  { emoji: "🔪", label: "Stove", value: "stove" },
+  { emoji: "🧑‍🍳", label: "Oven", value: "oven" },
+  { emoji: "🧊", label: "Refrigerator", value: "refrigerator" },
+  { emoji: "🍳", label: "Air Fryer", value: "air_fryer" },
+  { emoji: "🥤", label: "Blender", value: "blender" },
+  { emoji: "🍲", label: "Microwave", value: "microwave" }]
+
+},
+{
+  id: 6,
+  title: "How many meals do you want us to plan per day?",
+  type: "single-select",
+  field: "meals_per_day",
+  options: [
+  { emoji: "🍽️", label: "3 Meals", value: "3" },
+  { emoji: "🍴", label: "4 Meals", value: "4" },
+  { emoji: "🥗", label: "5+ Meals", value: "5" }]
+
+},
+{
+  id: 7,
+  title: "Do you follow any specific diet?",
+  type: "single-select",
+  field: "diet_type",
+  options: [
+  { emoji: "🥦", label: "Vegetarian", value: "vegetarian" },
+  { emoji: "🥩", label: "Non-Veg", value: "non_veg" },
+  { emoji: "🐟", label: "Pescatarian", value: "pescatarian" },
+  { emoji: "🌱", label: "Vegan", value: "vegan" },
+  { emoji: "⚖️", label: "No Preference", value: "no_preference" }]
+
+},
+{
+  id: 8,
+  title: "How active are you daily?",
+  type: "single-select",
+  field: "activity_level",
+  options: [
+  { emoji: "🧘", label: "Sedentary", value: "sedentary" },
+  { emoji: "🚶", label: "Lightly Active", value: "lightly_active" },
+  { emoji: "🏋️", label: "Moderately Active", value: "moderately_active" },
+  { emoji: "🏃‍♂️", label: "Very Active", value: "very_active" }]
+
+}];
+
 
 export default function PersonalizePage() {
   const router = useRouter();
@@ -141,7 +141,7 @@ export default function PersonalizePage() {
   const [userId, setUserId] = useState<string>("");
 
   const currentQuestion = questions[currentStep];
-  const progress = ((currentStep + 1) / questions.length) * 100;
+  const progress = (currentStep + 1) / questions.length * 100;
 
   // Initialize userId - either from session or generate temporary ID
   useEffect(() => {
@@ -172,7 +172,7 @@ export default function PersonalizePage() {
         if (data.success && data.preferences) {
           // Map database fields to form state
           const loadedAnswers: Record<string, string | string[]> = {};
-          
+
           if (data.preferences.userGoal) loadedAnswers.user_goal = data.preferences.userGoal;
           if (data.preferences.userAllergies) loadedAnswers.user_allergies = data.preferences.userAllergies;
           if (data.preferences.preferredCuisines) loadedAnswers.preferred_cuisines = data.preferences.preferredCuisines;
@@ -210,13 +210,13 @@ export default function PersonalizePage() {
         equipment: answers.equipment || null,
         mealsPerDay: answers.meals_per_day ? parseInt(answers.meals_per_day as string) : null,
         dietType: answers.diet_type || null,
-        activityLevel: answers.activity_level || null,
+        activityLevel: answers.activity_level || null
       };
 
       await fetch("/api/preferences/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(preferences),
+        body: JSON.stringify(preferences)
       });
     } catch (error) {
       console.error("Failed to save preferences:", error);
@@ -226,15 +226,15 @@ export default function PersonalizePage() {
   // Handle option selection
   const handleSelect = (value: string) => {
     const field = currentQuestion.field;
-    
+
     if (currentQuestion.type === "multi-select") {
-      const current = (answers[field] as string[]) || [];
-      
+      const current = answers[field] as string[] || [];
+
       if (value === "none") {
         setAnswers({ ...answers, [field]: ["none"] });
       } else {
         const filtered = current.filter((v) => v !== "none");
-        
+
         if (filtered.includes(value)) {
           setAnswers({ ...answers, [field]: filtered.filter((v) => v !== value) });
         } else {
@@ -250,7 +250,7 @@ export default function PersonalizePage() {
   const isSelected = (value: string) => {
     const field = currentQuestion.field;
     const answer = answers[field];
-    
+
     if (Array.isArray(answer)) {
       return answer.includes(value);
     }
@@ -305,24 +305,24 @@ export default function PersonalizePage() {
   const slideVariants = {
     enter: (direction: number) => ({
       x: direction > 0 ? 1000 : -1000,
-      opacity: 0,
+      opacity: 0
     }),
     center: {
       x: 0,
-      opacity: 1,
+      opacity: 1
     },
     exit: (direction: number) => ({
       x: direction > 0 ? -1000 : 1000,
-      opacity: 0,
-    }),
+      opacity: 0
+    })
   };
 
   if (isLoading || isPending) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "rgb(255, 255, 255)" }}>
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-      </div>
-    );
+      </div>);
+
   }
 
   return (
@@ -337,9 +337,9 @@ export default function PersonalizePage() {
                 fontFamily: '"Right Grotesk Wide", sans-serif',
                 fontSize: "14px",
                 fontWeight: 500,
-                color: "rgb(107, 114, 128)",
-              }}
-            >
+                color: "rgb(107, 114, 128)"
+              }}>
+
               Step {currentStep + 1} of {questions.length}
             </span>
             <span
@@ -347,9 +347,9 @@ export default function PersonalizePage() {
                 fontFamily: '"Right Grotesk Wide", sans-serif',
                 fontSize: "14px",
                 fontWeight: 500,
-                color: "rgb(107, 114, 128)",
-              }}
-            >
+                color: "rgb(107, 114, 128)"
+              }}>
+
               {Math.round(progress)}%
             </span>
           </div>
@@ -358,8 +358,8 @@ export default function PersonalizePage() {
               className="h-full bg-black rounded-full"
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.3 }}
-            />
+              transition={{ duration: 0.3 }} />
+
           </div>
         </div>
 
@@ -374,8 +374,8 @@ export default function PersonalizePage() {
               animate="center"
               exit="exit"
               transition={{ duration: 0.3 }}
-              className="space-y-8"
-            >
+              className="space-y-8">
+
               {/* Question Title */}
               <div className="space-y-3">
                 <h1
@@ -384,50 +384,50 @@ export default function PersonalizePage() {
                     fontSize: "48px",
                     fontWeight: 700,
                     lineHeight: "1.1",
-                    color: "rgb(17, 24, 39)",
-                  }}
-                >
+                    color: "rgb(17, 24, 39)"
+                  }}>
+
                   {currentQuestion.title}
                 </h1>
-                {currentQuestion.subtitle && (
-                  <p
-                    style={{
-                      fontFamily: '"General Sans", sans-serif',
-                      fontSize: "18px",
-                      color: "rgb(107, 114, 128)",
-                    }}
-                  >
+                {currentQuestion.subtitle &&
+                <p
+                  style={{
+                    fontFamily: '"General Sans", sans-serif',
+                    fontSize: "18px",
+                    color: "rgb(107, 114, 128)"
+                  }}>
+
                     {currentQuestion.subtitle}
                   </p>
-                )}
+                }
               </div>
 
               {/* Options */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {currentQuestion.options.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => handleSelect(option.value)}
-                    className={`p-6 rounded-xl border-2 transition-all text-left ${
-                      isSelected(option.value)
-                        ? "border-black bg-black text-white"
-                        : "border-gray-200 bg-white hover:border-gray-400"
-                    }`}
-                  >
+                {currentQuestion.options.map((option) =>
+                <button
+                  key={option.value}
+                  onClick={() => handleSelect(option.value)}
+                  className={`p-6 rounded-xl border-2 transition-all text-left ${
+                  isSelected(option.value) ?
+                  "border-black bg-black text-white" :
+                  "border-gray-200 bg-white hover:border-gray-400"}`
+                  }>
+
                     <div className="flex items-center gap-3">
                       <span className="text-3xl">{option.emoji}</span>
-                      <span
-                        style={{
-                          fontFamily: '"Right Grotesk Wide", sans-serif',
-                          fontSize: "16px",
-                          fontWeight: 500,
-                        }}
-                      >
+                      <span className="!whitespace-pre-line">
+
+
+
+
+
+
                         {option.label}
                       </span>
                     </div>
                   </button>
-                ))}
+                )}
               </div>
             </motion.div>
           </AnimatePresence>
@@ -442,9 +442,9 @@ export default function PersonalizePage() {
             style={{
               fontFamily: '"Right Grotesk Wide", sans-serif',
               fontSize: "14px",
-              fontWeight: 500,
-            }}
-          >
+              fontWeight: 500
+            }}>
+
             <ChevronLeft className="w-5 h-5" />
             Back
           </button>
@@ -456,9 +456,9 @@ export default function PersonalizePage() {
               style={{
                 fontFamily: '"Right Grotesk Wide", sans-serif',
                 fontSize: "14px",
-                fontWeight: 500,
-              }}
-            >
+                fontWeight: 500
+              }}>
+
               Skip
             </button>
             <button
@@ -468,9 +468,9 @@ export default function PersonalizePage() {
               style={{
                 fontFamily: '"Right Grotesk Wide", sans-serif',
                 fontSize: "14px",
-                fontWeight: 500,
-              }}
-            >
+                fontWeight: 500
+              }}>
+
               {isSaving ? "Saving..." : currentStep === questions.length - 1 ? "Complete" : "Next"}
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -483,10 +483,10 @@ export default function PersonalizePage() {
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
-            backgroundImage: "url('https://scuziassests.s3.us-east-1.amazonaws.com/WelcomeStep.webp')",
-          }}
-        />
+            backgroundImage: "url('https://scuziassests.s3.us-east-1.amazonaws.com/WelcomeStep.webp')"
+          }} />
+
       </div>
-    </div>
-  );
+    </div>);
+
 }
