@@ -15,17 +15,17 @@ export function HistoryDetailDialog({ item, open, onOpenChange }: HistoryDetailD
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto !w-0 !h-0">
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div className="flex-1 pr-8">
-              <DialogTitle 
+              <DialogTitle
                 className="text-2xl mb-2"
                 style={{
                   fontFamily: '"Right Grotesk Wide", sans-serif',
-                  fontWeight: 600,
-                }}
-              >
+                  fontWeight: 600
+                }}>
+
                 {item.title}
               </DialogTitle>
               <span
@@ -34,15 +34,15 @@ export function HistoryDetailDialog({ item, open, onOpenChange }: HistoryDetailD
                   fontFamily: '"General Sans", sans-serif',
                   backgroundColor: 'rgb(254, 243, 199)',
                   color: 'rgb(146, 64, 14)'
-                }}
-              >
+                }}>
+
                 {item.type.replace('_', ' ')}
               </span>
             </div>
             <button
               onClick={() => onOpenChange(false)}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
+              className="text-gray-400 hover:text-gray-600 transition-colors">
+
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -50,38 +50,38 @@ export function HistoryDetailDialog({ item, open, onOpenChange }: HistoryDetailD
 
         <div className="mt-6 space-y-6">
           {/* Image Section */}
-          {item.image_url ? (
-            <div className="w-full rounded-[20px] overflow-hidden">
+          {item.image_url ?
+          <div className="w-full rounded-[20px] overflow-hidden">
               <img
-                src={item.image_url}
-                alt={item.title}
-                className="w-full h-auto object-cover"
-              />
-            </div>
-          ) : (
-            <div className="w-full h-[300px] bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-[20px] flex flex-col items-center justify-center gap-3">
+              src={item.image_url}
+              alt={item.title}
+              className="w-full h-auto object-cover" />
+
+            </div> :
+
+          <div className="w-full h-[300px] bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-[20px] flex flex-col items-center justify-center gap-3">
               <span
-                style={{
-                  fontFamily: '"Right Grotesk Wide", sans-serif',
-                  fontSize: '48px',
-                  color: 'white',
-                  opacity: 0.8
-                }}
-              >
+              style={{
+                fontFamily: '"Right Grotesk Wide", sans-serif',
+                fontSize: '48px',
+                color: 'white',
+                opacity: 0.8
+              }}>
+
                 AI
               </span>
               <p
-                style={{
-                  fontFamily: '"General Sans", sans-serif',
-                  fontSize: '14px',
-                  color: 'white',
-                  opacity: 0.9
-                }}
-              >
+              style={{
+                fontFamily: '"General Sans", sans-serif',
+                fontSize: '14px',
+                color: 'white',
+                opacity: 0.9
+              }}>
+
                 Image is not available
               </p>
             </div>
-          )}
+          }
 
           {/* AI Response Section */}
           <div className="space-y-4">
@@ -91,8 +91,8 @@ export function HistoryDetailDialog({ item, open, onOpenChange }: HistoryDetailD
                 fontWeight: 600,
                 fontSize: '18px',
                 color: 'rgb(39, 39, 42)'
-              }}
-            >
+              }}>
+
               Full Details
             </h3>
             <div
@@ -102,8 +102,8 @@ export function HistoryDetailDialog({ item, open, onOpenChange }: HistoryDetailD
                 fontSize: '15px',
                 lineHeight: '21px',
                 color: 'rgb(39, 39, 42)'
-              }}
-            >
+              }}>
+
               {item.ai_response || item.description}
             </div>
           </div>
@@ -115,8 +115,8 @@ export function HistoryDetailDialog({ item, open, onOpenChange }: HistoryDetailD
                 fontFamily: '"General Sans", sans-serif',
                 fontSize: '13px',
                 color: 'rgb(163, 163, 163)'
-              }}
-            >
+              }}>
+
               Created: {new Date(item.timestamp).toLocaleString("en-GB", {
                 day: '2-digit',
                 month: 'short',
@@ -129,6 +129,6 @@ export function HistoryDetailDialog({ item, open, onOpenChange }: HistoryDetailD
           </div>
         </div>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>);
+
 }
