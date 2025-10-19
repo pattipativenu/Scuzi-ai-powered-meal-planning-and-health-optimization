@@ -1,62 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  BedrockRuntimeClient,
   InvokeModelCommand,
 } from "@aws-sdk/client-bedrock-runtime";
 import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { dynamoDb, HISTORY_TABLE_NAME } from "@/lib/dynamodb-config";
+import { bedrockClient } from "@/lib/aws-config";
 
 // ============================================
-// AWS BEDROCK CLIENT WITH STANDARD CREDENTIALS
+// INCREASE API ROUTE TIMEOUT
 // ============================================
-
-const client = new BedrockRuntimeClient({
-  region: process.env.AWS_REGION || "us-east-1",
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
-
-// ============================================
-// ENHANCED RETRY LOGIC WITH EXPONENTIAL BACKOFF
-// ============================================
-
-async function retryOperation<T>(
-  operation: () => Promise<T>,
-  maxRetries: number = 5,
-  baseDelay: number = 1000
-): Promise<T> {
-  let lastError: Error | undefined;
-  
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      console.log(`[IMAGE RETRY] Attempt ${attempt}/${maxRetries}`);
-      return await operation();
-    } catch (error) {
-      lastError = error as Error;
-      console.error(`[IMAGE RETRY] Attempt ${attempt} failed:`, error);
-      
-      if (attempt < maxRetries) {
-        const delay = baseDelay * Math.pow(2, attempt - 1);
-        console.log(`[IMAGE RETRY] Waiting ${delay}ms before retry...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-    }
-  }
-  
-  throw lastError || new Error("Image generation failed after all retries");
-}
+export const maxDuration = 60; // 60 seconds max execution time
 
 // ============================================
 // MAIN IMAGE GENERATION API
 // ============================================
 
 export async function POST(request: NextRequest) {
-  console.log("[IMAGE API] Request received");
+  console.log("=".repeat(80));
+  console.log("[IMAGE API] NEW REQUEST at:", new Date().toISOString());
+  console.log("=".repeat(80));
   
   try {
     const { mealDescription, imageMetadata, historyItemId } = await request.json();
+
+    console.log("[IMAGE API] Request body:", JSON.stringify({ 
+      mealDescription, 
+      imageMetadata, 
+      historyItemId 
+    }, null, 2));
 
     if (!mealDescription && !imageMetadata) {
       console.error("[IMAGE API] Missing required parameters");
@@ -67,82 +38,90 @@ export async function POST(request: NextRequest) {
     }
 
     // ============================================
-    // BUILD ENHANCED PROMPT FROM METADATA
+    // BUILD OPTIMIZED PROMPT
     // ============================================
     
-    let enhancedPrompt: string;
+    const dishName = imageMetadata?.dishName || mealDescription || "delicious meal";
+    const enhancedPrompt = `A professional, high-quality food photography shot of ${dishName}. Natural daylight, cinematic composition, appetizing presentation on a clean white plate, shallow depth of field, restaurant quality, sharp focus on the food.`;
+
+    console.log("[IMAGE API] Final prompt:", enhancedPrompt);
+    console.log("[IMAGE API] Prompt length:", enhancedPrompt.length);
+
+    // ============================================
+    // CALL AWS TITAN - USING SAME CLIENT AS RECIPE API
+    // ============================================
+
+    console.log("[TITAN] Preparing request...");
+    const input = {
+      taskType: "TEXT_IMAGE",
+      textToImageParams: {
+        text: enhancedPrompt,
+      },
+      imageGenerationConfig: {
+        numberOfImages: 1,
+        quality: "premium",
+        height: 1024,
+        width: 1024,
+        cfgScale: 8.0,
+      },
+    };
+
+    console.log("[TITAN] Request payload:", JSON.stringify(input, null, 2));
+
+    const command = new InvokeModelCommand({
+      modelId: "amazon.titan-image-generator-v2:0",
+      body: JSON.stringify(input),
+      contentType: "application/json",
+      accept: "application/json",
+    });
+
+    console.log("[TITAN] Sending request at:", new Date().toISOString());
+    const startTime = Date.now();
     
-    if (imageMetadata) {
-      const {
-        dishName,
-        mainIngredients,
-        cuisineStyle,
-        cookingMethod,
-        presentationStyle
-      } = imageMetadata;
+    let imageResponse;
+    try {
+      imageResponse = await bedrockClient.send(command);
+      const elapsedTime = Date.now() - startTime;
+      console.log(`[TITAN] ✅ Response received in ${elapsedTime}ms`);
+      console.log("[TITAN] Response metadata:", JSON.stringify(imageResponse.$metadata, null, 2));
+    } catch (awsError: any) {
+      const elapsedTime = Date.now() - startTime;
+      console.error("=".repeat(80));
+      console.error(`[TITAN] ❌ AWS ERROR after ${elapsedTime}ms:`);
+      console.error("[TITAN] Error name:", awsError.name);
+      console.error("[TITAN] Error message:", awsError.message);
+      console.error("[TITAN] Error code:", awsError.code);
+      console.error("[TITAN] Error status code:", awsError.$metadata?.httpStatusCode);
+      console.error("[TITAN] Full error:", JSON.stringify(awsError, null, 2));
+      console.error("=".repeat(80));
       
-      console.log("[IMAGE API] Using structured metadata:", imageMetadata);
-      
-      // CRITICAL: Keep prompt under 512 characters for AWS Titan
-      enhancedPrompt = `${dishName}, ${cuisineStyle} cuisine, ${mainIngredients}, ${cookingMethod}, ${presentationStyle} plating, white plate, 45-degree angle, natural daylight, shallow depth of field, sharp focus, restaurant quality, appetizing, high resolution`;
-    } else {
-      console.log("[IMAGE API] Using fallback description:", mealDescription);
-      
-      enhancedPrompt = `${mealDescription}, beautiful plating, white plate, natural daylight, 45-degree angle, shallow depth of field, sharp focus, restaurant quality, appetizing, high resolution`;
+      throw new Error(`AWS Bedrock Error: ${awsError.message} (Code: ${awsError.code || 'Unknown'})`);
     }
 
-    console.log("[IMAGE API] Generated prompt:", enhancedPrompt);
-    console.log("[IMAGE API] Prompt length:", enhancedPrompt.length, "characters");
-
     // ============================================
-    // CALL AWS TITAN G1 V2 WITH RETRY LOGIC
+    // PROCESS RESPONSE
     // ============================================
 
-    const imageResponse = await retryOperation(async () => {
-      const input = {
-        taskType: "TEXT_IMAGE",
-        textToImageParams: {
-          text: enhancedPrompt,
-          negativeText: "blurry, low quality, dark, unappetizing, messy, dirty, amateur, cartoon, illustration, text, watermark, logo, people, hands, fingers, utensils being held, poor lighting, oversaturated, artificial, plastic, fake",
-        },
-        imageGenerationConfig: {
-          numberOfImages: 1,
-          quality: "premium",
-          height: 1024,
-          width: 1024,
-          cfgScale: 8.0,
-          seed: Math.floor(Math.random() * 2147483647),
-        },
-      };
-
-      const command = new InvokeModelCommand({
-        modelId: "amazon.titan-image-generator-v2:0",
-        body: JSON.stringify(input),
-        contentType: "application/json",
-        accept: "application/json",
-      });
-
-      console.log("[TITAN] Sending image generation request...");
-      return await client.send(command);
-    }, 5, 1000);
-
-    console.log("[TITAN] Image generated successfully");
-
-    // ============================================
-    // PROCESS AND RETURN IMAGE
-    // ============================================
-
+    console.log("[TITAN] Decoding response body...");
     const responseBody = JSON.parse(new TextDecoder().decode(imageResponse.body));
+    console.log("[TITAN] Response keys:", Object.keys(responseBody));
+    
+    if (!responseBody.images || !responseBody.images[0]) {
+      console.error("[TITAN] ❌ No image data in response:", responseBody);
+      throw new Error("No image data in response");
+    }
+    
     const base64Image = responseBody.images[0];
+    console.log("[TITAN] ✅ Base64 image length:", base64Image.length);
+    
     const imageUrl = `data:image/png;base64,${base64Image}`;
 
-    console.log(`[IMAGE API] Returning image (${base64Image.length} chars)`);
-
     // ============================================
-    // UPDATE DYNAMODB WITH GENERATED IMAGE
+    // UPDATE DYNAMODB
     // ============================================
 
     if (historyItemId) {
+      console.log("[DYNAMODB] Updating history item:", historyItemId);
       try {
         const updateCommand = new UpdateCommand({
           TableName: HISTORY_TABLE_NAME,
@@ -154,25 +133,35 @@ export async function POST(request: NextRequest) {
         });
 
         await dynamoDb.send(updateCommand);
-        console.log("[DYNAMODB] Updated history item with generated image:", historyItemId);
+        console.log("[DYNAMODB] ✅ Successfully updated");
       } catch (dbError) {
-        console.error("[DYNAMODB] Failed to update history item:", dbError);
-        // Don't fail the request if DynamoDB update fails
+        console.error("[DYNAMODB] ❌ Update failed:", dbError);
       }
     }
 
+    console.log("=".repeat(80));
+    console.log("[IMAGE API] ✅ REQUEST COMPLETED SUCCESSFULLY");
+    console.log("=".repeat(80));
+    
     return NextResponse.json({
       imageUrl,
-      mealDescription: imageMetadata?.dishName || mealDescription,
+      mealDescription: dishName,
     });
 
   } catch (error) {
-    console.error("[IMAGE API] Fatal error:", error);
+    console.error("=".repeat(80));
+    console.error("[IMAGE API] ❌ FATAL ERROR:");
+    console.error("[IMAGE API] Error type:", error instanceof Error ? error.constructor.name : typeof error);
+    console.error("[IMAGE API] Error message:", error instanceof Error ? error.message : String(error));
+    console.error("[IMAGE API] Error stack:", error instanceof Error ? error.stack : "N/A");
+    console.error("=".repeat(80));
+    
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     
     return NextResponse.json(
       {
         error: "Failed to generate image",
-        details: error instanceof Error ? error.message : "Unknown error",
+        details: errorMessage,
       },
       { status: 500 }
     );

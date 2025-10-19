@@ -233,7 +233,7 @@ export default function Home() {
       {/* History Section - Real AI-Generated Content */}
       <section className="py-16" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
         <div className="max-w-[1400px] mx-auto px-6">
-          <h2 className="!font-bold">
+          <h2 className="!font-bold mb-8">
             Recent AI History
           </h2>
           
@@ -258,18 +258,18 @@ export default function Home() {
               fontSize: '15px',
               color: 'rgb(163, 163, 163)'
             }}>
-                No AI-generated content yet. Start a conversation in the chat to see your history here!
+                No history yet. Start a conversation in the chat to see your AI-generated content here!
               </p>
             </div>
           }
           
           {!isLoading && !error && history.length > 0 &&
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
               {history.map((item) =>
             <div
               key={item.id}
               onClick={() => handleHistoryCardClick(item)}
-              className="bg-white rounded-[20px] shadow-md overflow-hidden hover:scale-[1.02] transition-transform cursor-pointer">
+              className="snap-start flex-shrink-0 w-[280px] bg-white rounded-[20px] shadow-md overflow-hidden hover:scale-[1.02] transition-transform cursor-pointer">
 
                   {item.image_url ? (
               <img
