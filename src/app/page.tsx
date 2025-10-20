@@ -116,28 +116,24 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen md:pt-0 pt-40 md:pb-0 pb-20" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
+    <div className="min-h-screen pb-20 md:pb-0" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
       {/* Hero Section */}
-      <AnimatedHeroSection />
+      <div className="hero-container">
+        <AnimatedHeroSection />
+      </div>
 
       {/* Current Week's Meals */}
       <section className="py-8 md:py-16" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
         <div className="max-w-[1400px] mx-auto px-4 md:px-6">
           <div className="flex items-baseline justify-between mb-6 md:mb-12">
-            <h2 className="!font-semibold !text-2xl md:!text-3xl">
-              Current Week's Meals
+            <h2>
+              Current Week Meals
             </h2>
             <Link
               href="/plan-ahead"
-              style={{
-                fontFamily: '"Right Grotesk Wide", sans-serif',
-                fontWeight: 500,
-                fontSize: '14px',
-                lineHeight: '20px',
-                color: 'rgb(39, 39, 42)'
-              }}
-              className="hover:underline flex items-center gap-1 !font-semibold md:text-base">
-
+              className="hidden md:flex hover:underline items-center gap-1 nav-link"
+              style={{ color: 'rgb(39, 39, 42)' }}
+            >
               View Next Week Meals
               <ChevronRight className="w-4 h-4" />
             </Link>
@@ -171,23 +167,12 @@ export default function Home() {
               {daysOfWeek.map(({ day, date }) =>
             <div key={day}>
                   <div className="flex items-center justify-between mb-6">
-                    <h3
-                      style={{
-                        fontFamily: '"Right Grotesk Wide", sans-serif',
-                        fontWeight: 500,
-                        fontSize: '16px',
-                        color: 'rgb(39, 39, 42)'
-                      }}
-                    >
+                    <h4>
                       {day}, {date}
-                    </h3>
+                    </h4>
                     <Link
                       href="/plan-ahead"
-                      className="flex items-center gap-1 text-sm hover:underline"
-                      style={{
-                        fontFamily: '"General Sans", sans-serif',
-                        color: 'rgb(107, 114, 128)'
-                      }}
+                      className="flex items-center gap-1 text-sm hover:underline text-secondary"
                     >
                       Next Week
                       <ChevronRight className="w-4 h-4" />
@@ -201,13 +186,7 @@ export default function Home() {
 
                   <div
                     key={`${day}-${mealType}`}
-                    className="h-full min-h-[320px] bg-gray-100 rounded-[20px] flex items-center justify-center"
-                    style={{
-                      fontFamily: '"General Sans", sans-serif',
-                      fontSize: '15px',
-                      lineHeight: '21px',
-                      color: 'rgb(163, 163, 163)'
-                    }}>
+                    className="h-full min-h-[320px] bg-gray-100 rounded-[20px] flex items-center justify-center text-disabled">
 
                           No {mealType}
                         </div>;
@@ -229,24 +208,12 @@ export default function Home() {
             return (
               <div key={day}>
                   <div className="flex items-center justify-between mb-3 px-2">
-                    <h3 
-                      style={{
-                        fontFamily: '"Right Grotesk Wide", sans-serif',
-                        fontSize: '16px',
-                        fontWeight: 500,
-                        color: 'rgb(39, 39, 42)'
-                      }}
-                    >
+                    <h4>
                       {day}, {date}
-                    </h3>
+                    </h4>
                     <Link
                       href="/plan-ahead"
-                      className="flex items-center gap-1"
-                      style={{
-                        fontFamily: '"General Sans", sans-serif',
-                        fontSize: '12px',
-                        color: 'rgb(107, 114, 128)'
-                      }}
+                      className="flex items-center gap-1 text-xs text-secondary"
                     >
                       <ChevronRight className="w-3 h-3" />
                     </Link>
@@ -267,11 +234,9 @@ export default function Home() {
       </section>
 
       {/* History Section - Real AI-Generated Content */}
-      <section className="py-8 md:py-16" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
-        <div className="max-w-[1400px] mx-auto px-6">
-          <h2 className="!font-bold mb-8 !whitespace-pre-line !text-[29px]">Recent Chat History
-
-          </h2>
+      <section className="py-6 md:py-16" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
+        <div className="max-w-[1400px] mx-auto px-4 md:px-6">
+          <h2>Recent Chat History</h2>
           
           {isLoading &&
           <div className="flex justify-center items-center py-20">
@@ -317,14 +282,13 @@ export default function Home() {
                       <span style={{
                   fontFamily: '"Right Grotesk Wide", sans-serif',
                   fontSize: '48px',
+                  fontWeight: 700,
                   color: 'white',
                   opacity: 0.8
                 }}>
                         AI
                       </span>
-                      <p style={{
-                  fontFamily: '"General Sans", sans-serif',
-                  fontSize: '13px',
+                      <p className="text-sm" style={{
                   color: 'white',
                   opacity: 0.9
                 }}>
@@ -337,37 +301,19 @@ export default function Home() {
                       <span
                     className="px-2 py-1 rounded text-xs"
                     style={{
-                      fontFamily: '"General Sans", sans-serif',
                       backgroundColor: 'rgb(254, 243, 199)',
                       color: 'rgb(146, 64, 14)'
                     }}>
                         {item.type.replace('_', ' ')}
                       </span>
                     </div>
-                    <h3 style={{
-                  fontFamily: '"Right Grotesk Wide", sans-serif',
-                  fontWeight: 600,
-                  fontSize: '18px',
-                  lineHeight: '24px',
-                  color: 'rgb(39, 39, 42)'
-                }}>
+                    <h4>
                       {item.title}
-                    </h3>
-                    <p
-                  className="line-clamp-2"
-                  style={{
-                    fontFamily: '"General Sans", sans-serif',
-                    fontSize: '15px',
-                    lineHeight: '21px',
-                    color: 'rgb(107, 114, 128)'
-                  }}>
+                    </h4>
+                    <p className="line-clamp-2 text-secondary">
                       {item.description}
                     </p>
-                    <p style={{
-                  fontFamily: '"General Sans", sans-serif',
-                  fontSize: '12px',
-                  color: 'rgb(163, 163, 163)'
-                }}>
+                    <p className="text-xs text-disabled">
                       {new Date(item.timestamp).toLocaleString("en-GB", {
                     day: '2-digit',
                     month: 'short',
@@ -386,12 +332,12 @@ export default function Home() {
       </section>
 
       {/* Customer Reviews Carousel */}
-      <section className="py-8 md:py-16" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
-        <div className="max-w-4xl mx-auto px-20">
-          <div className="relative rounded-2xl shadow-lg p-12 text-center min-h-[280px] flex flex-col justify-center" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
-            <div className="flex justify-center gap-1 mb-6">
+      <section className="py-6 md:py-16" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
+        <div className="max-w-4xl mx-auto px-4 md:px-20">
+          <div className="relative rounded-2xl shadow-lg p-6 md:p-12 text-center min-h-[200px] md:min-h-[280px] flex flex-col justify-center" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
+            <div className="flex justify-center gap-1 mb-4 md:mb-6">
               {[...Array(5)].map((_, i) =>
-              <Star key={i} className="w-6 h-6 fill-yellow-400 text-yellow-400" />
+              <Star key={i} className="w-5 h-5 md:w-6 md:h-6 fill-yellow-400 text-yellow-400" />
               )}
             </div>
             
@@ -404,15 +350,13 @@ export default function Home() {
                 }>
 
                   <p style={{
-                  fontFamily: '"General Sans", sans-serif',
-                  fontWeight: 400,
-                  fontSize: '15px',
-                  lineHeight: '21px',
-                  color: 'rgb(17, 24, 39)',
-                  marginBottom: '24px',
-                  maxWidth: '600px',
-                  margin: '0 auto 24px'
-                }}>
+                  color: 'rgb(0, 0, 0)',
+                  marginBottom: '16px',
+                  maxWidth: '500px',
+                  margin: '0 auto 16px',
+                  fontSize: '14px',
+                  lineHeight: '20px'
+                }} className="md:text-base md:leading-6">
                     "{review.review}"
                   </p>
                   <div className="flex items-center justify-center gap-4">
@@ -424,22 +368,16 @@ export default function Home() {
                   }}>
                       {review.avatar}
                     </div>
-                    <p style={{
-                    fontFamily: '"Right Grotesk Wide", sans-serif',
-                    fontWeight: 500,
-                    fontSize: '16px',
-                    lineHeight: '24px',
-                    color: 'rgb(39, 39, 42)'
-                  }}>
+                    <h4>
                       {review.name}
-                    </p>
+                    </h4>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Carousel Indicators */}
-            <div className="flex justify-center gap-2 mt-8">
+            <div className="flex justify-center gap-2 mt-4 md:mt-8">
               {reviews.map((_, index) =>
               <button
                 key={index}
@@ -465,21 +403,11 @@ export default function Home() {
             <div>
               <h3 style={{
                 fontFamily: '"Right Grotesk Spatial", sans-serif',
-                fontWeight: 500,
-                fontSize: '30px',
-                lineHeight: '36px',
-                color: 'rgb(255, 255, 255)',
-                marginBottom: '16px'
+                color: 'rgb(255, 255, 255)'
               }}>
                 SCUZI
               </h3>
-              <p style={{
-                fontFamily: '"General Sans", sans-serif',
-                fontWeight: 400,
-                fontSize: '15px',
-                lineHeight: '21px',
-                color: 'rgb(209, 213, 219)'
-              }}>
+              <p style={{ color: 'rgb(209, 213, 219)' }}>
                 Your home for easy, delicious meal prep recipes powered by AI.
               </p>
             </div>
@@ -488,21 +416,13 @@ export default function Home() {
             <div>
               <h3 style={{
                 fontFamily: '"Right Grotesk Spatial", sans-serif',
-                fontWeight: 500,
-                fontSize: '30px',
-                lineHeight: '36px',
-                color: 'rgb(255, 255, 255)',
-                marginBottom: '16px'
+                color: 'rgb(255, 255, 255)'
               }}>
                 Quick Links
               </h3>
               <ul className="space-y-3">
                 <li>
                   <Link href="/" className="hover:text-white transition-colors" style={{
-                    fontFamily: '"General Sans", sans-serif',
-                    fontWeight: 400,
-                    fontSize: '15px',
-                    lineHeight: '21px',
                     color: 'rgb(209, 213, 219)'
                   }}>
                     Home
@@ -510,10 +430,6 @@ export default function Home() {
                 </li>
                 <li>
                   <Link href="/plan-ahead" className="hover:text-white transition-colors" style={{
-                    fontFamily: '"General Sans", sans-serif',
-                    fontWeight: 400,
-                    fontSize: '15px',
-                    lineHeight: '21px',
                     color: 'rgb(209, 213, 219)'
                   }}>
                     Plan Ahead
@@ -521,10 +437,6 @@ export default function Home() {
                 </li>
                 <li>
                   <Link href="/pantry" className="hover:text-white transition-colors" style={{
-                    fontFamily: '"General Sans", sans-serif',
-                    fontWeight: 400,
-                    fontSize: '15px',
-                    lineHeight: '21px',
                     color: 'rgb(209, 213, 219)'
                   }}>
                     Pantry
@@ -532,10 +444,6 @@ export default function Home() {
                 </li>
                 <li>
                   <Link href="/account" className="hover:text-white transition-colors" style={{
-                    fontFamily: '"General Sans", sans-serif',
-                    fontWeight: 400,
-                    fontSize: '15px',
-                    lineHeight: '21px',
                     color: 'rgb(209, 213, 219)'
                   }}>
                     Account
@@ -548,21 +456,13 @@ export default function Home() {
             <div>
               <h3 style={{
                 fontFamily: '"Right Grotesk Spatial", sans-serif',
-                fontWeight: 500,
-                fontSize: '30px',
-                lineHeight: '36px',
-                color: 'rgb(255, 255, 255)',
-                marginBottom: '16px'
+                color: 'rgb(255, 255, 255)'
               }}>
                 Legal
               </h3>
               <ul className="space-y-3">
                 <li>
                   <Link href="#" className="hover:text-white transition-colors" style={{
-                    fontFamily: '"General Sans", sans-serif',
-                    fontWeight: 400,
-                    fontSize: '15px',
-                    lineHeight: '21px',
                     color: 'rgb(209, 213, 219)'
                   }}>
                     Privacy Policy
@@ -570,10 +470,6 @@ export default function Home() {
                 </li>
                 <li>
                   <Link href="#" className="hover:text-white transition-colors" style={{
-                    fontFamily: '"General Sans", sans-serif',
-                    fontWeight: 400,
-                    fontSize: '15px',
-                    lineHeight: '21px',
                     color: 'rgb(209, 213, 219)'
                   }}>
                     Terms of Service
@@ -581,10 +477,6 @@ export default function Home() {
                 </li>
                 <li>
                   <Link href="#" className="hover:text-white transition-colors" style={{
-                    fontFamily: '"General Sans", sans-serif',
-                    fontWeight: 400,
-                    fontSize: '15px',
-                    lineHeight: '21px',
                     color: 'rgb(209, 213, 219)'
                   }}>
                     Contact
@@ -596,12 +488,7 @@ export default function Home() {
 
           {/* Copyright Section with Divider */}
           <div className="pt-8" style={{ borderTop: '1px solid #1f1f1f' }}>
-            <p className="text-center" style={{
-              fontFamily: '"General Sans", sans-serif',
-              fontWeight: 400,
-              fontSize: '13px',
-              color: 'rgb(163, 163, 163)'
-            }}>
+            <p className="text-center text-xs text-disabled">
               © 2025 Scuzi Health AI. All rights reserved.
             </p>
           </div>

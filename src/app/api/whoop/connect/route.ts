@@ -1,63 +1,52 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SignJWT } from "jose";
 import { randomBytes } from "crypto";
+import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-secrets-manager";
 
 export async function GET(request: NextRequest) {
   try {
-    // Use environment variables instead of AWS Secrets Manager
+    console.log("🚀 WHOOP Connect API called");
+
+    // Use environment variables for simplicity and reliability
     const clientId = process.env.WHOOP_CLIENT_ID;
     const stateSecret = process.env.OAUTH_STATE_SECRET;
-
+    
     if (!clientId || !stateSecret) {
-      console.error("Missing WHOOP credentials in environment variables");
+      console.error("❌ Missing WHOOP credentials");
       return NextResponse.json(
         { error: "WHOOP credentials not configured" },
         { status: 500 }
       );
     }
 
-    // Generate cryptographically secure nonce (16 bytes = 32 hex chars)
-    const nonce = randomBytes(16).toString("hex");
-    const timestamp = Date.now();
-
-    // Create self-contained JWT state token
-    const secret = new TextEncoder().encode(stateSecret);
-    const stateToken = await new SignJWT({ 
-      nonce, 
-      timestamp,
-      iss: "scuzi-whoop-oauth"
-    })
-      .setProtectedHeader({ alg: "HS256" })
-      .setIssuedAt()
-      .setExpirationTime("10m") // State expires in 10 minutes
-      .sign(secret);
-
-    // Use local callback URL instead of AWS Lambda
+    // Generate simple state token
+    const state = randomBytes(32).toString('hex');
     const redirectUri = `${request.nextUrl.origin}/api/whoop/callback`;
 
-    console.log("🔍 WHOOP OAuth Flow Initiated:");
-    console.log("Client ID:", clientId);
-    console.log("Redirect URI:", redirectUri);
-    console.log("⚠️  IMPORTANT: Register this EXACT URL in WHOOP Developer Portal:");
-    console.log("   ", redirectUri);
-    console.log("State JWT generated (length):", stateToken.length);
+    console.log("🔍 WHOOP OAuth Configuration:");
+    console.log("  Client ID:", clientId);
+    console.log("  Redirect URI:", redirectUri);
+    console.log("  State:", state);
 
+    // Build OAuth URL
     const authUrl = new URL("https://api.prod.whoop.com/oauth/oauth2/auth");
-    authUrl.searchParams.append("client_id", clientId);
-    authUrl.searchParams.append("redirect_uri", redirectUri);
-    authUrl.searchParams.append("response_type", "code");
-    authUrl.searchParams.append("scope", "read:profile read:recovery read:cycles read:sleep read:workout");
-    authUrl.searchParams.append("state", stateToken); // Use JWT as state
+    authUrl.searchParams.set("client_id", clientId);
+    authUrl.searchParams.set("redirect_uri", redirectUri);
+    authUrl.searchParams.set("response_type", "code");
+    authUrl.searchParams.set("scope", "offline read:profile read:recovery read:cycles read:sleep read:workout");
+    authUrl.searchParams.set("state", state);
 
-    // Create response with auth URL AND redirect URI for debugging
+    console.log("🔗 OAuth URL:", authUrl.toString());
+
+    // Create response
     const response = NextResponse.json({ 
       authUrl: authUrl.toString(),
-      redirectUri: redirectUri, // Include for client-side verification
-      message: `Make sure this redirect URI is registered in WHOOP Developer Portal: ${redirectUri}`
+      redirectUri: redirectUri,
+      state: state
     });
     
-    // Store state token in httpOnly cookie for CSRF protection
-    response.cookies.set("whoop_oauth_state", stateToken, {
+    // Store state in cookie for validation
+    response.cookies.set("whoop_oauth_state", state, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -65,12 +54,11 @@ export async function GET(request: NextRequest) {
       path: "/",
     });
 
-    console.log("📤 OAuth URL generated successfully");
-    console.log("🔒 State token stored in cookie for validation");
-
+    console.log("✅ OAuth URL generated and state stored");
     return response;
+
   } catch (error) {
-    console.error("Error generating WHOOP auth URL:", error);
+    console.error("❌ Error in WHOOP connect:", error);
     return NextResponse.json(
       { error: "Failed to generate authorization URL" },
       { status: 500 }

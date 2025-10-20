@@ -39,37 +39,19 @@ export const MealCard = ({ meal, size = "medium" }: MealCardProps) => {
           />
         </div>
         <div className={`${padding} flex-1 flex flex-col gap-2`}>
-          <h3 
-            className={`font-semibold ${titleSize} line-clamp-2`}
-            style={{
-              fontFamily: '"Right Grotesk Wide", sans-serif',
-              color: 'rgb(39, 39, 42)'
-            }}
-          >
+          <h4 className={`${titleSize} line-clamp-2`}>
             {meal.name}
-          </h3>
-          <p 
-            className={`${descSize} text-muted-foreground line-clamp-2 flex-1`}
-            style={{
-              fontFamily: '"General Sans", sans-serif',
-              color: 'rgb(107, 114, 128)'
-            }}
-          >
+          </h4>
+          <p className={`${descSize} text-secondary line-clamp-2 flex-1`}>
             {meal.description}
           </p>
           <div className={`flex items-center gap-2 ${metaSize} text-muted-foreground`}>
             <Clock className={iconSize} />
-            <span style={{ fontFamily: '"General Sans", sans-serif' }}>
-              {meal.prepTime + meal.cookTime} min
+            <span>
+              {(meal.prepTime || 0) + (meal.cookTime || 0)} min
             </span>
-            <span 
-              className={`ml-auto ${metaSize} ${badgePadding} bg-secondary rounded-full font-medium`}
-              style={{
-                fontFamily: '"General Sans", sans-serif',
-                color: 'rgb(39, 39, 42)'
-              }}
-            >
-              {meal.nutrition.calories} cal
+            <span className={`ml-auto ${metaSize} ${badgePadding} bg-secondary rounded-full font-medium`}>
+              {meal.nutrition?.calories || 0} cal
             </span>
           </div>
         </div>

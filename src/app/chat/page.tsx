@@ -288,9 +288,9 @@ export default function ScuziChat() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white">
+    <div className="flex flex-col h-screen bg-gray-50">
       {/* Mobile: Content area with proper padding */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-hide md:pt-0 pt-32 md:pb-6 pb-32">
+      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-3 scrollbar-hide md:pt-4 pt-44 md:pb-6 pb-32">
         {messages.map((message) =>
         <motion.div
           key={message.id}
@@ -303,11 +303,11 @@ export default function ScuziChat() {
             damping: 20
           }}
           className={cn(
-            "flex gap-2 md:gap-3 max-w-[85%]",
-            message.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto"
+            "flex gap-2 max-w-[80%] md:max-w-[85%]",
+            message.role === "user" ? "ml-auto" : "mr-auto"
           )}>
             {message.role === "assistant" &&
-          <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
+          <Avatar className="h-7 w-7 md:h-8 md:w-8 flex-shrink-0 mt-1">
                 <AvatarFallback className="bg-[rgb(209,222,38)] text-[rgb(39,39,42)]">
                   <ChefHat className="h-3 w-3 md:h-4 md:w-4" />
                 </AvatarFallback>
@@ -315,10 +315,10 @@ export default function ScuziChat() {
           }
             <div
             className={cn(
-              "rounded-xl px-3 py-2 md:px-4 md:py-3 shadow-sm",
+              "rounded-2xl px-3 py-2 md:px-4 md:py-3 shadow-sm relative",
               message.role === "user" ?
-              "bg-gray-100 text-[rgb(39,39,42)]" :
-              "bg-[#fffbea] text-[rgb(17,24,39)]"
+              "bg-[rgb(209,222,38)] text-[rgb(39,39,42)] rounded-br-md" :
+              "bg-white text-[rgb(17,24,39)] rounded-bl-md border border-gray-100"
             )}>
               {message.image &&
             <img
@@ -336,14 +336,17 @@ export default function ScuziChat() {
               className="whitespace-pre-wrap break-words"
               style={{
                 fontFamily: '"General Sans", sans-serif',
-                fontSize: '14px',
-                lineHeight: '20px',
+                fontSize: '15px',
+                lineHeight: '21px',
                 fontWeight: 400
               }}>
                 {message.content}
               </p>
               <p
-              className="text-gray-400 mt-1 md:mt-2"
+              className={cn(
+                "mt-1 md:mt-2 text-right text-xs",
+                message.role === "user" ? "text-[rgb(39,39,42)]/70" : "text-gray-400"
+              )}
               style={{
                 fontFamily: '"General Sans", sans-serif',
                 fontSize: '11px',
@@ -361,20 +364,20 @@ export default function ScuziChat() {
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex gap-2 md:gap-3 max-w-[85%] mr-auto"
+          className="flex gap-2 max-w-[80%] md:max-w-[85%] mr-auto"
         >
-            <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
+            <Avatar className="h-7 w-7 md:h-8 md:w-8 flex-shrink-0 mt-1">
               <AvatarFallback className="bg-[rgb(209,222,38)] text-[rgb(39,39,42)]">
                 <ChefHat className="h-3 w-3 md:h-4 md:w-4" />
               </AvatarFallback>
             </Avatar>
-            <div className="bg-[#fffbea] rounded-xl px-3 py-2 md:px-4 md:py-3 shadow-sm">
+            <div className="bg-white rounded-2xl rounded-bl-md px-3 py-2 md:px-4 md:py-3 shadow-sm border border-gray-100">
               <div className="flex items-center gap-2">
                 <span 
                   className="text-gray-600"
                   style={{
                     fontFamily: '"General Sans", sans-serif',
-                    fontSize: '14px',
+                    fontSize: '15px',
                     fontWeight: 400
                   }}
                 >
@@ -443,23 +446,23 @@ export default function ScuziChat() {
       }
 
       {/* Fixed Input Area - Above bottom nav on mobile */}
-      <div className="fixed md:sticky bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 z-40 md:mb-0 mb-16">
+      <div className="fixed md:sticky bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-3 py-3 z-40 md:mb-0 mb-16">
         {selectedImage &&
         <div className="mb-3 relative inline-block">
             <img
             src={selectedImage}
             alt="Selected"
-            className="h-24 rounded-lg" />
+            className="h-20 rounded-lg" />
 
             <button
             onClick={() => setSelectedImage(null)}
-            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors">
+            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 transition-colors text-xs">
 
               ×
             </button>
           </div>
         }
-        <div className="flex items-end gap-2 md:gap-3">
+        <div className="flex items-center gap-2">
           <input
             type="file"
             ref={fileInputRef}
@@ -472,31 +475,37 @@ export default function ScuziChat() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Type a message or upload an image…"
+              placeholder="Type a message"
               disabled={isLoading}
-              className="w-full min-h-[44px] max-h-[120px] bg-neutral-100 border border-gray-200 text-[rgb(17,24,39)] placeholder:text-gray-400 resize-none rounded-2xl focus:border-[rgb(209,222,38)] focus:ring-1 focus:ring-[rgb(209,222,38)] pl-12 pr-4 shadow-sm"
+              className="w-full min-h-[48px] max-h-[48px] bg-gray-50 border border-gray-200 text-[rgb(17,24,39)] placeholder:text-gray-400 placeholder:text-center resize-none rounded-3xl focus:border-[rgb(209,222,38)] focus:ring-1 focus:ring-[rgb(209,222,38)] pl-16 pr-12 py-3 shadow-sm text-left"
               style={{
-                fontFamily: '"Right Grotesk Wide", sans-serif',
-                fontSize: '15px',
+                fontFamily: '"General Sans", sans-serif',
+                fontSize: '16px',
                 lineHeight: '22px',
                 fontWeight: 400
               }}
               rows={1} />
-            <Camera 
-              className="absolute left-3 top-2.5 h-5 w-5 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" 
-              onClick={startCamera}
-            />
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+              <Camera 
+                className="h-5 w-5 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" 
+                onClick={startCamera}
+              />
+              <ImageIcon 
+                className="h-5 w-5 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" 
+                onClick={() => fileInputRef.current?.click()}
+              />
+            </div>
+            <Button
+              onClick={handleSend}
+              disabled={isLoading || (!input.trim() && !selectedImage)}
+              size="icon"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-[rgb(209,222,38)] hover:bg-[rgb(209,222,38)]/90 text-[rgb(39,39,42)] h-8 w-8 rounded-full disabled:opacity-50 flex-shrink-0">
+              {isLoading ?
+              <Loader2 className="h-4 w-4 animate-spin" /> :
+              <Send className="h-4 w-4" />
+              }
+            </Button>
           </div>
-          <Button
-            onClick={handleSend}
-            disabled={isLoading || !input.trim() && !selectedImage}
-            size="icon"
-            className="bg-[rgb(209,222,38)] hover:bg-[rgb(209,222,38)]/90 text-[rgb(39,39,42)] h-11 w-11 rounded-lg disabled:opacity-50 flex-shrink-0">
-            {isLoading ?
-            <Loader2 className="h-5 w-5 animate-spin" /> :
-            <Send className="h-5 w-5" />
-            }
-          </Button>
         </div>
       </div>
     </div>

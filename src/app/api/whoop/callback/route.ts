@@ -2,6 +2,71 @@ import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { storeWhoopTokens } from "@/lib/secrets-manager";
 import { auth } from "@/lib/auth";
+import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-secrets-manager";
+
+// Helper function to generate error HTML response
+function createErrorResponse(error: string, description?: string) {
+  const errorHtml = `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <title>WHOOP Connection Failed</title>
+    <style>
+      body { font-family: system-ui; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: linear-gradient(135deg, #ef4444, #dc2626); }
+      .container { background: white; padding: 2rem; border-radius: 1rem; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 400px; }
+      .error { color: #dc2626; font-size: 3rem; margin-bottom: 1rem; }
+      h1 { color: #1f2937; margin-bottom: 1rem; }
+      p { color: #6b7280; margin-bottom: 1.5rem; }
+      .error-details { background: #f9fafb; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1.5rem; font-size: 0.75rem; color: #6b7280; }
+      button { background: #1f2937; color: white; border: none; padding: 0.5rem 1.5rem; border-radius: 0.5rem; cursor: pointer; }
+      button:hover { background: #374151; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="error">❌</div>
+      <h1>Connection Failed</h1>
+      <p>${getErrorMessage(error)}</p>
+      ${error ? `<div class="error-details">Error: ${error}${description ? ` - ${description}` : ''}</div>` : ''}
+      <button onclick="window.close()">Close Window</button>
+    </div>
+    <script>
+      if (window.opener) {
+        window.opener.postMessage({
+          type: 'WHOOP_AUTH_ERROR',
+          error: '${error}',
+          description: '${description || ''}',
+          timestamp: Date.now()
+        }, window.location.origin);
+      }
+    </script>
+  </body>
+  </html>`;
+  
+  return new NextResponse(errorHtml, {
+    headers: { 'Content-Type': 'text/html' }
+  });
+}
+
+function getErrorMessage(errorCode: string) {
+  switch (errorCode) {
+    case 'access_denied':
+      return 'You denied access to your WHOOP account. Please try again if you want to connect.';
+    case 'invalid_state':
+    case 'state_mismatch':
+      return 'Security validation failed. Please try connecting again.';
+    case 'token_exchange_failed':
+      return 'Failed to complete the connection. Please try again.';
+    case 'configuration_error':
+      return 'WHOOP integration is not properly configured. Please contact support.';
+    case 'authentication_required':
+      return 'Please sign in to your account first, then try connecting WHOOP.';
+    case 'missing_parameters':
+      return 'Missing required parameters. Please try connecting again.';
+    default:
+      return 'Something went wrong while connecting to WHOOP. Please try again.';
+  }
+}
 
 // Add helper function to trigger backfill
 async function triggerBackfill(userId: string) {
@@ -28,97 +93,51 @@ async function triggerBackfill(userId: string) {
 }
 
 export async function GET(request: NextRequest) {
+  console.log("🔄 WHOOP Callback started");
+  
   try {
     const searchParams = request.nextUrl.searchParams;
     const code = searchParams.get("code");
     const state = searchParams.get("state");
     const error = searchParams.get("error");
 
+    console.log("📥 Callback parameters:", { code: code?.substring(0, 20) + "...", state: state?.substring(0, 20) + "...", error });
+
     // Handle OAuth errors
     if (error) {
       const errorDescription = searchParams.get("error_description");
       console.error("❌ WHOOP OAuth Error:", error, errorDescription);
-      return NextResponse.redirect(
-        new URL(`/connect/error?error=${encodeURIComponent(error)}&description=${encodeURIComponent(errorDescription || "")}`, request.url)
-      );
+      return createErrorResponse(error, errorDescription);
     }
 
     // Validate required parameters
     if (!code || !state) {
       console.error("❌ Missing code or state parameter");
-      return NextResponse.redirect(
-        new URL("/connect/error?error=missing_parameters", request.url)
-      );
+      return createErrorResponse('missing_parameters');
     }
 
-    // Retrieve and validate state from cookie
+    // Validate state
     const stateCookie = request.cookies.get("whoop_oauth_state");
-    if (!stateCookie) {
-      console.error("❌ State cookie not found - potential CSRF attack");
-      return NextResponse.redirect(
-        new URL("/connect/error?error=invalid_state", request.url)
-      );
+    if (!stateCookie || stateCookie.value !== state) {
+      console.error("❌ State validation failed");
+      return createErrorResponse('state_mismatch');
     }
 
-    // Verify state JWT token
-    const stateSecret = process.env.OAUTH_STATE_SECRET;
-    if (!stateSecret) {
-      console.error("❌ OAuth state secret not configured");
-      return NextResponse.redirect(
-        new URL("/connect/error?error=configuration_error", request.url)
-      );
-    }
+    console.log("✅ State validation passed");
 
-    // Validate state matches the cookie
-    if (stateCookie.value !== state) {
-      console.error("❌ State mismatch - potential CSRF attack");
-      return NextResponse.redirect(
-        new URL("/connect/error?error=state_mismatch", request.url)
-      );
-    }
-
-    // Verify JWT signature and expiration
-    try {
-      const secret = new TextEncoder().encode(stateSecret);
-      await jwtVerify(state, secret);
-      console.log("✅ State JWT validation successful");
-    } catch (jwtError) {
-      console.error("❌ State JWT verification failed:", jwtError);
-      return NextResponse.redirect(
-        new URL("/connect/error?error=invalid_state_token", request.url)
-      );
-    }
-
-    // Get authenticated user from session
-    const session = await auth.api.getSession({ headers: request.headers });
-    if (!session?.user?.id) {
-      console.error("❌ User not authenticated");
-      return NextResponse.redirect(
-        new URL("/connect/error?error=authentication_required", request.url)
-      );
-    }
-
-    const userId = session.user.id;
-    console.log("✅ Authenticated user ID:", userId);
-
-    // Use environment variables for credentials
+    // Get credentials
     const clientId = process.env.WHOOP_CLIENT_ID;
     const clientSecret = process.env.WHOOP_CLIENT_SECRET;
     const redirectUri = `${request.nextUrl.origin}/api/whoop/callback`;
 
     if (!clientId || !clientSecret) {
-      console.error("❌ Missing WHOOP credentials in environment variables");
-      return NextResponse.redirect(
-        new URL("/connect/error?error=configuration_error", request.url)
-      );
+      console.error("❌ Missing WHOOP credentials");
+      return createErrorResponse('configuration_error');
     }
 
-    console.log("🔍 WHOOP Token Exchange:");
-    console.log("Client ID:", clientId);
-    console.log("Redirect URI:", redirectUri);
-    console.log("Authorization Code:", code);
+    console.log("🔄 Exchanging code for tokens...");
 
-    // Exchange authorization code for access token
+    // Exchange code for tokens
     const tokenResponse = await fetch("https://api.prod.whoop.com/oauth/oauth2/token", {
       method: "POST",
       headers: {
@@ -135,49 +154,91 @@ export async function GET(request: NextRequest) {
 
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.text();
-      console.error("❌ WHOOP token exchange failed:", errorData);
-      return NextResponse.redirect(
-        new URL("/connect/error?error=token_exchange_failed", request.url)
-      );
+      console.error("❌ Token exchange failed:", errorData);
+      return createErrorResponse('token_exchange_failed', errorData);
     }
 
     const tokenData = await tokenResponse.json();
     const { access_token, refresh_token, expires_in } = tokenData;
 
-    console.log("✅ WHOOP token exchange successful");
+    console.log("✅ Token exchange successful");
 
-    // Store tokens in AWS Secrets Manager indexed by userId
+    // Store tokens in AWS Secrets Manager for data sync
     try {
-      await storeWhoopTokens(userId, {
+      await storeWhoopTokens(whoopUserId, {
         accessToken: access_token,
         refreshToken: refresh_token,
-        expiresAt: Date.now() + (expires_in * 1000),
-        userId,
+        expiresAt: new Date(Date.now() + (expires_in * 1000)).toISOString(),
       });
-      console.log("✅ Tokens stored in AWS Secrets Manager for user:", userId);
-      
-      // Trigger automatic backfill of historical data
-      triggerBackfill(userId);
-    } catch (secretsError) {
-      console.error("❌ Failed to store tokens in Secrets Manager:", secretsError);
-      // Continue anyway - tokens still in cookies as backup
+      console.log("✅ WHOOP tokens stored in AWS Secrets Manager");
+    } catch (error) {
+      console.error("❌ Failed to store WHOOP tokens:", error);
     }
 
-    // Redirect to success page with tokens in URL fragment
-    const successUrl = new URL("/connect/success", request.url);
-    successUrl.hash = `access_token=${access_token}&refresh_token=${refresh_token || ""}&expires_in=${expires_in}`;
-    
-    const response = NextResponse.redirect(successUrl);
-    
-    // Clear state cookie after successful validation
-    response.cookies.delete("whoop_oauth_state");
+    // Get WHOOP user profile
+    let whoopUserId = "unknown";
+    try {
+      console.log("🔄 Fetching WHOOP profile...");
+      const profileResponse = await fetch("https://api.prod.whoop.com/developer/v1/user/profile/basic", {
+        headers: { "Authorization": `Bearer ${access_token}` },
+      });
 
-    // Store tokens in httpOnly cookies for immediate frontend access
+      if (profileResponse.ok) {
+        const profileData = await profileResponse.json();
+        whoopUserId = profileData.user_id.toString();
+        console.log("✅ WHOOP User ID:", whoopUserId);
+      }
+    } catch (profileError) {
+      console.error("❌ Profile fetch failed:", profileError);
+    }
+
+    // Create success response with cookies
+    const successHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>WHOOP Connected</title>
+      <style>
+        body { font-family: system-ui; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: linear-gradient(135deg, #10b981, #059669); }
+        .container { background: white; padding: 2rem; border-radius: 1rem; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .success { color: #059669; font-size: 3rem; margin-bottom: 1rem; }
+        h1 { color: #1f2937; margin-bottom: 1rem; }
+        p { color: #6b7280; margin-bottom: 1.5rem; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="success">✅</div>
+        <h1>WHOOP Connected Successfully!</h1>
+        <p>User ID: ${whoopUserId}</p>
+        <p>Your WHOOP account has been connected and your data is now available.</p>
+        <button onclick="window.close()" style="padding: 0.5rem 1rem; background: #059669; color: white; border: none; border-radius: 0.5rem; cursor: pointer;">Close Window</button>
+      </div>
+      <script>
+        // Send success message to parent window
+        if (window.opener) {
+          window.opener.postMessage({
+            type: 'WHOOP_AUTH_SUCCESS',
+            userId: '${whoopUserId}',
+            timestamp: Date.now()
+          }, window.location.origin);
+        }
+        // Auto-close after 5 seconds
+        setTimeout(() => window.close(), 5000);
+      </script>
+    </body>
+    </html>`;
+    
+    const response = new NextResponse(successHtml, {
+      headers: { 'Content-Type': 'text/html' }
+    });
+    
+    // Set cookies
     response.cookies.set("whoop_access_token", access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: expires_in,
+      maxAge: expires_in || 3600,
       path: "/",
     });
 
@@ -186,25 +247,30 @@ export async function GET(request: NextRequest) {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
-        maxAge: 30 * 24 * 60 * 60, // 30 days
+        maxAge: 30 * 24 * 60 * 60,
         path: "/",
       });
     }
 
-    // Store userId in cookie for easy frontend access
-    response.cookies.set("whoop_user_id", userId, {
+    response.cookies.set("whoop_user_id", whoopUserId, {
       httpOnly: false,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 30 * 24 * 60 * 60, // 30 days
+      maxAge: 30 * 24 * 60 * 60,
       path: "/",
     });
 
+    // Clear state cookie
+    response.cookies.delete("whoop_oauth_state");
+
+    // Trigger automatic data sync for the last 90 days
+    await triggerBackfill(whoopUserId);
+
+    console.log("✅ WHOOP callback completed successfully");
     return response;
+
   } catch (error) {
-    console.error("❌ Error in WHOOP callback:", error);
-    return NextResponse.redirect(
-      new URL("/connect/error?error=callback_error", request.url)
-    );
+    console.error("❌ Callback error:", error);
+    return createErrorResponse('callback_error', error instanceof Error ? error.message : 'Unknown error');
   }
 }

@@ -74,55 +74,226 @@ export default function PlanAheadPage() {
     setIsGenerating(true);
     setError("");
     setMealProgress(0);
-    setGenerationStep("Loading meals from library...");
+    setGenerationStep("Analyzing your WHOOP health data...");
 
     try {
-      // Step 1: Generate meals from library (already has images)
-      setGenerationStep("Selecting optimal meals from your library...");
+      // Step 1: Check AI generation capabilities
+      setGenerationStep("Checking your health data and meal history...");
+      setMealProgress(2);
+      
+      let apiEndpoint = "/api/plan-ahead/generate-ai-meals";
+      let capabilities;
+      
+      try {
+        const capabilitiesResponse = await fetch(apiEndpoint);
+        
+        if (!capabilitiesResponse.ok) {
+          const errorText = await capabilitiesResponse.text();
+          console.warn("Main AI API not available, switching to fallback:", errorText);
+          
+          // Try fallback API
+          apiEndpoint = "/api/plan-ahead/generate-ai-meals-fallback";
+          const fallbackResponse = await fetch(apiEndpoint);
+          
+          if (!fallbackResponse.ok) {
+            throw new Error("Both main and fallback APIs are unavailable");
+          }
+          
+          capabilities = await fallbackResponse.json();
+          console.log("✅ Using fallback AI generation mode");
+        } else {
+          capabilities = await capabilitiesResponse.json();
+          console.log("✅ Using full AI generation mode");
+        }
+      } catch (error) {
+        console.error("All AI generation APIs failed:", error);
+        throw new Error("AI meal generation is currently unavailable. Please try again later.");
+      }
+
+      // Step 2: Start AI-powered meal generation
+      setGenerationStep(capabilities.has_whoop_data 
+        ? "Analyzing your WHOOP data to personalize meals..." 
+        : capabilities.mode === "fallback" 
+          ? "Generating test meals (fallback mode)..."
+          : "Generating personalized meals with AI...");
       setMealProgress(5);
       
-      const generateResponse = await fetch("/api/plan-ahead/generate-from-library", {
+      const generateResponse = await fetch(apiEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          regenerate: meals.length > 0,
+          shuffleOnly: false 
+        }),
       });
 
       if (!generateResponse.ok) {
-        throw new Error("Failed to generate meals from library");
+        const errorText = await generateResponse.text();
+        console.error("AI meal generation failed:", errorText);
+        
+        // Check if it's an HTML error page
+        if (errorText.includes("<!DOCTYPE")) {
+          throw new Error("AI meal generation service is currently unavailable. Please check your configuration and try again.");
+        }
+        
+        // Try to parse as JSON for structured errors
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.suggestion === "shuffle_existing") {
+            const shouldShuffle = confirm(
+              `${errorData.message}\n\nClick OK to shuffle existing meals, or Cancel to generate completely new ones.`
+            );
+            
+            if (shouldShuffle) {
+              return handleShuffleMeals();
+            } else {
+              return handleGenerateNewMeals();
+            }
+          }
+          throw new Error(errorData.error || "Failed to generate AI meals");
+        } catch (parseError) {
+          throw new Error("AI meal generation failed. Please try again.");
+        }
       }
 
       const generateData = await generateResponse.json();
-      
-      if (generateData.status !== "success") {
-        throw new Error(generateData.message || "Failed to generate meals");
-      }
 
-      // Simulate progress for better UX
-      setMealProgress(15);
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      setGenerationStep("Optimizing meal variety and nutrition...");
-      setMealProgress(20);
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Step 3: Simulate progress updates during generation
+      if (generateData.step !== "completed") {
+        if (capabilities.mode === "fallback") {
+          setGenerationStep("Creating test meal plan...");
+          setMealProgress(15);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } else {
+          setGenerationStep("Generating personalized recipes with Claude AI...");
+          setMealProgress(10);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          setGenerationStep("Creating meal images with Titan AI...");
+          setMealProgress(15);
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          
+          setGenerationStep("Storing meals in your library...");
+          setMealProgress(25);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
       
       setMealProgress(MAX_MEALS);
       
-      // Step 2: Display meals immediately AND cache to localStorage
+      // Step 4: Display meals immediately AND cache to localStorage
       setMeals(generateData.meals);
       localStorage.setItem("currentMealPlan", JSON.stringify(generateData.meals));
       
-      setGenerationStep("Meal plan ready!");
+      setGenerationStep(capabilities.has_whoop_data 
+        ? "AI meal plan ready! Personalized for your WHOOP data." 
+        : capabilities.mode === "fallback"
+          ? "Test meal plan ready! (Configure Bedrock for full AI)"
+          : "AI meal plan ready!");
       
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
       setGenerationStep("");
       setIsGenerating(false);
 
-      // Step 3: Store to DB in the background
-      storeMealsInBackground(generateData.meals, "Generated from meals library");
+      console.log("✅ AI meal generation completed:", {
+        type: generateData.generation_type,
+        whoop_data: capabilities.has_whoop_data,
+        processing_time: generateData.processing_time_ms,
+        insights: generateData.whoop_insights
+      });
       
     } catch (error) {
-      console.error("Error generating meals:", error);
-      setError(error instanceof Error ? error.message : "Failed to generate meals from library");
+      console.error("Error generating AI meals:", error);
+      setError(error instanceof Error ? error.message : "Failed to generate AI-powered meals");
+      setIsGenerating(false);
+      setGenerationStep("");
+      setMealProgress(0);
+    }
+  };
+
+  const handleShuffleMeals = async () => {
+    setIsGenerating(true);
+    setError("");
+    setMealProgress(0);
+    setGenerationStep("Shuffling your existing meals...");
+
+    try {
+      const shuffleResponse = await fetch("/api/plan-ahead/generate-ai-meals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shuffleOnly: true }),
+      });
+
+      const shuffleData = await shuffleResponse.json();
+      
+      if (!shuffleResponse.ok) {
+        throw new Error(shuffleData.error || "Failed to shuffle meals");
+      }
+
+      setMealProgress(MAX_MEALS);
+      setMeals(shuffleData.meals);
+      localStorage.setItem("currentMealPlan", JSON.stringify(shuffleData.meals));
+      
+      setGenerationStep("Meals shuffled successfully!");
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setGenerationStep("");
+      setIsGenerating(false);
+      
+    } catch (error) {
+      console.error("Error shuffling meals:", error);
+      setError(error instanceof Error ? error.message : "Failed to shuffle meals");
+      setIsGenerating(false);
+      setGenerationStep("");
+      setMealProgress(0);
+    }
+  };
+
+  const handleGenerateNewMeals = async () => {
+    setIsGenerating(true);
+    setError("");
+    setMealProgress(0);
+    setGenerationStep("Generating completely new AI meals...");
+
+    try {
+      const generateResponse = await fetch("/api/plan-ahead/generate-ai-meals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          regenerate: true,
+          shuffleOnly: false 
+        }),
+      });
+
+      const generateData = await generateResponse.json();
+      
+      if (!generateResponse.ok) {
+        throw new Error(generateData.error || "Failed to generate new AI meals");
+      }
+
+      // Simulate progress
+      setGenerationStep("Creating new recipes with Claude AI...");
+      setMealProgress(10);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      setGenerationStep("Generating fresh meal images...");
+      setMealProgress(20);
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      setMealProgress(MAX_MEALS);
+      setMeals(generateData.meals);
+      localStorage.setItem("currentMealPlan", JSON.stringify(generateData.meals));
+      
+      setGenerationStep("New AI meal plan ready!");
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setGenerationStep("");
+      setIsGenerating(false);
+      
+    } catch (error) {
+      console.error("Error generating new meals:", error);
+      setError(error instanceof Error ? error.message : "Failed to generate new AI meals");
       setIsGenerating(false);
       setGenerationStep("");
       setMealProgress(0);
@@ -189,8 +360,8 @@ export default function PlanAheadPage() {
 
   // Convert GeneratedMeal to Meal format for MealCard
   const convertToMeal = (meal: GeneratedMeal): Meal => {
-    // Handle both image_base64 (from generate-images) and image (from lambda-store/retrieve)
-    let imageUrl = meal.image;
+    // Handle different image field names (image, imageUrl, image_base64)
+    let imageUrl = meal.image || (meal as any).imageUrl;
     
     // If image_base64 exists but no image URL, convert to data URL
     if (!imageUrl && (meal as any).image_base64) {
@@ -207,22 +378,32 @@ export default function PlanAheadPage() {
       imageUrl = "/placeholder-meal.jpg";
     }
     
+    // Ensure all required fields are present with safe defaults
+    const safeIngredients = meal.ingredients || [];
+    const safeInstructions = meal.instructions || ["Follow recipe instructions"];
+    const safeNutrition = meal.nutrition || {
+      calories: 400,
+      protein: 20,
+      carbs: 40,
+      fat: 15
+    };
+    
     return {
       id: `${meal.day}-${meal.meal_type}`,
-      name: meal.name,
-      description: meal.description,
+      name: meal.name || "Unnamed Meal",
+      description: meal.description || "Delicious and nutritious meal",
       image: imageUrl,
       category: meal.meal_type.toLowerCase() as "breakfast" | "lunch" | "snack" | "dinner",
-      prepTime: meal.prep_time,
-      cookTime: meal.cook_time,
-      servings: meal.servings,
-      ingredients: meal.ingredients.map((ing) => ({
-        name: ing.name,
-        amount: ing.amount,
+      prepTime: meal.prep_time || 15,
+      cookTime: meal.cook_time || 15,
+      servings: meal.servings || 2,
+      ingredients: safeIngredients.map((ing) => ({
+        name: typeof ing === 'string' ? ing : (ing.name || 'Unknown ingredient'),
+        amount: typeof ing === 'string' ? "as needed" : (ing.amount || "as needed"),
         category: "cupboard" as const,
       })),
-      instructions: meal.instructions,
-      nutrition: meal.nutrition,
+      instructions: safeInstructions,
+      nutrition: safeNutrition,
     };
   };
 
@@ -230,42 +411,101 @@ export default function PlanAheadPage() {
     <div className="min-h-screen bg-background md:pt-0 pt-40 md:pb-0 pb-20">
       <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-8">
         {/* Header with Generate Button */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1
-              className="text-4xl font-bold mb-2"
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-8 gap-4">
+          {/* Mobile Layout */}
+          <div className="block md:hidden">
+            <p className="text-lg font-medium text-foreground mb-4">
+              {meals.length > 0
+                ? "Your AI-generated personalized meal plan powered by WHOOP data"
+                : "Generate a 7-day AI meal plan personalized with your WHOOP health data"}
+            </p>
+            <button
+              onClick={handleGenerateMeals}
+              disabled={isGenerating}
+              className="bg-black text-white px-4 py-3 rounded-full hover:bg-gray-800 transition-all font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 w-full justify-center whitespace-nowrap"
               style={{
-                fontFamily: '"Right Grotesk Spatial", sans-serif',
+                fontFamily: '"Right Grotesk Wide", sans-serif',
               }}
             >
-              Plan Ahead
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              {meals.length > 0
-                ? "Your AI-generated personalized meal plan"
-                : "Generate a 7-day meal plan based on your WHOOP data"}
-            </p>
+              {isGenerating ? (
+                <>
+                  <Sparkles className="w-4 h-4 animate-pulse" />
+                  AI Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  {meals.length > 0 ? "Regenerate Meals" : "Generate Meals"}
+                </>
+              )}
+            </button>
           </div>
-          <button
-            onClick={handleGenerateMeals}
-            disabled={isGenerating}
-            className="bg-black text-white px-6 py-3 rounded-full hover:bg-gray-800 transition-all font-medium text-[16px] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            style={{
-              fontFamily: '"Right Grotesk Wide", sans-serif',
-            }}
-          >
-            {isGenerating ? (
-              <>
-                <Sparkles className="w-5 h-5 animate-pulse" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-5 h-5" />
-                {meals.length > 0 ? "Regenerate Meals" : "Generate Meals"}
-              </>
-            )}
-          </button>
+
+          {/* Tablet Layout */}
+          <div className="hidden md:block lg:hidden">
+            <h1 className="heading-h2 mb-2">
+              plan ahead
+            </h1>
+            <p className="text-base text-muted-foreground max-w-md">
+              {meals.length > 0
+                ? "Your AI-generated personalized meal plan powered by WHOOP data"
+                : "Generate a 7-day AI meal plan personalized with your WHOOP health data"}
+            </p>
+            <button
+              onClick={handleGenerateMeals}
+              disabled={isGenerating}
+              className="bg-black text-white px-4 py-3 rounded-full hover:bg-gray-800 transition-all font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mt-4 whitespace-nowrap"
+              style={{
+                fontFamily: '"Right Grotesk Wide", sans-serif',
+              }}
+            >
+              {isGenerating ? (
+                <>
+                  <Sparkles className="w-4 h-4 animate-pulse" />
+                  AI Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  {meals.length > 0 ? "Regenerate AI Meals" : "Generate AI Meals"}
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Desktop Layout */}
+          <div className="hidden lg:flex lg:justify-between lg:items-center w-full">
+            <div>
+              <h1 className="heading-h1 mb-2">
+                plan ahead
+              </h1>
+              <p className="text-lg text-muted-foreground">
+                {meals.length > 0
+                  ? "Your AI-generated personalized meal plan powered by WHOOP data"
+                  : "Generate a 7-day AI meal plan personalized with your WHOOP health data"}
+              </p>
+            </div>
+            <button
+              onClick={handleGenerateMeals}
+              disabled={isGenerating}
+              className="bg-black text-white px-6 py-3 rounded-full hover:bg-gray-800 transition-all font-medium text-[16px] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
+              style={{
+                fontFamily: '"Right Grotesk Wide", sans-serif',
+              }}
+            >
+              {isGenerating ? (
+                <>
+                  <Sparkles className="w-5 h-5 animate-pulse" />
+                  AI Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-5 h-5" />
+                  {meals.length > 0 ? "Regenerate AI Meals" : "Generate AI Meals"}
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Loading State with WHOOP Insights */}
@@ -316,7 +556,35 @@ export default function PlanAheadPage() {
             transition={{ delay: 0.2 }}
           >
             {/* Summary Banner */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            {/* Mobile: Single row layout */}
+            <div className="grid grid-cols-3 md:hidden gap-2 mb-8">
+              <div className="bg-card border border-border rounded-lg p-3">
+                <div className="flex flex-col items-center text-center">
+                  <Calendar className="w-4 h-4 text-primary mb-1" />
+                  <span className="text-xs text-muted-foreground">Total Meals</span>
+                  <p className="text-lg font-bold">{totalMeals}</p>
+                </div>
+              </div>
+              <div className="bg-card border border-border rounded-lg p-3">
+                <div className="flex flex-col items-center text-center">
+                  <Clock className="w-4 h-4 text-primary mb-1" />
+                  <span className="text-xs text-muted-foreground">Prep Time</span>
+                  <p className="text-lg font-bold">
+                    {Math.round(totalPrepTime / 60)}h {totalPrepTime % 60}m
+                  </p>
+                </div>
+              </div>
+              <div className="bg-card border border-border rounded-lg p-3">
+                <div className="flex flex-col items-center text-center">
+                  <Flame className="w-4 h-4 text-primary mb-1" />
+                  <span className="text-xs text-muted-foreground">Calories</span>
+                  <p className="text-lg font-bold">{Math.round(totalCalories / 1000)}k</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Tablet & Desktop: Original layout */}
+            <div className="hidden md:grid md:grid-cols-3 gap-4 mb-8">
               <div className="bg-card border border-border rounded-lg p-6">
                 <div className="flex items-center gap-3 mb-2">
                   <Calendar className="w-5 h-5 text-primary" />
@@ -379,24 +647,51 @@ export default function PlanAheadPage() {
                         transition={{ duration: 0.3 }}
                         className="overflow-hidden"
                       >
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-6">
-                          {mealTypes.map((mealType) => {
-                            const meal = dayMeals.find((m) => m.meal_type === mealType);
-                            return meal ? (
-                              <MealCard
-                                key={`${day}-${mealType}`}
-                                meal={convertToMeal(meal)}
-                                size="medium"
-                              />
-                            ) : (
-                              <div
-                                key={`${day}-${mealType}`}
-                                className="h-full min-h-[320px] bg-muted rounded-[20px] flex items-center justify-center text-muted-foreground text-sm"
-                              >
-                                No {mealType}
-                              </div>
-                            );
-                          })}
+                        {/* Mobile & Tablet: Horizontal scrolling */}
+                        <div className="lg:hidden p-6">
+                          <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
+                            {mealTypes.map((mealType) => {
+                              const meal = dayMeals.find((m) => m.meal_type === mealType);
+                              return meal ? (
+                                <div key={`${day}-${mealType}`} className="flex-shrink-0 w-[280px]">
+                                  <MealCard
+                                    meal={convertToMeal(meal)}
+                                    size="medium"
+                                  />
+                                </div>
+                              ) : (
+                                <div
+                                  key={`${day}-${mealType}`}
+                                  className="flex-shrink-0 w-[280px] h-[320px] bg-muted rounded-[20px] flex items-center justify-center text-muted-foreground text-sm"
+                                >
+                                  No {mealType}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Desktop: Grid layout */}
+                        <div className="hidden lg:block">
+                          <div className="grid grid-cols-4 gap-6 p-6">
+                            {mealTypes.map((mealType) => {
+                              const meal = dayMeals.find((m) => m.meal_type === mealType);
+                              return meal ? (
+                                <MealCard
+                                  key={`${day}-${mealType}`}
+                                  meal={convertToMeal(meal)}
+                                  size="medium"
+                                />
+                              ) : (
+                                <div
+                                  key={`${day}-${mealType}`}
+                                  className="h-full min-h-[320px] bg-muted rounded-[20px] flex items-center justify-center text-muted-foreground text-sm"
+                                >
+                                  No {mealType}
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       </motion.div>
                     )}

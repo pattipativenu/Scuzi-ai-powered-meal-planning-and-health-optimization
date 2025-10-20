@@ -3,8 +3,16 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { Clock, ChefHat, Users, ArrowLeft, Flame, Plus, Minus } from "lucide-react";
-import { motion } from "framer-motion";
+import {
+  Clock,
+  ChefHat,
+  Users,
+  ArrowLeft,
+  Plus,
+  Minus,
+  Star,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface MealData {
   day: string;
@@ -30,11 +38,108 @@ export default function MealDetailPage() {
   const params = useParams();
   const router = useRouter();
   const mealId = params.mealId as string;
-  
+
   const [meal, setMeal] = useState<MealData | null>(null);
   const [loading, setLoading] = useState(true);
   const [servings, setServings] = useState(1);
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState<
+    "ingredients" | "methods" | "nutrition"
+  >("ingredients");
+  const [cookingMode, setCookingMode] = useState(false);
+  const [reviewText, setReviewText] = useState("");
+
+  // Cooking Mode Component
+  const CookingModeToggle = ({ className = "" }) => (
+    <div
+      className={`bg-gray-50 rounded-lg p-4 flex items-center justify-between ${className}`}
+    >
+      <div>
+        <h4 className="font-semibold">Cooking mode</h4>
+        <p className="text-sm text-muted-foreground">
+          Keep your screen awake as you cook
+        </p>
+      </div>
+      <button
+        onClick={() => {
+          setCookingMode(!cookingMode);
+          if (!cookingMode) {
+            // Request screen wake lock
+            if ("wakeLock" in navigator) {
+              navigator.wakeLock.request("screen").catch(() => {
+                console.log("Wake lock failed");
+              });
+            }
+          }
+        }}
+        className={`relative w-12 h-6 rounded-full transition-colors ${
+          cookingMode ? "bg-black" : "bg-gray-300"
+        }`}
+      >
+        <div
+          className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
+            cookingMode ? "translate-x-6" : "translate-x-0.5"
+          }`}
+        />
+      </button>
+    </div>
+  );
+
+  // Mock reviews data
+  const mockReviews = [
+    {
+      id: 1,
+      rating: 5,
+      comment:
+        "This recipe is absolutely delicious! The flavors blend perfectly and it's so nutritious.",
+      author: "Sarah M.",
+      date: "2 days ago",
+    },
+    {
+      id: 2,
+      rating: 4,
+      comment:
+        "Great recipe for post-workout meals. Really helps with recovery based on my WHOOP data.",
+      author: "Mike R.",
+      date: "1 week ago",
+    },
+    {
+      id: 3,
+      rating: 5,
+      comment:
+        "Perfect balance of protein and carbs. My sleep score improved after eating this regularly.",
+      author: "Emma L.",
+      date: "2 weeks ago",
+    },
+    {
+      id: 4,
+      rating: 4,
+      comment:
+        "Easy to make and tastes amazing. The prep time is exactly as stated.",
+      author: "David K.",
+      date: "3 weeks ago",
+    },
+    {
+      id: 5,
+      rating: 5,
+      comment:
+        "This has become my go-to meal. Love how Scuzi personalizes it to my health data.",
+      author: "Lisa P.",
+      date: "1 month ago",
+    },
+    {
+      id: 6,
+      rating: 4,
+      comment:
+        "Fantastic recipe! My HRV improved significantly after incorporating this into my routine.",
+      author: "Tom W.",
+      date: "1 month ago",
+    },
+  ];
+
+  const averageRating =
+    mockReviews.reduce((sum, review) => sum + review.rating, 0) /
+    mockReviews.length;
 
   useEffect(() => {
     const loadMeal = async () => {
@@ -44,14 +149,18 @@ export default function MealDetailPage() {
         if (cachedMeals) {
           const meals = JSON.parse(cachedMeals);
           const [day, mealType] = mealId.split("-");
-          
+
           const foundMeal = meals.find(
             (m: any) => m.day === day && m.meal_type === mealType
           );
-          
+
           if (foundMeal) {
             // Convert image URL to use proxy if it's an S3 URL
-            if (foundMeal.image && foundMeal.image.includes('s3.') && foundMeal.image.includes('.amazonaws.com')) {
+            if (
+              foundMeal.image &&
+              foundMeal.image.includes("s3.") &&
+              foundMeal.image.includes(".amazonaws.com")
+            ) {
               foundMeal.image = `/api/image-proxy?url=${encodeURIComponent(foundMeal.image)}`;
             }
             setMeal(foundMeal);
@@ -66,14 +175,18 @@ export default function MealDetailPage() {
 
         if (data.status === "success" && data.mealPlan?.meals) {
           const [day, mealType] = mealId.split("-");
-          
+
           const foundMeal = data.mealPlan.meals.find(
             (m: any) => m.day === day && m.meal_type === mealType
           );
 
           if (foundMeal) {
             // Convert image URL to use proxy if it's an S3 URL
-            if (foundMeal.image && foundMeal.image.includes('s3.') && foundMeal.image.includes('.amazonaws.com')) {
+            if (
+              foundMeal.image &&
+              foundMeal.image.includes("s3.") &&
+              foundMeal.image.includes(".amazonaws.com")
+            ) {
               foundMeal.image = `/api/image-proxy?url=${encodeURIComponent(foundMeal.image)}`;
             }
             setMeal(foundMeal);
@@ -101,9 +214,9 @@ export default function MealDetailPage() {
 
   const calculateIngredientAmount = (amount: string) => {
     if (!meal) return amount;
-    
+
     const ratio = servings / meal.servings;
-    
+
     const numberMatch = amount.match(/^([\d.\/]+)\s*(.*)$/);
     if (numberMatch) {
       const originalAmount = eval(numberMatch[1]);
@@ -111,7 +224,7 @@ export default function MealDetailPage() {
       const newAmount = (originalAmount * ratio).toFixed(1).replace(/\.0$/, "");
       return `${newAmount} ${unit}`;
     }
-    
+
     return amount;
   };
 
@@ -138,7 +251,8 @@ export default function MealDetailPage() {
         <div className="text-center max-w-md mx-auto px-6">
           <h2 className="text-2xl font-bold mb-4">Recipe Not Found</h2>
           <p className="text-muted-foreground mb-6">
-            {error || "This recipe doesn't exist. Please generate your meal plan first."}
+            {error ||
+              "This recipe doesn't exist. Please generate your meal plan first."}
           </p>
           <button
             onClick={() => router.push("/plan-ahead")}
@@ -151,192 +265,788 @@ export default function MealDetailPage() {
     );
   }
 
-  const imageUrl = meal.image || 
-                   (meal.image_base64 ? `data:image/png;base64,${meal.image_base64}` : null) || 
-                   "/placeholder-meal.jpg";
+  const imageUrl =
+    meal.image ||
+    (meal.image_base64 ? `data:image/png;base64,${meal.image_base64}` : null) ||
+    "/placeholder-meal.jpg";
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-[1400px] mx-auto px-6 py-8">
-        {/* Back Button */}
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Back to Plan</span>
-        </button>
+      {/* Mobile: Hide for now as requested */}
+      <div className="hidden md:block">
+        <div className="max-w-[1600px] mx-auto px-6 py-8">
+          {/* Back Button */}
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span>Back to Plan</span>
+          </button>
 
-        {/* Recipe Layout: 60% Left | 40% Right */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          {/* Left Panel: Recipe Details (60%) */}
-          <div className="lg:col-span-3">
-            {/* Header */}
+          {/* Main Container - Full Width Layout */}
+          <div className="w-full">
+            {/* Recipe Header Section */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-8"
+              className="grid grid-cols-1 lg:grid-cols-5 gap-12 mb-16 lg:items-end"
             >
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                <span className="px-2 py-1 bg-secondary rounded-full text-xs font-medium">
-                  {meal.day}
-                </span>
-                <span>•</span>
-                <span>{meal.meal_type}</span>
-              </div>
-              <h1 className="text-4xl font-bold mb-4" style={{ fontFamily: '"Right Grotesk Spatial", sans-serif' }}>
-                {meal.name}
-              </h1>
-              <p className="text-lg text-muted-foreground">{meal.description}</p>
-            </motion.div>
+              {/* Left: Recipe Info (2 columns) - Aligned to bottom */}
+              <div className="lg:col-span-2 space-y-8 lg:pb-0">
+                <h1 className="heading-h1">{meal.name}</h1>
 
-            {/* Quick Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="flex flex-wrap gap-4 mb-8"
-            >
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="w-5 h-5 text-primary" />
-                <span className="font-medium">Prep:</span>
-                <span className="text-muted-foreground">{meal.prep_time} min</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="w-5 h-5 text-primary" />
-                <span className="font-medium">Cook:</span>
-                <span className="text-muted-foreground">{meal.cook_time} min</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Users className="w-5 h-5 text-primary" />
-                <span className="font-medium">Servings:</span>
-                <span className="text-muted-foreground">{meal.servings}</span>
-              </div>
-            </motion.div>
-
-            {/* Instructions */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-card border border-border rounded-lg p-6"
-            >
-              <h2 className="text-2xl font-semibold mb-6" style={{ fontFamily: '"Right Grotesk Wide", sans-serif' }}>
-                Instructions
-              </h2>
-              <ol className="space-y-4">
-                {meal.instructions.map((instruction, index) => (
-                  <li key={index} className="flex gap-4">
-                    <span className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-semibold text-sm">
-                      {index + 1}
+                {/* Rating and Meta Info */}
+                <div className="flex items-center gap-8">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-6 h-6 ${
+                            i < Math.floor(averageRating)
+                              ? "fill-yellow-400 text-yellow-400"
+                              : "text-gray-300"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="font-bold text-2xl">
+                      {averageRating.toFixed(1)}
                     </span>
-                    <p className="text-muted-foreground pt-1">{instruction}</p>
-                  </li>
-                ))}
-              </ol>
-            </motion.div>
-          </div>
+                  </div>
 
-          {/* Right Panel: Image, Ingredients, Nutrition (40%) */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Meal Image */}
+                  <div className="flex items-center gap-2 text-lg text-muted-foreground">
+                    <Users className="w-6 h-6" />
+                    <span className="font-medium">
+                      {mockReviews.length} Notes
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-lg text-muted-foreground">
+                    <Clock className="w-6 h-6" />
+                    <span className="font-medium">
+                      {meal.prep_time + meal.cook_time} min cook
+                    </span>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <p className="text-xl text-muted-foreground leading-relaxed">
+                  This is Scuzi's latest meal with cauliflower recipes, with
+                  servings of 4 servings. Discover delicious and nutritious
+                  recipes that are optimized based on your WHOOP data to support
+                  your recovery, energy levels, and overall wellness goals.
+                </p>
+
+                {/* Created by Scuzi */}
+                <div className="flex items-center gap-3 text-lg text-muted-foreground">
+                  <ChefHat className="w-6 h-6" />
+                  <span className="font-medium">
+                    Created by <strong>SCUZI</strong>
+                  </span>
+                </div>
+              </div>
+
+              {/* Right: Large Recipe Image (3 columns) */}
+              <div className="lg:col-span-3">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl"
+                >
+                  <Image
+                    src={imageUrl}
+                    alt={meal.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 60vw"
+                    priority
+                  />
+                </motion.div>
+              </div>
+            </motion.div>
+
+            {/* Tab Navigation - Full Width */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="relative w-full aspect-square rounded-2xl overflow-hidden"
+              className="mb-8"
             >
-              <Image
-                src={imageUrl}
-                alt={meal.name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 40vw"
-                priority
-              />
+              <div className="flex border-b border-border">
+                {[
+                  { id: "ingredients", label: "Ingredients" },
+                  { id: "methods", label: "Method" },
+                  { id: "nutrition", label: "Nutrition" },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`flex-1 py-4 px-6 font-medium text-center transition-colors border-b-2 ${
+                      activeTab === tab.id
+                        ? "border-black text-black"
+                        : "border-transparent text-muted-foreground hover:text-black"
+                    }`}
+                    style={{ fontFamily: '"Right Grotesk Wide", sans-serif' }}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
             </motion.div>
 
-            {/* Serving Adjuster */}
+            {/* Tab Content */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="bg-card border border-border rounded-lg p-4"
+              className="mb-16"
             >
-              <div className="flex items-center justify-between">
-                <span className="font-medium">Servings</span>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => adjustServings(servings - 1)}
-                    className="w-8 h-8 rounded-full bg-secondary hover:bg-secondary/80 flex items-center justify-center transition-colors"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  <span className="text-xl font-semibold w-8 text-center">{servings}</span>
-                  <button
-                    onClick={() => adjustServings(servings + 1)}
-                    className="w-8 h-8 rounded-full bg-secondary hover:bg-secondary/80 flex items-center justify-center transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {activeTab === "ingredients" && (
+                    <div className="space-y-6">
+                      <CookingModeToggle />
+                      {/* Servings Adjuster */}
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-2xl font-semibold">Servings</h3>
+                        <div className="flex items-center gap-4">
+                          <button
+                            onClick={() => adjustServings(servings - 1)}
+                            className="w-10 h-10 rounded-full border border-border hover:bg-gray-50 flex items-center justify-center transition-colors"
+                          >
+                            <Minus className="w-5 h-5" />
+                          </button>
+                          <span className="text-2xl font-bold w-8 text-center">
+                            {servings}
+                          </span>
+                          <button
+                            onClick={() => adjustServings(servings + 1)}
+                            className="w-10 h-10 rounded-full border border-border hover:bg-gray-50 flex items-center justify-center transition-colors"
+                          >
+                            <Plus className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Ingredients List */}
+                      <div className="space-y-4">
+                        {meal.ingredients.map((ingredient, index) => (
+                          <div
+                            key={index}
+                            className="flex justify-between items-center py-3 border-b border-border/30"
+                          >
+                            <span className="text-lg">{ingredient.name}</span>
+                            <span className="text-lg font-medium text-muted-foreground">
+                              {calculateIngredientAmount(ingredient.amount)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === "methods" && (
+                    <div className="space-y-8">
+                      <CookingModeToggle />
+                      {meal.instructions.map((instruction, index) => (
+                        <div key={index}>
+                          <div className="flex gap-6 pb-8">
+                            <span className="flex-shrink-0 w-12 h-12 bg-black text-white rounded-full flex items-center justify-center font-bold text-xl">
+                              {index + 1}
+                            </span>
+                            <div className="flex-1">
+                              <h3 className="heading-h4 mb-4">
+                                step {index + 1}
+                              </h3>
+                              <p className="text-lg text-muted-foreground leading-relaxed">
+                                {instruction}
+                              </p>
+                            </div>
+                          </div>
+                          {index < meal.instructions.length - 1 && (
+                            <div className="border-b border-border/20 mb-8" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {activeTab === "nutrition" && (
+                    <div className="space-y-6">
+                      <CookingModeToggle />
+                      <h3 className="heading-h4 text-muted-foreground">
+                        nutritional information per serving:
+                      </h3>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center py-3 border-b border-border/30">
+                          <span className="text-lg font-medium">Calories</span>
+                          <span className="text-lg font-semibold">
+                            {calculateNutrition(meal.nutrition.calories)}kcal
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center py-3 border-b border-border/30">
+                          <span className="text-lg font-medium">Fat</span>
+                          <span className="text-lg font-semibold">
+                            {calculateNutrition(meal.nutrition.fat)}g
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center py-3 border-b border-border/30">
+                          <span className="text-lg font-medium">
+                            Saturated Fat
+                          </span>
+                          <span className="text-lg font-semibold">
+                            {Math.round(
+                              calculateNutrition(meal.nutrition.fat) * 0.3
+                            )}
+                            g
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center py-3 border-b border-border/30">
+                          <span className="text-lg font-medium">
+                            Dietary Fibre
+                          </span>
+                          <span className="text-lg font-semibold">
+                            {Math.round(
+                              calculateNutrition(meal.nutrition.carbs) * 0.15
+                            )}
+                            g
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center py-3 border-b border-border/30">
+                          <span className="text-lg font-medium">
+                            Carbohydrates
+                          </span>
+                          <span className="text-lg font-semibold">
+                            {calculateNutrition(meal.nutrition.carbs)}g
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center py-3 border-b border-border/30">
+                          <span className="text-lg font-medium">Sugars</span>
+                          <span className="text-lg font-semibold">
+                            {Math.round(
+                              calculateNutrition(meal.nutrition.carbs) * 0.25
+                            )}
+                            g
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center py-3 border-b border-border/30">
+                          <span className="text-lg font-medium">Protein</span>
+                          <span className="text-lg font-semibold">
+                            {calculateNutrition(meal.nutrition.protein)}g
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center py-3 border-b border-border/30">
+                          <span className="text-lg font-medium">Sodium</span>
+                          <span className="text-lg font-semibold">
+                            {Math.round(
+                              calculateNutrition(meal.nutrition.calories) * 0.3
+                            )}
+                            mg
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
             </motion.div>
 
-            {/* Ingredients */}
+            {/* Rating Section */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="bg-card border border-border rounded-lg p-6"
+              className="text-center mb-12"
             >
-              <h3 className="text-xl font-semibold mb-4" style={{ fontFamily: '"Right Grotesk Wide", sans-serif' }}>
-                Ingredients
-              </h3>
-              <ul className="space-y-3">
-                {meal.ingredients.map((ingredient, index) => (
-                  <li key={index} className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">{ingredient.name}</span>
-                    <span className="font-medium">{calculateIngredientAmount(ingredient.amount)}</span>
-                  </li>
-                ))}
-              </ul>
+              <h3 className="heading-h3 mb-4">did you like this recipe?</h3>
+              <div className="flex items-center justify-center gap-4 mb-4">
+                <button className="w-16 h-16 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
+                  👍
+                </button>
+                <button className="w-16 h-16 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
+                  👎
+                </button>
+              </div>
+              <p className="text-muted-foreground">
+                You need to be logged in to leave your rating
+              </p>
             </motion.div>
 
-            {/* Nutrition */}
+            {/* Leave a Note Section */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="bg-card border border-border rounded-lg p-6"
+              className="mb-12"
             >
-              <h3 className="text-xl font-semibold mb-4" style={{ fontFamily: '"Right Grotesk Wide", sans-serif' }}>
-                Nutrition
-              </h3>
+              <h3 className="text-2xl font-semibold mb-6">Leave a note</h3>
+              <CookingModeToggle className="mb-6" />
               <div className="space-y-4">
+                <textarea
+                  value={reviewText}
+                  onChange={(e) => setReviewText(e.target.value)}
+                  placeholder="Share your thoughts about this recipe..."
+                  className="w-full p-6 border border-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-lg"
+                  rows={4}
+                />
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Flame className="w-5 h-5 text-orange-500" />
-                    <span className="text-sm text-muted-foreground">Calories</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg text-muted-foreground">
+                      Rating:
+                    </span>
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          className="w-8 h-8 text-gray-300 hover:text-yellow-400 transition-colors"
+                        >
+                          <Star className="w-full h-full" />
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <span className="font-semibold">{calculateNutrition(meal.nutrition.calories)}</span>
-                </div>
-                <div className="h-px bg-border"></div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Protein</span>
-                  <span className="font-medium">{calculateNutrition(meal.nutrition.protein)}g</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Carbs</span>
-                  <span className="font-medium">{calculateNutrition(meal.nutrition.carbs)}g</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Fat</span>
-                  <span className="font-medium">{calculateNutrition(meal.nutrition.fat)}g</span>
+                  <button
+                    disabled={!reviewText.trim()}
+                    className="px-6 py-3 bg-black text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 transition-colors"
+                  >
+                    Post Note
+                  </button>
                 </div>
               </div>
             </motion.div>
+
+            {/* Notes Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 }}
+            >
+              <h3 className="text-2xl font-semibold mb-6">
+                Notes ({mockReviews.length})
+              </h3>
+              <div className="space-y-6">
+                {mockReviews.map((review) => (
+                  <div key={review.id} className="flex gap-4">
+                    <div className="w-12 h-12 bg-black text-white rounded-full flex items-center justify-center font-bold">
+                      {review.author.charAt(0)}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="font-semibold">{review.author}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {review.date}
+                        </span>
+                        <div className="flex items-center">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-4 h-4 ${
+                                i < review.rating
+                                  ? "fill-yellow-400 text-yellow-400"
+                                  : "text-gray-300"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-muted-foreground leading-relaxed">
+                        {review.comment}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
           </div>
+        </div>
+      </div>
+
+      {/* Mobile Version */}
+      <div className="md:hidden min-h-screen bg-background">
+        <div className="px-4 py-6 space-y-6">
+          {/* Back Button */}
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span>Back to Plan</span>
+          </button>
+
+          {/* Recipe Image */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative w-full aspect-square rounded-2xl overflow-hidden"
+          >
+            <Image
+              src={imageUrl}
+              alt={meal.name}
+              fill
+              className="object-cover"
+              sizes="100vw"
+              priority
+            />
+          </motion.div>
+
+          {/* Recipe Info */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="space-y-4"
+          >
+            <h1 className="heading-h2">{meal.name}</h1>
+
+            {/* Rating and Meta */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1">
+                <div className="flex items-center">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`w-4 h-4 ${
+                        i < Math.floor(averageRating)
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-gray-300"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="font-bold">{averageRating.toFixed(1)}</span>
+              </div>
+
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <Users className="w-4 h-4" />
+                <span>{mockReviews.length} Notes</span>
+              </div>
+
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <Clock className="w-4 h-4" />
+                <span>{meal.prep_time + meal.cook_time} min cook</span>
+              </div>
+            </div>
+
+            {/* Description */}
+            <p className="text-muted-foreground leading-relaxed">
+              This is Scuzi's latest meal with cauliflower recipes, with
+              servings of 4 servings. Discover delicious and nutritious recipes
+              that are optimized based on your WHOOP data.
+            </p>
+
+            {/* Created by */}
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <ChefHat className="w-4 h-4" />
+              <span>
+                Created by <strong>SCUZI</strong>
+              </span>
+            </div>
+          </motion.div>
+
+          {/* Tab Navigation */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <div className="flex border-b border-border">
+              {[
+                { id: "ingredients", label: "Ingredients" },
+                { id: "methods", label: "Method" },
+                { id: "nutrition", label: "Nutrition" },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`flex-1 py-3 px-4 font-medium text-center transition-colors border-b-2 ${
+                    activeTab === tab.id
+                      ? "border-black text-black"
+                      : "border-transparent text-muted-foreground"
+                  }`}
+                  style={{ fontFamily: '"Right Grotesk Wide", sans-serif' }}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Tab Content */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                {activeTab === "ingredients" && (
+                  <div className="space-y-4">
+                    <CookingModeToggle />
+                    {/* Servings */}
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold">Servings</span>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => adjustServings(servings - 1)}
+                          className="w-8 h-8 rounded-full border border-border flex items-center justify-center"
+                        >
+                          <Minus className="w-4 h-4" />
+                        </button>
+                        <span className="font-bold text-lg w-6 text-center">
+                          {servings}
+                        </span>
+                        <button
+                          onClick={() => adjustServings(servings + 1)}
+                          className="w-8 h-8 rounded-full border border-border flex items-center justify-center"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Ingredients List */}
+                    <div className="space-y-3">
+                      {meal.ingredients.map((ingredient, index) => (
+                        <div
+                          key={index}
+                          className="flex justify-between items-center py-2 border-b border-border/30"
+                        >
+                          <span>{ingredient.name}</span>
+                          <span className="font-medium text-muted-foreground">
+                            {calculateIngredientAmount(ingredient.amount)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "methods" && (
+                  <div className="space-y-6">
+                    <CookingModeToggle />
+
+                    {/* Method Steps */}
+                    <div className="space-y-6">
+                      {meal.instructions.map((instruction, index) => (
+                        <div key={index}>
+                          <div className="flex gap-4 pb-6">
+                            <span className="flex-shrink-0 w-8 h-8 bg-black text-white rounded-full flex items-center justify-center font-bold">
+                              {index + 1}
+                            </span>
+                            <div className="flex-1">
+                              <h4 className="font-semibold mb-2">
+                                Step {index + 1}
+                              </h4>
+                              <p className="text-muted-foreground leading-relaxed">
+                                {instruction}
+                              </p>
+                            </div>
+                          </div>
+                          {index < meal.instructions.length - 1 && (
+                            <div className="border-b border-border/20 mb-6" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "nutrition" && (
+                  <div className="space-y-4">
+                    <CookingModeToggle />
+                    <h4 className="font-semibold text-muted-foreground">
+                      Nutritional information per serving:
+                    </h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center py-2 border-b border-border/30">
+                        <span className="font-medium">Calories</span>
+                        <span className="font-semibold">
+                          {calculateNutrition(meal.nutrition.calories)}kcal
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-border/30">
+                        <span className="font-medium">Fat</span>
+                        <span className="font-semibold">
+                          {calculateNutrition(meal.nutrition.fat)}g
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-border/30">
+                        <span className="font-medium">Saturated Fat</span>
+                        <span className="font-semibold">
+                          {Math.round(
+                            calculateNutrition(meal.nutrition.fat) * 0.3
+                          )}
+                          g
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-border/30">
+                        <span className="font-medium">Dietary Fibre</span>
+                        <span className="font-semibold">
+                          {Math.round(
+                            calculateNutrition(meal.nutrition.carbs) * 0.15
+                          )}
+                          g
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-border/30">
+                        <span className="font-medium">Carbohydrates</span>
+                        <span className="font-semibold">
+                          {calculateNutrition(meal.nutrition.carbs)}g
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-border/30">
+                        <span className="font-medium">Sugars</span>
+                        <span className="font-semibold">
+                          {Math.round(
+                            calculateNutrition(meal.nutrition.carbs) * 0.25
+                          )}
+                          g
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-border/30">
+                        <span className="font-medium">Protein</span>
+                        <span className="font-semibold">
+                          {calculateNutrition(meal.nutrition.protein)}g
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-border/30">
+                        <span className="font-medium">Sodium</span>
+                        <span className="font-semibold">
+                          {Math.round(
+                            calculateNutrition(meal.nutrition.calories) * 0.3
+                          )}
+                          mg
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
+
+          {/* Rating Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="text-center space-y-4"
+          >
+            <h3 className="text-xl font-semibold">Did you like this recipe?</h3>
+            <div className="flex items-center justify-center gap-4">
+              <button className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-2xl">
+                👍
+              </button>
+              <button className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-2xl">
+                👎
+              </button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              You need to be logged in to leave your rating
+            </p>
+          </motion.div>
+
+          {/* Leave a Note */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="space-y-4"
+          >
+            <h3 className="text-xl font-semibold">Leave a note</h3>
+            <CookingModeToggle />
+            <div className="space-y-3">
+              <textarea
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+                placeholder="Share your thoughts about this recipe..."
+                className="w-full p-4 border border-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                rows={4}
+              />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Rating:</span>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        className="w-6 h-6 text-gray-300 hover:text-yellow-400 transition-colors"
+                      >
+                        <Star className="w-full h-full" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  disabled={!reviewText.trim()}
+                  className="px-4 py-2 bg-black text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 transition-colors"
+                >
+                  Post Note
+                </button>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Notes Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="space-y-4 pb-8"
+          >
+            <h3 className="text-xl font-semibold">
+              Notes ({mockReviews.length})
+            </h3>
+            <div className="space-y-4">
+              {mockReviews.map((review) => (
+                <div key={review.id} className="flex gap-3">
+                  <div className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center font-bold text-sm">
+                    {review.author.charAt(0)}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-semibold text-sm">
+                        {review.author}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {review.date}
+                      </span>
+                      <div className="flex items-center ml-auto">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-3 h-3 ${
+                              i < review.rating
+                                ? "fill-yellow-400 text-yellow-400"
+                                : "text-gray-300"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {review.comment}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
         </div>
       </div>
     </div>

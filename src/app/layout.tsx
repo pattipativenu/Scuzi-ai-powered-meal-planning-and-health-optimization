@@ -1,6 +1,5 @@
 "use client";
 
-import type { Metadata } from "next";
 import "./globals.css";
 import VisualEditsMessenger from "../visual-edits/VisualEditsMessenger";
 import ErrorReporter from "@/components/ErrorReporter";
@@ -23,6 +22,10 @@ children: React.ReactNode;
 
   return (
     <html lang="en">
+      <head>
+        <title>Scuzi AI - Food & Health Chat</title>
+        <meta name="description" content="AI-powered meal planning and health chat" />
+      </head>
       <body className="antialiased">
         {/* Mobile-only: Fixed persistent layout structure */}
         <div className="md:contents flex flex-col min-h-screen overflow-hidden">

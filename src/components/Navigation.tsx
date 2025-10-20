@@ -142,11 +142,10 @@ const Nav = ({ setMenuOpen }: {setMenuOpen: (open: boolean) => void;}) => {
             onClick={() => setMenuOpen(false)}
             className="block cursor-pointer no-underline"
             style={{
-              fontFamily: '"Right Grotesk Spatial", sans-serif',
               fontSize: "65px",
               lineHeight: "58px",
               fontWeight: 700,
-              color: "rgb(17, 24, 39)"
+              color: "rgb(0, 0, 0)"
             }}>
 
               {link.name}
@@ -163,31 +162,17 @@ const Nav = ({ setMenuOpen }: {setMenuOpen: (open: boolean) => void;}) => {
                   <User className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <p style={{
-                  fontFamily: '"Right Grotesk Wide", sans-serif',
-                  fontSize: "16px",
-                  fontWeight: 500,
-                  color: "rgb(17, 24, 39)"
-                }}>
+                  <h4>
                     {session.user.name}
-                  </p>
-                  <p style={{
-                  fontFamily: '"General Sans", sans-serif',
-                  fontSize: "14px",
-                  color: "rgb(107, 114, 128)"
-                }}>
+                  </h4>
+                  <p className="text-sm text-secondary">
                     {session.user.email}
                   </p>
                 </div>
               </div>
               <button
               onClick={handleSignOut}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 transition-colors w-full justify-center"
-              style={{
-                fontFamily: '"Right Grotesk Wide", sans-serif',
-                fontSize: "14px",
-                fontWeight: 500
-              }}>
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 transition-colors w-full justify-center nav-link">
 
                 <LogOut className="w-4 h-4" />
                 Sign Out
@@ -198,24 +183,14 @@ const Nav = ({ setMenuOpen }: {setMenuOpen: (open: boolean) => void;}) => {
               <Link
               href="/login"
               onClick={() => setMenuOpen(false)}
-              className="block px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 transition-colors text-center"
-              style={{
-                fontFamily: '"Right Grotesk Wide", sans-serif',
-                fontSize: "14px",
-                fontWeight: 500
-              }}>
+              className="block px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 transition-colors text-center nav-link">
 
                 Sign In
               </Link>
               <Link
               href="/personalize"
               onClick={() => setMenuOpen(false)}
-              className="block px-4 py-2 rounded-lg border-2 border-black text-black hover:bg-gray-50 transition-colors text-center"
-              style={{
-                fontFamily: '"Right Grotesk Wide", sans-serif',
-                fontSize: "14px",
-                fontWeight: 500
-              }}>
+              className="block px-4 py-2 rounded-lg border-2 border-black text-black hover:bg-gray-50 transition-colors text-center nav-link">
 
                 Create Account
               </Link>
@@ -258,7 +233,7 @@ export function Navigation() {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Add WHOOP connection hook
-  const { connect, isLoading: whoopLoading } = useWhoopConnect();
+  const { connect, disconnect, isLoading: whoopLoading, isConnected, metrics, fetchMetrics } = useWhoopConnect();
 
   const placeholders = [
   "Have leftovers? I can make a meal.",
@@ -298,7 +273,25 @@ export function Navigation() {
   };
 
   const handleWhoopConnect = async () => {
-    await connect();
+    console.log("🔘 WHOOP button clicked", { 
+      isConnected, 
+      whoopLoading, 
+      metrics
+    });
+    
+    // Always trigger the connection flow - even if already connected
+    console.log("🔗 Triggering WHOOP connection (allowing reconnection)");
+    try {
+      await connect();
+    } catch (error) {
+      console.error("❌ WHOOP connect error:", error);
+    }
+  };
+
+  const handleWhoopDisconnect = async () => {
+    if (confirm("Are you sure you want to disconnect your WHOOP account?")) {
+      await disconnect();
+    }
   };
 
   const isOnChatPage = pathname === '/chat';
@@ -306,15 +299,15 @@ export function Navigation() {
   const hasSearchQuery = searchQuery.length > 0;
 
   return (
-    <nav className="md:sticky md:top-0 z-50 border-b border-border">
+    <nav className="sticky-nav border-b border-border">
       {/* Top Bar - Yellow Background - Show on ALL pages */}
       <div style={{ backgroundColor: "rgb(209, 222, 38)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center gap-6 h-20">
             {/* Mobile: Always centered SCUZI on all pages */}
             <div className="md:hidden flex items-center justify-center w-full">
-              <Link href="/" className="flex items-center gap-2 font-semibold text-lg" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
-                <span className="!not-italic !whitespace-pre-line !font-extrabold !text-[35px]">SCUZI</span>
+              <Link href="/" className="flex items-center gap-2">
+                <span className="brand-text text-[35px] font-extrabold">Scuzi</span>
               </Link>
             </div>
 
@@ -328,8 +321,8 @@ export function Navigation() {
                     title="Go Back">
                     <ArrowLeft className="w-6 h-6" style={{ color: "rgb(39, 39, 42)" }} />
                   </button>
-                  <Link href="/" className="flex items-center gap-2 font-semibold text-lg" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
-                    <span className="!not-italic !px-[17px] !whitespace-pre-line !font-extrabold !text-[31px]">SCUZI</span>
+                  <Link href="/" className="flex items-center gap-2">
+                    <span className="brand-text text-[31px] font-extrabold px-[17px]">Scuzi</span>
                   </Link>
                 </div>
               </div>
@@ -337,12 +330,12 @@ export function Navigation() {
 
             {/* Desktop Home & Other Pages: Search bar layout */}
             {!isOnChatPage && (
-              <div className="hidden md:flex items-center justify-center w-full relative">
-                <Link href="/" className="flex items-center gap-2 font-semibold text-lg flex-shrink-0 absolute left-0" style={{ fontFamily: '"Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif' }}>
-                  <span className="!not-italic !px-[17px] !whitespace-pre-line !font-extrabold !text-[31px] !w-full !h-full">Scuzi</span>
+              <div className="hidden md:flex items-center justify-between w-full relative">
+                <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+                  <span className="brand-text text-[31px] font-extrabold px-[17px]">Scuzi</span>
                 </Link>
 
-                <div className="flex-1 max-w-2xl mx-auto">
+                <div className="flex-1 max-w-xl lg:max-w-2xl mx-4 lg:mx-auto">
                   <form onSubmit={handleSearch} className="relative w-full">
                     <input
                       ref={searchInputRef}
@@ -350,13 +343,9 @@ export function Navigation() {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder={placeholders[placeholderIndex]}
-                      className="w-full h-11 pl-4 pr-28 rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-black/10 transition-all shimmer-placeholder"
+                      className="w-full h-11 pl-4 pr-28 rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-black/10 transition-all shimmer-placeholder nav-link"
                       style={{
                         backgroundColor: "rgb(209, 222, 38)",
-                        fontFamily: '"Right Grotesk Wide", ui-sans-serif, system-ui, sans-serif',
-                        fontWeight: 500,
-                        fontSize: "16px",
-                        lineHeight: "24px",
                         color: "rgb(39, 39, 42)",
                         boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.05)"
                       }}
@@ -404,12 +393,23 @@ export function Navigation() {
             <div className={`md:hidden flex items-center gap-3 w-full`}>
               <button
                 onClick={handleWhoopConnect}
+                onContextMenu={(e) => {
+                  if (isConnected) {
+                    e.preventDefault();
+                    handleWhoopDisconnect();
+                  }
+                }}
                 disabled={whoopLoading}
-                className="flex items-center gap-2 px-3 py-2 rounded-full bg-black text-white hover:bg-gray-800 transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                </svg>
-                <span style={{ fontFamily: '"Right Grotesk Wide", sans-serif', fontWeight: 500, fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.3px", whiteSpace: "nowrap" }}>
+                className="flex items-center gap-2 px-3 py-2 rounded-full transition-all flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed bg-black text-white hover:bg-gray-800"
+                title={isConnected ? "Right-click to disconnect" : "Click to connect WHOOP"}>
+                {whoopLoading ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                  </svg>
+                )}
+                <span className="nav-link" style={{ fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.3px", whiteSpace: "nowrap" }}>
                   {whoopLoading ? "CONNECTING..." : "WHOOP"}
                 </span>
               </button>
@@ -420,16 +420,27 @@ export function Navigation() {
             </div>
 
             {/* Desktop All Pages: WHOOP + Metrics + Menu (except menu hidden on chat page) */}
-            <div className="hidden md:flex items-center gap-3 w-full">
+            <div className="hidden md:flex items-center justify-between w-full">
               <button
                 onClick={handleWhoopConnect}
+                onContextMenu={(e) => {
+                  if (isConnected) {
+                    e.preventDefault();
+                    handleWhoopDisconnect();
+                  }
+                }}
                 disabled={whoopLoading}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white hover:bg-gray-800 transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                </svg>
-                <span style={{ fontFamily: '"Right Grotesk Wide", sans-serif', fontWeight: 500, fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.3px", whiteSpace: "nowrap" }}>
-                  {whoopLoading ? "CONNECTING..." : "WHOOP CONNECT"}
+                className="flex items-center gap-2 px-4 py-2 rounded-full transition-all flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed bg-black text-white hover:bg-gray-800"
+                title={isConnected ? "Right-click to disconnect" : "Click to connect WHOOP"}>
+                {whoopLoading ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                  </svg>
+                )}
+                <span className="nav-link" style={{ fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.3px", whiteSpace: "nowrap" }}>
+                  {whoopLoading ? "CONNECTING..." : isConnected ? "WHOOP CONNECTED" : "WHOOP CONNECT"}
                 </span>
               </button>
 
@@ -437,7 +448,7 @@ export function Navigation() {
                 <WhoopMiniMetrics />
               </div>
 
-              {/* Menu Button - Only on desktop */}
+              {/* Menu Button - Show on tablet and desktop */}
               {!isOnChatPage && (
                 <div className="relative h-[40px] flex items-center flex-shrink-0">
                   <motion.div

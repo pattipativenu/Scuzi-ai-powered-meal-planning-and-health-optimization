@@ -125,9 +125,9 @@ async function fetchWhoopData(endpoint: string, accessToken: string, params: URL
 async function getDbConnection() {
   return mysql.createConnection({
     host: process.env.RDS_HOST,
-    user: process.env.RDS_USER,
+    user: process.env.RDS_USERNAME,
     password: process.env.RDS_PASSWORD,
-    database: process.env.RDS_DATABASE,
+    database: "WHOOPHEALTHDATA", // Database name is uppercase
     port: Number(process.env.RDS_PORT) || 3306,
   });
 }
@@ -205,110 +205,63 @@ export async function POST(request: NextRequest) {
       const recovery = recoveries.find(r => r.cycle_id === cycle.id);
       const sleep = sleeps.find(s => s.id === recovery?.sleep_id);
 
-      // Transform WHOOP data to RDS schema
+      // Extract date from cycle start for the record
+      const cycleDate = new Date(cycle.start).toISOString().split('T')[0];
+      
+      // Transform WHOOP data to match the whoop_health_data schema
       const dbRecord = {
-        id: `whoop_${cycle.id}_${userId}`,
-        cycle_start_time: cycle.start,
-        cycle_end_time: cycle.end || null,
-        cycle_timezone: cycle.timezone_offset,
-        recovery_score_percent: recovery?.score?.recovery_score || null,
-        resting_heart_rate_bpm: recovery?.score?.resting_heart_rate || null,
-        heart_rate_variability_ms: recovery?.score?.hrv_rmssd_milli || null,
-        skin_temp_celsius: recovery?.score?.skin_temp_celsius || null,
-        blood_oxygen_percent: recovery?.score?.spo2_percentage || null,
-        day_strain: cycle.score?.strain || null,
-        energy_burned_cal: cycle.score?.kilojoule ? Math.round(cycle.score.kilojoule / 4.184) : null,
-        max_hr_bpm: cycle.score?.max_heart_rate || null,
-        average_hr_bpm: cycle.score?.average_heart_rate || null,
-        sleep_onset: sleep?.start || null,
-        wake_onset: sleep?.end || null,
-        sleep_performance_percent: sleep?.score?.sleep_performance_percentage || null,
-        respiratory_rate_rpm: sleep?.score?.respiratory_rate || null,
-        asleep_duration_min: sleep?.score?.stage_summary ? Math.round(
+        userId: userId,
+        date: cycleDate,
+        recoveryScore: recovery?.score?.recovery_score || null,
+        strain: cycle.score?.strain || null,
+        sleepHours: sleep?.score?.stage_summary ? 
           (sleep.score.stage_summary.total_light_sleep_time_milli +
            sleep.score.stage_summary.total_slow_wave_sleep_time_milli +
-           sleep.score.stage_summary.total_rem_sleep_time_milli) / 60000
-        ) : null,
-        in_bed_duration_min: sleep?.score?.stage_summary?.total_in_bed_time_milli 
-          ? Math.round(sleep.score.stage_summary.total_in_bed_time_milli / 60000) : null,
-        light_sleep_duration_min: sleep?.score?.stage_summary?.total_light_sleep_time_milli
-          ? Math.round(sleep.score.stage_summary.total_light_sleep_time_milli / 60000) : null,
-        deep_sws_duration_min: sleep?.score?.stage_summary?.total_slow_wave_sleep_time_milli
-          ? Math.round(sleep.score.stage_summary.total_slow_wave_sleep_time_milli / 60000) : null,
-        rem_duration_min: sleep?.score?.stage_summary?.total_rem_sleep_time_milli
-          ? Math.round(sleep.score.stage_summary.total_rem_sleep_time_milli / 60000) : null,
-        awake_duration_min: sleep?.score?.stage_summary?.total_awake_time_milli
-          ? Math.round(sleep.score.stage_summary.total_awake_time_milli / 60000) : null,
-        sleep_need_min: sleep?.score?.sleep_needed?.baseline_milli
-          ? Math.round(sleep.score.sleep_needed.baseline_milli / 60000) : null,
-        sleep_debt_min: sleep?.score?.sleep_needed?.need_from_sleep_debt_milli
-          ? Math.round(sleep.score.sleep_needed.need_from_sleep_debt_milli / 60000) : null,
-        sleep_efficiency_percent: sleep?.score?.sleep_efficiency_percentage || null,
-        sleep_consistency_percent: sleep?.score?.sleep_consistency_percentage || null,
-        created_at: cycle.created_at,
-        updated_at: new Date().toISOString(),
+           sleep.score.stage_summary.total_rem_sleep_time_milli) / 3600000 : null,
+        caloriesBurned: cycle.score?.kilojoule ? Math.round(cycle.score.kilojoule * 0.239006) : null,
+        avgHr: cycle.score?.average_heart_rate || null,
+        rhr: recovery?.score?.resting_heart_rate || null,
+        hrv: recovery?.score?.hrv_rmssd_milli || null,
+        spo2: recovery?.score?.spo2_percentage || null,
+        skinTemp: recovery?.score?.skin_temp_celsius || null,
+        respiratoryRate: sleep?.score?.respiratory_rate || null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
 
-      // Insert or update record
+      // Check if record already exists for this user and date
       const [existing] = await connection.execute(
-        "SELECT id FROM physiological_cycles WHERE id = ?",
-        [dbRecord.id]
+        "SELECT id FROM whoop_health_data WHERE userId = ? AND date = ?",
+        [dbRecord.userId, dbRecord.date]
       ) as any;
 
       if (existing.length > 0) {
         // Update existing record
         await connection.execute(
-          `UPDATE physiological_cycles SET
-            cycle_start_time = ?, cycle_end_time = ?, cycle_timezone = ?,
-            recovery_score_percent = ?, resting_heart_rate_bpm = ?, heart_rate_variability_ms = ?,
-            skin_temp_celsius = ?, blood_oxygen_percent = ?, day_strain = ?,
-            energy_burned_cal = ?, max_hr_bpm = ?, average_hr_bpm = ?,
-            sleep_onset = ?, wake_onset = ?, sleep_performance_percent = ?,
-            respiratory_rate_rpm = ?, asleep_duration_min = ?, in_bed_duration_min = ?,
-            light_sleep_duration_min = ?, deep_sws_duration_min = ?, rem_duration_min = ?,
-            awake_duration_min = ?, sleep_need_min = ?, sleep_debt_min = ?,
-            sleep_efficiency_percent = ?, sleep_consistency_percent = ?, updated_at = ?
-           WHERE id = ?`,
+          `UPDATE whoop_health_data SET
+            recoveryScore = ?, strain = ?, sleepHours = ?, caloriesBurned = ?,
+            avgHr = ?, rhr = ?, hrv = ?, spo2 = ?, skinTemp = ?, respiratoryRate = ?,
+            updatedAt = ?
+           WHERE userId = ? AND date = ?`,
           [
-            dbRecord.cycle_start_time, dbRecord.cycle_end_time, dbRecord.cycle_timezone,
-            dbRecord.recovery_score_percent, dbRecord.resting_heart_rate_bpm, dbRecord.heart_rate_variability_ms,
-            dbRecord.skin_temp_celsius, dbRecord.blood_oxygen_percent, dbRecord.day_strain,
-            dbRecord.energy_burned_cal, dbRecord.max_hr_bpm, dbRecord.average_hr_bpm,
-            dbRecord.sleep_onset, dbRecord.wake_onset, dbRecord.sleep_performance_percent,
-            dbRecord.respiratory_rate_rpm, dbRecord.asleep_duration_min, dbRecord.in_bed_duration_min,
-            dbRecord.light_sleep_duration_min, dbRecord.deep_sws_duration_min, dbRecord.rem_duration_min,
-            dbRecord.awake_duration_min, dbRecord.sleep_need_min, dbRecord.sleep_debt_min,
-            dbRecord.sleep_efficiency_percent, dbRecord.sleep_consistency_percent, dbRecord.updated_at,
-            dbRecord.id
+            dbRecord.recoveryScore, dbRecord.strain, dbRecord.sleepHours, dbRecord.caloriesBurned,
+            dbRecord.avgHr, dbRecord.rhr, dbRecord.hrv, dbRecord.spo2, dbRecord.skinTemp, 
+            dbRecord.respiratoryRate, dbRecord.updatedAt, dbRecord.userId, dbRecord.date
           ]
         );
         recordsUpdated++;
       } else {
         // Insert new record
         await connection.execute(
-          `INSERT INTO physiological_cycles (
-            id, cycle_start_time, cycle_end_time, cycle_timezone,
-            recovery_score_percent, resting_heart_rate_bpm, heart_rate_variability_ms,
-            skin_temp_celsius, blood_oxygen_percent, day_strain,
-            energy_burned_cal, max_hr_bpm, average_hr_bpm,
-            sleep_onset, wake_onset, sleep_performance_percent,
-            respiratory_rate_rpm, asleep_duration_min, in_bed_duration_min,
-            light_sleep_duration_min, deep_sws_duration_min, rem_duration_min,
-            awake_duration_min, sleep_need_min, sleep_debt_min,
-            sleep_efficiency_percent, sleep_consistency_percent,
-            created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO whoop_health_data (
+            userId, date, recoveryScore, strain, sleepHours, caloriesBurned,
+            avgHr, rhr, hrv, spo2, skinTemp, respiratoryRate, createdAt, updatedAt
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
-            dbRecord.id, dbRecord.cycle_start_time, dbRecord.cycle_end_time, dbRecord.cycle_timezone,
-            dbRecord.recovery_score_percent, dbRecord.resting_heart_rate_bpm, dbRecord.heart_rate_variability_ms,
-            dbRecord.skin_temp_celsius, dbRecord.blood_oxygen_percent, dbRecord.day_strain,
-            dbRecord.energy_burned_cal, dbRecord.max_hr_bpm, dbRecord.average_hr_bpm,
-            dbRecord.sleep_onset, dbRecord.wake_onset, dbRecord.sleep_performance_percent,
-            dbRecord.respiratory_rate_rpm, dbRecord.asleep_duration_min, dbRecord.in_bed_duration_min,
-            dbRecord.light_sleep_duration_min, dbRecord.deep_sws_duration_min, dbRecord.rem_duration_min,
-            dbRecord.awake_duration_min, dbRecord.sleep_need_min, dbRecord.sleep_debt_min,
-            dbRecord.sleep_efficiency_percent, dbRecord.sleep_consistency_percent,
-            dbRecord.created_at, dbRecord.updated_at
+            dbRecord.userId, dbRecord.date, dbRecord.recoveryScore, dbRecord.strain,
+            dbRecord.sleepHours, dbRecord.caloriesBurned, dbRecord.avgHr, dbRecord.rhr,
+            dbRecord.hrv, dbRecord.spo2, dbRecord.skinTemp, dbRecord.respiratoryRate,
+            dbRecord.createdAt, dbRecord.updatedAt
           ]
         );
         recordsInserted++;

@@ -11,10 +11,10 @@ export function FloatingAskScuzi() {
   const [subtextIndex, setSubtextIndex] = useState(0);
 
   const subtexts = [
-    "Turn leftovers into meals",
-    "Convert food to nutrition insights",
-    "Find recipes from your fridge",
-    "Optimize meals with WHOOP data",
+    "Have leftovers? I can make a meal.",
+    "Want to know nutrition of your meal? Let me know.",
+    "Need a meal plan? I can do that.",
+    "Worried about your food or have a doubt about your food? Ask me.",
   ];
 
   // Only show on Home, Plan Ahead, and Pantry pages
@@ -26,7 +26,7 @@ export function FloatingAskScuzi() {
     
     const interval = setInterval(() => {
       setSubtextIndex((prev) => (prev + 1) % subtexts.length);
-    }, 3000);
+    }, 3500);
     return () => clearInterval(interval);
   }, [shouldShow]);
 
@@ -45,25 +45,12 @@ export function FloatingAskScuzi() {
     >
       <button
         onClick={handleClick}
-        className="w-full max-w-md h-14 rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98] flex flex-col items-center justify-center gap-0.5 backdrop-blur-md"
+        className="w-full max-w-md h-14 rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98] flex items-center justify-center backdrop-blur-md"
         style={{
           background: "rgba(0, 0, 0, 0.75)",
         }}
       >
-        <div className="flex items-center gap-2">
-          <MessageCircle className="w-5 h-5 text-white" />
-          <span
-            style={{
-              fontFamily: '"Right Grotesk Wide", sans-serif',
-              fontSize: "16px",
-              fontWeight: 600,
-              color: "white",
-            }}
-          >
-            💬 Ask Scuzi
-          </span>
-        </div>
-        <div className="h-4 overflow-hidden">
+        <div className="text-center">
           <AnimatePresence mode="wait">
             <motion.span
               key={subtextIndex}
@@ -73,9 +60,9 @@ export function FloatingAskScuzi() {
               transition={{ duration: 0.3 }}
               style={{
                 fontFamily: '"General Sans", sans-serif',
-                fontSize: "11px",
-                fontWeight: 400,
-                color: "rgba(255, 255, 255, 0.7)",
+                fontSize: "15px",
+                fontWeight: 500,
+                color: "white",
               }}
             >
               {subtexts[subtextIndex]}

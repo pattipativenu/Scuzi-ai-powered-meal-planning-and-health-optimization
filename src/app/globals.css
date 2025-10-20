@@ -52,29 +52,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@font-face {
-  font-family: "Right Grotesk Spatial";
-  src: url("/fonts/RightGrotesk-Spatial-Regular.woff2") format("woff2");
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
+/* Right Grotesk Spatial font will be added later - using system fallbacks */
 
-@font-face {
-  font-family: "Right Grotesk Wide";
-  src: url("/fonts/RightGrotesk-Wide-Regular.woff2") format("woff2");
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "General Sans";
-  src: url("/fonts/GeneralSans-Regular.woff2") format("woff2");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
+/* Font files will be added later - using system fallbacks for now */
 
 @custom-variant dark (&:is(.dark *));
 
@@ -83,7 +63,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: "Right Grotesk Spatial", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-heading: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -194,25 +174,329 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 400;
   }
   
-  /* Apply Right Grotesk Spatial to all headings */
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading);
+  /* ✳️ Scuzi Typography System (Final v2) - Right Grotesk Wide & General Sans */
+  
+  /* 🪶 Headings (H1–H4) - Right Grotesk Spatial (using system fonts as fallback) */
+  h1 {
+    font-family: "Right Grotesk Spatial", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 700;
+    font-size: clamp(36px, 5vw, 65px);
+    line-height: clamp(40px, 5.5vw, 58px);
+    color: rgb(39, 39, 42);
+    margin-bottom: 24px;
+    text-transform: lowercase;
   }
   
-  /* WHOOP Metrics Ticker Animation */
+  h1::first-letter {
+    text-transform: uppercase;
+  }
+  
+  h2 {
+    font-family: "Right Grotesk Spatial", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 600;
+    font-size: clamp(28px, 4vw, 36px);
+    line-height: clamp(34px, 4.5vw, 42px);
+    color: rgb(39, 39, 42);
+    margin-bottom: 16px;
+    text-transform: lowercase;
+  }
+  
+  h2::first-letter {
+    text-transform: uppercase;
+  }
+  
+  h3 {
+    font-family: "Right Grotesk Spatial", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 500;
+    font-size: clamp(20px, 3vw, 24px);
+    line-height: clamp(26px, 3.5vw, 30px);
+    color: rgb(39, 39, 42);
+    margin-bottom: 16px;
+    text-transform: lowercase;
+  }
+  
+  h3::first-letter {
+    text-transform: uppercase;
+  }
+  
+  h4 {
+    font-family: "Right Grotesk Spatial", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 500;
+    font-size: clamp(18px, 2.5vw, 20px);
+    line-height: clamp(24px, 3vw, 26px);
+    color: rgb(39, 39, 42);
+    margin-bottom: 12px;
+    text-transform: lowercase;
+  }
+  
+  h4::first-letter {
+    text-transform: uppercase;
+  }
+  
+  /* 🧱 Body & Paragraph Text - General Sans (using system fonts as fallback) */
+  p {
+    font-family: "General Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 400;
+    font-size: clamp(15px, 2vw, 16px);
+    line-height: clamp(22px, 2.5vw, 24px);
+    color: rgb(39, 39, 42);
+    margin-bottom: 12px;
+  }
+  
+  /* Medium text for highlights */
+  .text-medium, p.medium {
+    font-family: "General Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 500;
+    font-size: clamp(15px, 2vw, 16px);
+    line-height: clamp(22px, 2.5vw, 24px);
+  }
+  
+  /* 🧭 Navigation, Buttons & Inputs - Right Grotesk Wide */
+  button, .btn {
+    font-family: "Right Grotesk Wide", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 500;
+    font-size: clamp(15px, 2vw, 16px);
+    line-height: clamp(22px, 2.5vw, 24px);
+  }
+  
+  input, textarea {
+    font-family: "General Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 400;
+    font-size: 15px;
+    line-height: 22px;
+  }
+  
+  /* Navigation links */
+  nav a, .nav-link {
+    font-family: "Right Grotesk Wide", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 500;
+  }
+  
+  /* Secondary text */
+  .text-secondary, .text-muted {
+    color: rgb(107, 114, 128);
+  }
+  
+  .text-accent {
+    color: rgb(17, 24, 39);
+  }
+  
+  .text-disabled {
+    color: rgb(156, 163, 175);
+  }
+  
+  /* Small text */
+  .text-sm, small {
+    font-family: "General Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 400;
+    font-size: clamp(13px, 1.8vw, 14px);
+    line-height: clamp(18px, 2.2vw, 20px);
+  }
+  
+  /* Extra small text */
+  .text-xs {
+    font-family: "General Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 16px;
+  }
+  
+  /* 📱 Responsive Breakpoints */
+  /* Mobile: <768px */
+  /* Tablet: 768px-1024px */
+  /* Desktop: >1024px */
+  
+  /* Sticky Navigation */
+  .sticky-nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    transition: all 0.3s ease;
+  }
+  
+  @media (max-width: 767px) {
+    .sticky-nav {
+      position: relative; /* Mobile uses bottom nav, so top nav is not sticky */
+    }
+  }
+  
+  /* Ensure sticky works on tablet and desktop */
+  @media (min-width: 768px) {
+    .sticky-nav {
+      position: sticky !important;
+      top: 0 !important;
+      z-index: 50 !important;
+      background: white;
+      backdrop-filter: blur(10px);
+    }
+  }
+  
+  /* Fix any potential layout shifts */
+  .sticky-nav * {
+    box-sizing: border-box;
+  }
+  
+  /* Brand Typography - "Scuzi" with lowercase except S */
+  .brand-text {
+    font-family: "Right Grotesk Wide", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 700;
+    text-transform: none;
+  }
+  
+  .brand-text::first-letter {
+    text-transform: uppercase;
+  }
+
+  /* Heading Utility Classes */
+  .heading-h1 {
+    font-family: "Right Grotesk Spatial", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 700;
+    font-size: clamp(36px, 5vw, 65px);
+    line-height: clamp(40px, 5.5vw, 58px);
+    text-transform: lowercase;
+  }
+  
+  .heading-h1::first-letter {
+    text-transform: uppercase;
+  }
+  
+  .heading-h2 {
+    font-family: "Right Grotesk Spatial", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 600;
+    font-size: clamp(28px, 4vw, 36px);
+    line-height: clamp(34px, 4.5vw, 42px);
+    text-transform: lowercase;
+  }
+  
+  .heading-h2::first-letter {
+    text-transform: uppercase;
+  }
+  
+  .heading-h3 {
+    font-family: "Right Grotesk Spatial", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 500;
+    font-size: clamp(20px, 3vw, 24px);
+    line-height: clamp(26px, 3.5vw, 30px);
+    text-transform: lowercase;
+  }
+  
+  .heading-h3::first-letter {
+    text-transform: uppercase;
+  }
+  
+  .heading-h4 {
+    font-family: "Right Grotesk Spatial", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 500;
+    font-size: clamp(18px, 2.5vw, 20px);
+    line-height: clamp(24px, 3vw, 26px);
+    text-transform: lowercase;
+  }
+  
+  .heading-h4::first-letter {
+    text-transform: uppercase;
+  }
+  
+  /* Hero Section Responsive Improvements */
+  .hero-container {
+    transition: all 0.3s ease;
+  }
+  
+  /* Mobile hero adjustments */
+  @media (max-width: 767px) {
+    .hero-container {
+      margin-top: 6rem;
+      padding-top: 3rem;
+    }
+    
+    .hero-container section {
+      padding-top: 4rem;
+    }
+  }
+  
+  /* Full height hero for desktop */
+  @media (min-width: 1024px) {
+    .hero-container {
+      min-height: 85vh;
+      display: flex;
+      align-items: center;
+    }
+    
+    /* Perfect desktop balance */
+    .hero-container section {
+      width: 100%;
+      max-width: 96vw;
+      margin: 0 auto;
+    }
+  }
+  
+  /* Ensure proper spacing and alignment */
+  .hero-text-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2rem;
+  }
+  
+  /* Button styling consistency */
+  .btn {
+    font-family: "Right Grotesk Wide", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 24px;
+    transition: all 0.3s ease;
+  }
+  
+  /* Responsive image handling */
+  .hero-image {
+    transition: transform 0.3s ease;
+  }
+  
+  .hero-image:hover {
+    transform: scale(1.02);
+  }
+  
+  /* Smooth scrolling for better UX */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Ensure proper vertical rhythm */
+  .vertical-rhythm > * + * {
+    margin-top: 1.5rem;
+  }
+  
+  /* Typography spacing adjustments */
+  h1 + p {
+    margin-top: 1rem;
+  }
+  
+  h2 + p {
+    margin-top: 0.75rem;
+  }
+  
+  h3 + p, h4 + p {
+    margin-top: 0.5rem;
+  }
+  
+  /* WHOOP Metrics Ticker Animation - Seamless Loop */
   @keyframes scroll-rtl {
     0% {
       transform: translateX(0);
     }
     100% {
-      transform: translateX(-33.333%);
+      transform: translateX(-50%);
     }
   }
   
   .animate-scroll-rtl {
     animation: scroll-rtl 30s linear infinite;
+    backface-visibility: hidden;
+    perspective: 1000px;
+    transform: translateZ(0);
   }
   
   .animate-scroll-rtl:hover {
