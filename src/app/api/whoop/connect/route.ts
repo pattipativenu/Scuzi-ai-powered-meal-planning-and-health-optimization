@@ -7,9 +7,12 @@ export async function GET(request: NextRequest) {
   try {
     console.log("🚀 WHOOP Connect API called");
 
-    // Use environment variables for simplicity and reliability
-    const clientId = process.env.WHOOP_CLIENT_ID;
-    const stateSecret = process.env.OAUTH_STATE_SECRET;
+    // Get credentials from secrets manager
+    const { getAppSecrets } = await import('@/lib/secrets-manager');
+    const secrets = await getAppSecrets();
+    
+    const clientId = secrets.whoop.clientId;
+    const stateSecret = secrets.whoop.oauthStateSecret;
     
     if (!clientId || !stateSecret) {
       console.error("❌ Missing WHOOP credentials");

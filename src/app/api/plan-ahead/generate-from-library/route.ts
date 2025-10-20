@@ -1,214 +1,165 @@
-import { NextRequest, NextResponse } from "next/server";
-import { DynamoDBClient, ScanCommand } from "@aws-sdk/client-dynamodb";
-import { unmarshall } from "@aws-sdk/util-dynamodb";
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
+import { fetchUserWhoopData, analyzeWhoopData } from '@/lib/whoop-analyzer';
+import { MealLibraryService } from '@/lib/meal-library-service';
 
-const dynamoClient = new DynamoDBClient({
-  region: process.env.AWS_REGION || "us-east-1",
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
+export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+  console.log('🚀 [LIBRARY-GEN] Starting meal generation from library based on WHOOP data');
 
-const MEALS_TABLE = "meals_library";
-const DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-const MEAL_TYPES = ["Breakfast", "Lunch", "Snack", "Dinner"];
-
-interface MealFromLibrary {
-  meal_id: string;
-  meal_type: string;
-  name: string;
-  description: string;
-  ingredients: Array<{ name: string; amount: string }>;
-  instructions: string[];
-  prep_time: number;
-  cook_time: number;
-  servings: number;
-  nutrition: {
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-  };
-  imageUrl?: string;
-  imagePrompt?: string;
-}
-
-interface GeneratedMeal {
-  day: string;
-  meal_type: string;
-  name: string;
-  description: string;
-  ingredients: Array<{ name: string; amount: string }>;
-  instructions: string[];
-  prep_time: number;
-  cook_time: number;
-  servings: number;
-  nutrition: {
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-  };
-  image: string;
-  meal_id: string;
-}
-
-/**
- * Intelligent meal selection algorithm:
- * - Prioritizes using maximum variety from dataset
- * - Enforces max 2 repeats per meal across the week
- * - Ensures balanced distribution
- */
-function selectMealsWithRepeatLimit(
-  meals: MealFromLibrary[],
-  mealType: string,
-  count: number = 7
-): MealFromLibrary[] {
-  const typeMeals = meals.filter(
-    (m) => m.meal_type.toLowerCase() === mealType.toLowerCase()
-  );
-
-  if (typeMeals.length === 0) {
-    throw new Error(`No ${mealType} meals found in library`);
-  }
-
-  // Shuffle for randomness
-  const shuffled = [...typeMeals].sort(() => Math.random() - 0.5);
-  
-  const selected: MealFromLibrary[] = [];
-  const usageCount = new Map<string, number>();
-
-  // First pass: Use each meal once
-  for (const meal of shuffled) {
-    if (selected.length >= count) break;
-    selected.push(meal);
-    usageCount.set(meal.meal_id, 1);
-  }
-
-  // Second pass: If still need more meals, repeat (max 2 times per meal)
-  let attempts = 0;
-  while (selected.length < count && attempts < 100) {
-    for (const meal of shuffled) {
-      if (selected.length >= count) break;
-      const currentCount = usageCount.get(meal.meal_id) || 0;
-      if (currentCount < 2) {
-        selected.push(meal);
-        usageCount.set(meal.meal_id, currentCount + 1);
-      }
-    }
-    attempts++;
-  }
-
-  // Final pass: If still not enough (very rare), allow more repeats
-  while (selected.length < count) {
-    const randomMeal = shuffled[Math.floor(Math.random() * shuffled.length)];
-    selected.push(randomMeal);
-    const currentCount = usageCount.get(randomMeal.meal_id) || 0;
-    usageCount.set(randomMeal.meal_id, currentCount + 1);
-  }
-
-  return selected.slice(0, count);
-}
-
-export async function POST(req: NextRequest) {
   try {
-    console.log("Starting meal generation from library...");
+    // Step 1: Verify user authentication
+    const session = await auth.api.getSession({ headers: request.headers });
+    let userId = session?.user?.id;
 
-    // Step 1: Fetch all meals from DynamoDB
-    const scanCommand = new ScanCommand({
-      TableName: MEALS_TABLE,
-    });
-
-    const scanResult = await dynamoClient.send(scanCommand);
-    
-    if (!scanResult.Items || scanResult.Items.length === 0) {
-      return NextResponse.json(
-        {
-          status: "error",
-          message: "No meals found in library. Please seed the meals_library table first.",
-        },
-        { status: 404 }
-      );
+    // TEMPORARY: For testing, use test user if no auth
+    if (!userId) {
+      console.warn('⚠️ [AUTH] No authentication found, using test user');
+      userId = 'test_user_library_integration';
     }
 
-    const allMeals: MealFromLibrary[] = scanResult.Items.map((item) => {
-      const meal = unmarshall(item);
-      return {
-        meal_id: meal.meal_id,
+    console.log(`✅ [AUTH] User authenticated: ${userId}`);
+
+    // Step 2: Fetch and analyze WHOOP data
+    console.log('📊 [WHOOP] Fetching user WHOOP health data...');
+    
+    let whoopData;
+    let whoopAnalysis;
+    
+    try {
+      whoopData = await fetchUserWhoopData(userId, 7);
+      
+      if (whoopData.length === 0) {
+        console.warn('⚠️ [WHOOP] No WHOOP data found, using default analysis');
+        // Create default analysis for users without WHOOP data
+        whoopAnalysis = {
+          userId,
+          dataPoints: 0,
+          dateRange: { start: 'N/A', end: 'N/A' },
+          averages: { recovery: 65, strain: 12, sleep: 7.5, hrv: 45, rhr: 65, calories: 2200 },
+          trends: { recovery: 'stable' as const, sleep: 'stable' as const, strain: 'stable' as const },
+          physiologicalState: {
+            fatigueLevel: 'moderate' as const,
+            recoveryStatus: 'good' as const,
+            metabolicDemand: 'moderate' as const,
+            sleepQuality: 'good' as const
+          },
+          nutritionalRecommendations: {
+            proteinEmphasis: 'moderate' as const,
+            carbTiming: 'balanced' as const,
+            antiInflammatory: false,
+            hydrationFocus: false,
+            energyDensity: 'moderate' as const
+          }
+        };
+      } else {
+        whoopAnalysis = analyzeWhoopData(whoopData);
+        console.log(`✅ [WHOOP] Analyzed ${whoopData.length} days of health data`);
+      }
+    } catch (whoopError) {
+      console.error('❌ [WHOOP] Error fetching WHOOP data:', whoopError);
+      return NextResponse.json({
+        error: 'Failed to fetch WHOOP health data',
+        step: 'whoop_analysis',
+        details: whoopError instanceof Error ? whoopError.message : 'Unknown error'
+      }, { status: 500 });
+    }
+
+    // Step 3: Get library statistics
+    console.log('📚 [LIBRARY] Checking meal library status...');
+    const libraryStats = await MealLibraryService.getLibraryStats();
+    
+    console.log(`📚 [LIBRARY] Library stats:`, libraryStats);
+
+    if (libraryStats.mealsWithImages < 20) {
+      return NextResponse.json({
+        error: 'Insufficient meals in library',
+        message: `Only ${libraryStats.mealsWithImages} meals with images available. Need at least 20 meals to generate a diverse meal plan.`,
+        step: 'library_validation',
+        libraryStats,
+      }, { status: 400 });
+    }
+
+    // Step 4: Select meals from library based on WHOOP analysis
+    console.log('🎯 [SELECTION] Selecting optimal meals from library...');
+    
+    let mealSelection;
+    try {
+      mealSelection = await MealLibraryService.selectMealsFromLibrary(whoopAnalysis);
+      console.log(`✅ [SELECTION] Selected ${mealSelection.meals.length} meals from library`);
+    } catch (selectionError) {
+      console.error('❌ [SELECTION] Error selecting meals from library:', selectionError);
+      return NextResponse.json({
+        error: 'Failed to select meals from library',
+        step: 'meal_selection',
+        details: selectionError instanceof Error ? selectionError.message : 'Unknown error'
+      }, { status: 500 });
+    }
+
+    // Step 5: Return the meal plan
+    const duration = Date.now() - startTime;
+    console.log(`🎉 [SUCCESS] Library-based meal generation completed in ${duration}ms`);
+
+    return NextResponse.json({
+      success: true,
+      meals: mealSelection.meals.map(meal => ({
+        day: meal.day,
         meal_type: meal.meal_type,
         name: meal.name,
         description: meal.description,
-        ingredients: meal.ingredients || [],
-        instructions: meal.instructions || [],
-        prep_time: meal.prep_time || 0,
-        cook_time: meal.cook_time || 0,
-        servings: meal.servings || 1,
-        nutrition: meal.nutrition || { calories: 0, protein: 0, carbs: 0, fat: 0 },
-        imageUrl: meal.imageUrl || "",
-        imagePrompt: meal.imagePrompt || "",
-      };
+        ingredients: meal.ingredients,
+        instructions: meal.instructions,
+        prep_time: meal.prep_time,
+        cook_time: meal.cook_time,
+        servings: meal.servings,
+        nutrition: meal.nutrition,
+        image: meal.image,
+        meal_id: meal.meal_id,
+      })),
+      generation_type: 'library_based',
+      whoop_analysis: whoopAnalysis,
+      whoop_insights: mealSelection.whoopInsights,
+      generation_summary: mealSelection.selectionSummary,
+      library_stats: libraryStats,
+      processing_time_ms: duration,
+      step: 'completed'
     });
 
-    console.log(`Fetched ${allMeals.length} meals from library`);
-
-    // Step 2: Select meals for each type with repeat limit
-    const generatedMeals: GeneratedMeal[] = [];
-
-    for (const mealType of MEAL_TYPES) {
-      try {
-        const selectedMeals = selectMealsWithRepeatLimit(allMeals, mealType, 7);
-        
-        // Assign to days of week
-        selectedMeals.forEach((meal, index) => {
-          generatedMeals.push({
-            day: DAYS_OF_WEEK[index],
-            meal_type: mealType,
-            name: meal.name,
-            description: meal.description,
-            ingredients: meal.ingredients,
-            instructions: meal.instructions,
-            prep_time: meal.prep_time,
-            cook_time: meal.cook_time,
-            servings: meal.servings,
-            nutrition: meal.nutrition,
-            image: meal.imageUrl || "/placeholder-meal.jpg",
-            meal_id: meal.meal_id,
-          });
-        });
-      } catch (error) {
-        console.error(`Error selecting ${mealType} meals:`, error);
-        return NextResponse.json(
-          {
-            status: "error",
-            message: `Failed to select ${mealType} meals: ${error instanceof Error ? error.message : "Unknown error"}`,
-          },
-          { status: 500 }
-        );
-      }
-    }
-
-    // Step 3: Verify we have 28 meals (7 days × 4 meal types)
-    if (generatedMeals.length !== 28) {
-      console.warn(`Generated ${generatedMeals.length} meals instead of expected 28`);
-    }
-
-    console.log(`Successfully generated ${generatedMeals.length} meals from library`);
-
-    return NextResponse.json({
-      status: "success",
-      meals: generatedMeals,
-      message: `Generated ${generatedMeals.length} meals from library`,
-      librarySize: allMeals.length,
-    });
   } catch (error) {
-    console.error("Error generating meals from library:", error);
-    return NextResponse.json(
-      {
-        status: "error",
-        message: error instanceof Error ? error.message : "Failed to generate meals from library",
-      },
-      { status: 500 }
-    );
+    const duration = Date.now() - startTime;
+    console.error('💥 [ERROR] Fatal error in library-based meal generation:', error);
+    
+    return NextResponse.json({
+      error: 'Library-based meal generation failed',
+      step: 'fatal_error',
+      details: error instanceof Error ? error.message : 'Unknown error',
+      processing_time_ms: duration
+    }, { status: 500 });
+  }
+}
+
+// GET endpoint for checking library status
+export async function GET() {
+  try {
+    const libraryStats = await MealLibraryService.getLibraryStats();
+    
+    return NextResponse.json({
+      success: true,
+      library_stats: libraryStats,
+      ready_for_generation: libraryStats.mealsWithImages >= 20,
+      capabilities: {
+        total_meals: libraryStats.totalMeals,
+        meals_with_images: libraryStats.mealsWithImages,
+        meal_types: Object.keys(libraryStats.mealsByType),
+        available_tags: libraryStats.availableTags.slice(0, 10), // First 10 tags
+      }
+    });
+
+  } catch (error) {
+    console.error('Error checking library status:', error);
+    return NextResponse.json({
+      error: 'Failed to check library status',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }

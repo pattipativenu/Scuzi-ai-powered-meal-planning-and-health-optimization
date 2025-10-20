@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { MessageCircle } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 
@@ -17,8 +17,8 @@ export function FloatingAskScuzi() {
     "Worried about your food or have a doubt about your food? Ask me.",
   ];
 
-  // Only show on Home, Plan Ahead, and Pantry pages
-  const shouldShow = pathname === '/' || pathname === '/plan-ahead' || pathname === '/pantry';
+  // Only show on Home, Plan Ahead, Pantry, and History detail pages
+  const shouldShow = pathname === '/' || pathname === '/plan-ahead' || pathname === '/pantry' || pathname.startsWith('/history/');
 
   // Rotate subtext every 3 seconds
   useEffect(() => {
@@ -45,12 +45,13 @@ export function FloatingAskScuzi() {
     >
       <button
         onClick={handleClick}
-        className="w-full max-w-md h-14 rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98] flex items-center justify-center backdrop-blur-md"
-        style={{
-          background: "rgba(0, 0, 0, 0.75)",
-        }}
+        className="w-full max-w-md h-14 bg-black/75 backdrop-blur-md text-white rounded-xl hover:bg-black/80 transition-all active:scale-[0.98] flex items-center justify-center gap-3 px-4"
       >
-        <div className="text-center">
+        <Sparkles 
+          className="w-5 h-5 flex-shrink-0" 
+          style={{ color: 'rgb(209,222,38)' }}
+        />
+        <div className="text-center flex-1">
           <AnimatePresence mode="wait">
             <motion.span
               key={subtextIndex}

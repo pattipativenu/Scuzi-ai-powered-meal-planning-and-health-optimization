@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1760978422517,
+      "tag": "0000_abandoned_marvel_apes",
+      "breakpoints": true
+    }
+  ]
+}

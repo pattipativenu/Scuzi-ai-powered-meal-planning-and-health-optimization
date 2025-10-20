@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   InvokeModelCommand,
 } from "@aws-sdk/client-bedrock-runtime";
-import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { UpdateCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import { dynamoDb, HISTORY_TABLE_NAME } from "@/lib/dynamodb-config";
 import { bedrockClient } from "@/lib/aws-config";
+import { cacheGeneratedImage } from "@/lib/image-cache";
 
 // ============================================
 // INCREASE API ROUTE TIMEOUT
@@ -17,7 +18,8 @@ export const maxDuration = 60; // 60 seconds max execution time
 
 export async function POST(request: NextRequest) {
   console.log("=".repeat(80));
-  console.log("[IMAGE API] NEW REQUEST at:", new Date().toISOString());
+  console.log("[IMAGE API] 🚨 NEW IMAGE GENERATION REQUEST at:", new Date().toISOString());
+  console.log("[IMAGE API] 🚨 This should appear in logs if API is called!");
   console.log("=".repeat(80));
   
   try {
@@ -117,23 +119,70 @@ export async function POST(request: NextRequest) {
     const imageUrl = `data:image/png;base64,${base64Image}`;
 
     // ============================================
-    // UPDATE DYNAMODB
+    // UPDATE DYNAMODB AND STORE IN MEALS LIBRARY
     // ============================================
 
     if (historyItemId) {
       console.log("[DYNAMODB] Updating history item:", historyItemId);
       try {
-        const updateCommand = new UpdateCommand({
-          TableName: HISTORY_TABLE_NAME,
-          Key: { id: historyItemId },
-          UpdateExpression: "SET image_url = :imageUrl",
-          ExpressionAttributeValues: {
-            ":imageUrl": imageUrl,
-          },
-        });
+        // Try to update history item with image URL (with error handling)
+        console.log("[DYNAMODB] 🚨 ATTEMPTING TO UPDATE HISTORY WITH IMAGE");
+        console.log("[DYNAMODB] 🚨 History Item ID:", historyItemId);
+        console.log("[DYNAMODB] 🚨 Image URL length:", imageUrl.length);
+        
+        try {
+          const updateCommand = new UpdateCommand({
+            TableName: HISTORY_TABLE_NAME,
+            Key: { id: historyItemId },
+            UpdateExpression: "SET image_url = :imageUrl",
+            ExpressionAttributeValues: {
+              ":imageUrl": imageUrl,
+            },
+            ReturnValues: "ALL_NEW"
+          });
 
-        await dynamoDb.send(updateCommand);
-        console.log("[DYNAMODB] ✅ Successfully updated");
+          const result = await dynamoDb.send(updateCommand);
+          console.log("[DYNAMODB] ✅ Successfully updated history with image URL!");
+          console.log("[DYNAMODB] ✅ Updated item:", result.Attributes?.id);
+          
+        } catch (dbError) {
+          console.error("[DYNAMODB] ❌ Failed to update history item:", dbError);
+          console.log("[DYNAMODB] 🚨 Attempting S3 upload and retry...");
+          
+          // Store in cache as backup
+          cacheGeneratedImage(historyItemId, imageUrl, dishName);
+          
+          // Try uploading to S3 and storing S3 URL instead
+          try {
+            console.log("[S3] 🚨 Uploading large image to S3...");
+            const { uploadImageToS3 } = await import("@/lib/meal-library-utils");
+            const s3Url = await uploadImageToS3(base64Image, dishName);
+            
+            if (s3Url) {
+              console.log("[S3] ✅ Uploaded to S3, trying DynamoDB with S3 URL...");
+              
+              const retryUpdateCommand = new UpdateCommand({
+                TableName: HISTORY_TABLE_NAME,
+                Key: { id: historyItemId },
+                UpdateExpression: "SET image_url = :imageUrl, ai_generated_image = :aiImage",
+                ExpressionAttributeValues: {
+                  ":imageUrl": s3Url,
+                  ":aiImage": s3Url,
+                },
+                ReturnValues: "ALL_NEW"
+              });
+
+              await dynamoDb.send(retryUpdateCommand);
+              console.log("[DYNAMODB] ✅ Successfully updated with S3 URL!");
+              console.log("[DYNAMODB] ✅ Image now visible in frontend history!");
+            }
+          } catch (s3Error) {
+            console.error("[S3] ❌ S3 upload failed:", s3Error);
+          }
+        }
+        
+        console.log("[IMAGE API] 🚨 IMAGE GENERATION COMPLETED");
+        
       } catch (dbError) {
         console.error("[DYNAMODB] ❌ Update failed:", dbError);
       }

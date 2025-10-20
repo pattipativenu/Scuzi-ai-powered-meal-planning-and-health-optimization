@@ -1,0 +1,7 @@
+# Copy this file to terraform.tfvars and update the values
+
+# Database password (use a strong password)
+db_password = "your_secure_password_here"
+
+# Environment
+environment = "development"

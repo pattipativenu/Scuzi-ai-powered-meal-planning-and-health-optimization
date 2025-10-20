@@ -8,6 +8,8 @@ export interface HistoryItem {
   timestamp: number;
   type: string;
   ai_response?: string;
+  ai_generated_image?: string;
+  generated_image_url?: string;
 }
 
 export function useHistoryFeed() {

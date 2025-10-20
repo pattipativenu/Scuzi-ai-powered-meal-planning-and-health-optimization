@@ -34,7 +34,7 @@ export function Navigation() {
               Orchids
             </Link>
           </div>
-          <div className="flex items-center space-x-1 overflow-x-auto">
+          <div className="flex items-center space-x-1 overflow-x-auto scrollbar-hide">
             {navItems.map((item) => (
               <Link
                 key={item.href}

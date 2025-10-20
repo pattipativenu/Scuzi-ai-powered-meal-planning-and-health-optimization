@@ -41,7 +41,7 @@ export default function PlanAheadPage() {
   const mealTypes = ["Breakfast", "Lunch", "Snack", "Dinner"];
   const MAX_MEALS = 28;
 
-  // Load existing meal plan on mount
+  // Load existing meal plan on mount - PERSISTENT MEALS
   useEffect(() => {
     loadExistingMealPlan();
   }, []);
@@ -49,21 +49,25 @@ export default function PlanAheadPage() {
   const loadExistingMealPlan = async () => {
     try {
       // First check localStorage for immediate access
-      const cachedMeals = localStorage.getItem("currentMealPlan");
+      const cachedMeals = localStorage.getItem("persistentMealPlan");
       if (cachedMeals) {
         const parsed = JSON.parse(cachedMeals);
+        console.log("📱 Loaded persistent meal plan from localStorage:", parsed.length, "meals");
         setMeals(parsed);
         return;
       }
 
-      // Fall back to API
+      // Fall back to API to check for saved meal plan
       const response = await fetch("/api/plan-ahead/retrieve");
       const data = await response.json();
       
       if (data.status === "success" && data.mealPlan?.meals) {
+        console.log("💾 Loaded persistent meal plan from database:", data.mealPlan.meals.length, "meals");
         setMeals(data.mealPlan.meals);
-        // Cache to localStorage
-        localStorage.setItem("currentMealPlan", JSON.stringify(data.mealPlan.meals));
+        // Cache to localStorage with persistent key
+        localStorage.setItem("persistentMealPlan", JSON.stringify(data.mealPlan.meals));
+      } else {
+        console.log("📝 No existing meal plan found - user needs to generate first plan");
       }
     } catch (error) {
       console.error("Error loading meal plan:", error);
@@ -77,45 +81,57 @@ export default function PlanAheadPage() {
     setGenerationStep("Analyzing your WHOOP health data...");
 
     try {
-      // Step 1: Check AI generation capabilities
-      setGenerationStep("Checking your health data and meal history...");
+      // Step 1: Check meal library and generation capabilities
+      setGenerationStep("Checking meal library and your health data...");
       setMealProgress(2);
       
-      let apiEndpoint = "/api/plan-ahead/generate-ai-meals";
+      let apiEndpoint = "/api/plan-ahead/generate-from-library";
       let capabilities;
       
       try {
-        const capabilitiesResponse = await fetch(apiEndpoint);
+        // First try library-based generation (preferred)
+        const libraryResponse = await fetch(apiEndpoint);
         
-        if (!capabilitiesResponse.ok) {
-          const errorText = await capabilitiesResponse.text();
-          console.warn("Main AI API not available, switching to fallback:", errorText);
-          
-          // Try fallback API
-          apiEndpoint = "/api/plan-ahead/generate-ai-meals-fallback";
-          const fallbackResponse = await fetch(apiEndpoint);
-          
-          if (!fallbackResponse.ok) {
-            throw new Error("Both main and fallback APIs are unavailable");
-          }
-          
-          capabilities = await fallbackResponse.json();
-          console.log("✅ Using fallback AI generation mode");
+        if (libraryResponse.ok) {
+          capabilities = await libraryResponse.json();
+          console.log("✅ Using meal library generation mode");
         } else {
-          capabilities = await capabilitiesResponse.json();
-          console.log("✅ Using full AI generation mode");
+          console.warn("Library API not ready, falling back to AI generation");
+          
+          // Fallback to AI generation
+          apiEndpoint = "/api/plan-ahead/generate-ai-meals";
+          const aiResponse = await fetch(apiEndpoint);
+          
+          if (!aiResponse.ok) {
+            // Final fallback
+            apiEndpoint = "/api/plan-ahead/generate-ai-meals-fallback";
+            const fallbackResponse = await fetch(apiEndpoint);
+            
+            if (!fallbackResponse.ok) {
+              throw new Error("All meal generation APIs are unavailable");
+            }
+            
+            capabilities = await fallbackResponse.json();
+            console.log("✅ Using fallback AI generation mode");
+          } else {
+            capabilities = await aiResponse.json();
+            console.log("✅ Using AI generation mode");
+          }
         }
       } catch (error) {
-        console.error("All AI generation APIs failed:", error);
-        throw new Error("AI meal generation is currently unavailable. Please try again later.");
+        console.error("All meal generation APIs failed:", error);
+        throw new Error("Meal generation is currently unavailable. Please try again later.");
       }
 
-      // Step 2: Start AI-powered meal generation
-      setGenerationStep(capabilities.has_whoop_data 
-        ? "Analyzing your WHOOP data to personalize meals..." 
-        : capabilities.mode === "fallback" 
-          ? "Generating test meals (fallback mode)..."
-          : "Generating personalized meals with AI...");
+      // Step 2: Start meal generation
+      const isLibraryMode = apiEndpoint.includes('generate-from-library');
+      setGenerationStep(isLibraryMode
+        ? "Selecting optimal meals from library based on your WHOOP data..."
+        : capabilities.has_whoop_data 
+          ? "Analyzing your WHOOP data to personalize meals..." 
+          : capabilities.mode === "fallback" 
+            ? "Generating test meals (fallback mode)..."
+            : "Generating personalized meals with AI...");
       setMealProgress(5);
       
       const generateResponse = await fetch(apiEndpoint, {
@@ -160,7 +176,19 @@ export default function PlanAheadPage() {
 
       // Step 3: Simulate progress updates during generation
       if (generateData.step !== "completed") {
-        if (capabilities.mode === "fallback") {
+        if (isLibraryMode) {
+          setGenerationStep("Analyzing your WHOOP health patterns...");
+          setMealProgress(10);
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          
+          setGenerationStep("Selecting meals that match your needs...");
+          setMealProgress(20);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          setGenerationStep("Creating your personalized meal plan...");
+          setMealProgress(25);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } else if (capabilities.mode === "fallback") {
           setGenerationStep("Creating test meal plan...");
           setMealProgress(15);
           await new Promise(resolve => setTimeout(resolve, 1000));
@@ -181,15 +209,18 @@ export default function PlanAheadPage() {
       
       setMealProgress(MAX_MEALS);
       
-      // Step 4: Display meals immediately AND cache to localStorage
+      // Step 4: Display meals immediately AND cache to localStorage (PERSISTENT)
       setMeals(generateData.meals);
-      localStorage.setItem("currentMealPlan", JSON.stringify(generateData.meals));
+      localStorage.setItem("persistentMealPlan", JSON.stringify(generateData.meals));
+      console.log("💾 Saved new meal plan with", generateData.meals.length, "UNIQUE meals");
       
-      setGenerationStep(capabilities.has_whoop_data 
-        ? "AI meal plan ready! Personalized for your WHOOP data." 
-        : capabilities.mode === "fallback"
-          ? "Test meal plan ready! (Configure Bedrock for full AI)"
-          : "AI meal plan ready!");
+      setGenerationStep(isLibraryMode
+        ? "Meal plan ready! Selected from library based on your WHOOP data."
+        : capabilities.has_whoop_data 
+          ? "AI meal plan ready! Personalized for your WHOOP data." 
+          : capabilities.mode === "fallback"
+            ? "Test meal plan ready! (Configure Bedrock for full AI)"
+            : "AI meal plan ready!");
       
       await new Promise(resolve => setTimeout(resolve, 1500));
       
@@ -233,7 +264,8 @@ export default function PlanAheadPage() {
 
       setMealProgress(MAX_MEALS);
       setMeals(shuffleData.meals);
-      localStorage.setItem("currentMealPlan", JSON.stringify(shuffleData.meals));
+      localStorage.setItem("persistentMealPlan", JSON.stringify(shuffleData.meals));
+      console.log("🔀 Shuffled to new meal selection with", shuffleData.meals.length, "UNIQUE meals");
       
       setGenerationStep("Meals shuffled successfully!");
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -283,7 +315,8 @@ export default function PlanAheadPage() {
       
       setMealProgress(MAX_MEALS);
       setMeals(generateData.meals);
-      localStorage.setItem("currentMealPlan", JSON.stringify(generateData.meals));
+      localStorage.setItem("persistentMealPlan", JSON.stringify(generateData.meals));
+      console.log("🆕 Generated completely new meal plan with", generateData.meals.length, "UNIQUE meals");
       
       setGenerationStep("New AI meal plan ready!");
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -435,7 +468,7 @@ export default function PlanAheadPage() {
               ) : (
                 <>
                   <Sparkles className="w-4 h-4" />
-                  {meals.length > 0 ? "Regenerate Meals" : "Generate Meals"}
+                  {meals.length > 0 ? "Get New Meals" : "Generate Meal Plan"}
                 </>
               )}
             </button>
@@ -462,12 +495,12 @@ export default function PlanAheadPage() {
               {isGenerating ? (
                 <>
                   <Sparkles className="w-4 h-4 animate-pulse" />
-                  AI Generating...
+                  Selecting Meals...
                 </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4" />
-                  {meals.length > 0 ? "Regenerate AI Meals" : "Generate AI Meals"}
+                  {meals.length > 0 ? "Get New Meals" : "Generate Meal Plan"}
                 </>
               )}
             </button>
@@ -496,12 +529,12 @@ export default function PlanAheadPage() {
               {isGenerating ? (
                 <>
                   <Sparkles className="w-5 h-5 animate-pulse" />
-                  AI Generating...
+                  Selecting Meals...
                 </>
               ) : (
                 <>
                   <Sparkles className="w-5 h-5" />
-                  {meals.length > 0 ? "Regenerate AI Meals" : "Generate AI Meals"}
+                  {meals.length > 0 ? "Get New Meals" : "Generate Meal Plan"}
                 </>
               )}
             </button>

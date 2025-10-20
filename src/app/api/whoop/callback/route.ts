@@ -125,9 +125,12 @@ export async function GET(request: NextRequest) {
 
     console.log("✅ State validation passed");
 
-    // Get credentials
-    const clientId = process.env.WHOOP_CLIENT_ID;
-    const clientSecret = process.env.WHOOP_CLIENT_SECRET;
+    // Get credentials from secrets manager
+    const { getAppSecrets } = await import('@/lib/secrets-manager');
+    const secrets = await getAppSecrets();
+    
+    const clientId = secrets.whoop.clientId;
+    const clientSecret = secrets.whoop.clientSecret;
     const redirectUri = `${request.nextUrl.origin}/api/whoop/callback`;
 
     if (!clientId || !clientSecret) {

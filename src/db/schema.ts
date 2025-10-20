@@ -88,12 +88,14 @@ export const mealsLibrary = sqliteTable('meals_library', {
   name: text('name').notNull(),
   description: text('description'),
   mealType: text('meal_type').notNull(), // breakfast, lunch, snack, dinner
-  prepTime: integer('prep_time').notNull(), // minutes
-  cookTime: integer('cook_time').notNull(), // minutes
+  prepTime: integer('prep_time'), // minutes (made optional)
+  cookTime: integer('cook_time'), // minutes (made optional)
   servings: integer('servings').notNull(),
-  ingredients: text('ingredients', { mode: 'json' }).notNull(), // [{name, amount, unit, category}]
+  ingredients: text('ingredients', { mode: 'json' }).notNull(), // [{name, amount, unit, category}] or string array
   instructions: text('instructions', { mode: 'json' }).notNull(), // array of strings
   nutrition: text('nutrition', { mode: 'json' }).notNull(), // {calories, protein, carbs, fat, fiber, sodium}
   tags: text('tags', { mode: 'json' }), // ["high-protein", "low-carb", etc]
+  imageUrl: text('image_url'), // Optional: Generated on-demand with AWS Titan G1V2
   createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at'), // for tracking image generation updates
 });

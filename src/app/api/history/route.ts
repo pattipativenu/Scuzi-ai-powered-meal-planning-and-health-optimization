@@ -28,6 +28,8 @@ export async function GET(request: NextRequest) {
       timestamp: item.timestamp,
       type: item.type,
       ai_response: item.ai_response,
+      ai_generated_image: item.ai_generated_image || "",
+      generated_image_url: item.generated_image_url || "",
     }));
 
     return NextResponse.json(formattedItems);

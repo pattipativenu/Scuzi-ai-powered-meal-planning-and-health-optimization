@@ -6,13 +6,17 @@ import { ChevronRight, Star } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { addDays, format, startOfWeek } from "date-fns";
+import { useRouter } from "next/navigation";
 import { useHistoryFeed } from "@/hooks/useHistoryFeed";
 import { useCurrentWeekMeals } from "@/hooks/useCurrentWeekMeals";
 import { HistoryDetailDialog } from "@/components/HistoryDetailDialog";
+import { initializeAutoRecipeProcessing } from "@/lib/auto-recipe-processor";
 import type { Meal } from "@/types/meal";
 import type { HistoryItem } from "@/hooks/useHistoryFeed";
 
 export default function Home() {
+  const router = useRouter();
+  
   // Fetch real current week meals from database
   const { meals: currentWeekMealsData, isLoading: mealsLoading } = useCurrentWeekMeals();
 
@@ -103,6 +107,13 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [reviews.length]);
 
+  // Initialize auto recipe processing when component mounts
+  useEffect(() => {
+    initializeAutoRecipeProcessing();
+  }, []);
+
+
+
   // Fetch real history data from DynamoDB
   const { history, isLoading, error } = useHistoryFeed();
 
@@ -111,8 +122,17 @@ export default function Home() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleHistoryCardClick = (item: HistoryItem) => {
-    setSelectedHistoryItem(item);
-    setDialogOpen(true);
+    // Check if mobile (screen width < 768px)
+    const isMobile = window.innerWidth < 768;
+    
+    if (isMobile) {
+      // Navigate to full page on mobile
+      router.push(`/history/${item.id}`);
+    } else {
+      // Show dialog on desktop
+      setSelectedHistoryItem(item);
+      setDialogOpen(true);
+    }
   };
 
   return (
@@ -265,12 +285,20 @@ export default function Home() {
           }
           
           {!isLoading && !error && history.length > 0 &&
-          <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
+          <div 
+            className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide" 
+            style={{ 
+              WebkitOverflowScrolling: 'touch', 
+              scrollBehavior: 'smooth',
+              transform: 'translateZ(0)',
+              willChange: 'scroll-position'
+            }}>
               {history.map((item) =>
             <div
               key={item.id}
               onClick={() => handleHistoryCardClick(item)}
-              className="snap-start flex-shrink-0 w-[280px] bg-white rounded-[20px] shadow-md overflow-hidden hover:scale-[1.02] transition-transform cursor-pointer">
+              className="snap-start flex-shrink-0 w-[280px] bg-white rounded-[20px] shadow-md overflow-hidden hover:scale-[1.02] hover:shadow-lg transition-all duration-200 cursor-pointer border border-gray-100"
+              style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}>
 
                   {item.image_url ?
               <img
@@ -279,18 +307,10 @@ export default function Home() {
                 className="object-cover w-full h-[240px]" /> :
 
               <div className="w-full h-[240px] bg-gradient-to-br from-yellow-400 to-yellow-600 flex flex-col items-center justify-center gap-2">
-                      <span style={{
-                  fontFamily: '"Right Grotesk Wide", sans-serif',
-                  fontSize: '48px',
-                  fontWeight: 700,
-                  color: 'white',
-                  opacity: 0.8
-                }}>
-                        AI
-                      </span>
                       <p className="text-sm" style={{
                   color: 'white',
-                  opacity: 0.9
+                  opacity: 0.9,
+                  fontFamily: '"General Sans", sans-serif'
                 }}>
                         Image is not available
                       </p>
@@ -307,10 +327,21 @@ export default function Home() {
                         {item.type.replace('_', ' ')}
                       </span>
                     </div>
-                    <h4>
+                    <h4 style={{
+                      fontFamily: '"Right Grotesk Wide", sans-serif',
+                      fontSize: '16px',
+                      fontWeight: 600,
+                      color: 'rgb(17, 24, 39)',
+                      lineHeight: '24px'
+                    }}>
                       {item.title}
                     </h4>
-                    <p className="line-clamp-2 text-secondary">
+                    <p className="line-clamp-2" style={{
+                      fontFamily: '"General Sans", sans-serif',
+                      fontSize: '14px',
+                      color: 'rgb(75, 85, 99)',
+                      lineHeight: '20px'
+                    }}>
                       {item.description}
                     </p>
                     <p className="text-xs text-disabled">

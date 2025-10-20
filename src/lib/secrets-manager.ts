@@ -7,13 +7,59 @@ import {
   ResourceNotFoundException 
 } from '@aws-sdk/client-secrets-manager';
 
+// Use IAM role or instance profile for authentication in production
+// This avoids hardcoded credentials
 const client = new SecretsManagerClient({
   region: process.env.AWS_REGION || 'us-east-1',
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-  },
 });
+
+// Cache for secrets to avoid repeated API calls
+const secretsCache = new Map<string, { value: any; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// Application secrets structure
+export interface AppSecrets {
+  aws: {
+    accessKeyId: string;
+    secretAccessKey: string;
+    region: string;
+    bearerTokenBedrock?: string;
+  };
+  database: {
+    rds: {
+      host: string;
+      port: number;
+      user: string;
+      password: string;
+      database: string;
+    };
+    turso: {
+      connectionUrl: string;
+      authToken: string;
+    };
+  };
+  whoop: {
+    clientId: string;
+    clientSecret: string;
+    redirectUri: string;
+    syncToken: string;
+    oauthStateSecret: string;
+  };
+  aws_services: {
+    s3: {
+      bucketRecipes: string;
+      bucketMeals: string;
+    };
+    dynamodb: {
+      tableMealPlan: string;
+      tableHistory: string;
+    };
+    lambda: {
+      functionName: string;
+      arn: string;
+    };
+  };
+}
 
 export interface WhoopTokens {
   accessToken: string;
@@ -22,6 +68,74 @@ export interface WhoopTokens {
   userId: string;
   createdAt: string;
   updatedAt: string;
+}
+
+/**
+ * Get a secret from AWS Secrets Manager with caching
+ */
+async function getSecret(secretName: string): Promise<any> {
+  const cached = secretsCache.get(secretName);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.value;
+  }
+
+  try {
+    const response = await client.send(new GetSecretValueCommand({
+      SecretId: secretName,
+    }));
+    
+    if (!response.SecretString) {
+      throw new Error(`Secret ${secretName} has no value`);
+    }
+    
+    const value = JSON.parse(response.SecretString);
+    secretsCache.set(secretName, { value, timestamp: Date.now() });
+    return value;
+  } catch (error: any) {
+    if (error instanceof ResourceNotFoundException) {
+      throw new Error(`Secret ${secretName} not found`);
+    }
+    throw error;
+  }
+}
+
+/**
+ * Get application secrets from AWS Secrets Manager
+ * Secret ARN: You can store this ARN in your environment variables
+ */
+export async function getAppSecrets(): Promise<AppSecrets> {
+  const secretName = process.env.APP_SECRETS_ARN || 'scuzi-app-secrets';
+  return await getSecret(secretName);
+}
+
+/**
+ * Store application secrets in AWS Secrets Manager
+ */
+export async function storeAppSecrets(secrets: AppSecrets): Promise<void> {
+  const secretName = process.env.APP_SECRETS_ARN || 'scuzi-app-secrets';
+  
+  try {
+    await client.send(new PutSecretValueCommand({
+      SecretId: secretName,
+      SecretString: JSON.stringify(secrets),
+    }));
+    
+    // Clear cache
+    secretsCache.delete(secretName);
+    console.log(`✅ Updated application secrets`);
+  } catch (error: any) {
+    if (error instanceof ResourceNotFoundException) {
+      await client.send(new CreateSecretCommand({
+        Name: secretName,
+        SecretString: JSON.stringify(secrets),
+        Description: 'Scuzi application secrets',
+      }));
+      
+      console.log(`✅ Created application secrets`);
+    } else {
+      throw error;
+    }
+  }
 }
 
 /**
@@ -121,6 +235,8 @@ export async function refreshWhoopAccessToken(userId: string): Promise<WhoopToke
   }
   
   try {
+    const secrets = await getAppSecrets();
+    
     const response = await fetch('https://api.prod.whoop.com/oauth/token', {
       method: 'POST',
       headers: {
@@ -129,8 +245,8 @@ export async function refreshWhoopAccessToken(userId: string): Promise<WhoopToke
       body: new URLSearchParams({
         grant_type: 'refresh_token',
         refresh_token: tokens.refreshToken,
-        client_id: process.env.WHOOP_CLIENT_ID || '',
-        client_secret: process.env.WHOOP_CLIENT_SECRET || '',
+        client_id: secrets.whoop.clientId,
+        client_secret: secrets.whoop.clientSecret,
       }),
     });
     

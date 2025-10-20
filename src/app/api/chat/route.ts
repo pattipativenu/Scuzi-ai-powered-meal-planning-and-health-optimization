@@ -208,21 +208,41 @@ function extractImageMetadata(text: string): {
   cookingMethod: string;
   presentationStyle: string;
 } {
+  console.log("[METADATA] 🚨 ANALYZING TEXT FOR IMAGE METADATA");
+  console.log("[METADATA] 🚨 Text length:", text.length);
+  console.log("[METADATA] 🚨 Text preview:", text.substring(0, 200));
+  
   const metadataRegex = /\[IMAGE_METADATA\]([\s\S]*?)\[\/IMAGE_METADATA\]/;
   const match = text.match(metadataRegex);
   
   if (!match) {
-    console.log("[METADATA] No IMAGE_METADATA tags found, checking for recipe format...");
+    console.log("[METADATA] 🚨 No IMAGE_METADATA tags found, checking for recipe format...");
     
-    // FALLBACK: Check if this is a recipe response without metadata tags
+    // AGGRESSIVE FALLBACK: Check if this is ANY recipe response
     const hasRecipeIndicators = 
       text.includes("Ingredients:") || 
       text.includes("**Ingredients:**") ||
+      text.includes("ingredients:") ||
       text.includes("Step-by-Step Instructions") ||
-      text.includes("🥘");
+      text.includes("Instructions:") ||
+      text.includes("instructions:") ||
+      text.includes("🥘") ||
+      text.includes("recipe") ||
+      text.includes("Recipe") ||
+      text.includes("cook") ||
+      text.includes("Cook") ||
+      text.includes("prep") ||
+      text.includes("Prep") ||
+      text.includes("servings") ||
+      text.includes("Servings") ||
+      (text.includes("minutes") && text.includes("min")) ||
+      text.includes("tbsp") ||
+      text.includes("tsp") ||
+      text.includes("cup") ||
+      text.includes("oz");
     
     if (hasRecipeIndicators) {
-      console.log("[METADATA] Recipe detected without metadata tags, extracting fallback...");
+      console.log("[METADATA] 🚨 AGGRESSIVE recipe detection - generating image for ANY recipe-like content!");
       
       // Extract dish name from 🥘 emoji heading
       const dishNameMatch = text.match(/🥘\s*\*\*(.+?)\*\*/);
@@ -527,7 +547,8 @@ export async function POST(request: NextRequest) {
     }
 
     responseText = sanitizeText(responseText);
-    console.log(`[RESPONSE] Extracted ${responseText.length} characters`);
+    console.log(`[RESPONSE] 🚨 Extracted ${responseText.length} characters`);
+    console.log(`[RESPONSE] 🚨 Response preview:`, responseText.substring(0, 300));
 
     // ============================================
     // STEP 5: EXTRACT IMAGE METADATA
@@ -555,6 +576,11 @@ export async function POST(request: NextRequest) {
       ai_response: cleanedResponse,
       user_image: userImage, // Pass user's image
     });
+
+    console.log("[CHAT API] 🚨 RESPONSE SUMMARY:");
+    console.log("[CHAT API] 🚨 Should generate image:", imageMetadata.shouldGenerate);
+    console.log("[CHAT API] 🚨 History item ID:", historyItemId);
+    console.log("[CHAT API] 🚨 Image metadata:", imageMetadata.shouldGenerate ? "YES" : "NO");
 
     return NextResponse.json({
       content: cleanedResponse || "I'm here to help with your food and health questions! 🍳",

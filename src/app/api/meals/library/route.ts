@@ -1,199 +1,204 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/db';
-import { mealsLibrary } from '@/db/schema';
-import { eq, like, and, or, sql } from 'drizzle-orm';
-
-const VALID_MEAL_TYPES = ['breakfast', 'lunch', 'snack', 'dinner'];
+import { db } from '@/db/mysql-connection';
+import { meals } from '@/db/mysql-schema';
+import { and, eq, like, sql, inArray } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
+    const { searchParams } = new URL(request.url);
     
-    // Extract and validate parameters
-    const mealType = searchParams.get('meal_type');
-    const tagsParam = searchParams.get('tags');
-    const minProteinParam = searchParams.get('min_protein');
-    const maxCaloriesParam = searchParams.get('max_calories');
-    const limitParam = searchParams.get('limit');
-    const offsetParam = searchParams.get('offset');
+    // Query parameters
+    const mealType = searchParams.get('mealType');
+    const tags = searchParams.get('tags')?.split(',').filter(Boolean);
     const search = searchParams.get('search');
+    const limit = parseInt(searchParams.get('limit') || '50');
+    const offset = parseInt(searchParams.get('offset') || '0');
+    const hasImage = searchParams.get('hasImage') === 'true';
 
-    // Validate meal_type
-    if (mealType && !VALID_MEAL_TYPES.includes(mealType)) {
-      return NextResponse.json({
-        error: `Invalid meal_type. Must be one of: ${VALID_MEAL_TYPES.join(', ')}`,
-        code: 'INVALID_MEAL_TYPE'
-      }, { status: 400 });
-    }
+    // Build where conditions
+    const conditions = [];
 
-    // Validate and parse numeric parameters
-    const limit = limitParam ? Math.min(parseInt(limitParam), 100) : 20;
-    const offset = offsetParam ? parseInt(offsetParam) : 0;
-    const minProtein = minProteinParam ? parseFloat(minProteinParam) : null;
-    const maxCalories = maxCaloriesParam ? parseFloat(maxCaloriesParam) : null;
-
-    if (limitParam && (isNaN(limit) || limit < 1)) {
-      return NextResponse.json({
-        error: 'Invalid limit parameter. Must be a positive integer.',
-        code: 'INVALID_LIMIT'
-      }, { status: 400 });
-    }
-
-    if (offsetParam && (isNaN(offset) || offset < 0)) {
-      return NextResponse.json({
-        error: 'Invalid offset parameter. Must be a non-negative integer.',
-        code: 'INVALID_OFFSET'
-      }, { status: 400 });
-    }
-
-    if (minProteinParam && (isNaN(minProtein!) || minProtein! < 0)) {
-      return NextResponse.json({
-        error: 'Invalid min_protein parameter. Must be a positive number.',
-        code: 'INVALID_MIN_PROTEIN'
-      }, { status: 400 });
-    }
-
-    if (maxCaloriesParam && (isNaN(maxCalories!) || maxCalories! < 0)) {
-      return NextResponse.json({
-        error: 'Invalid max_calories parameter. Must be a positive number.',
-        code: 'INVALID_MAX_CALORIES'
-      }, { status: 400 });
-    }
-
-    // Parse tags
-    const tags = tagsParam ? tagsParam.split(',').map(tag => tag.trim()) : [];
-
-    // Fetch all meals from database
-    let query = db.select().from(mealsLibrary);
-    const allMeals = await query;
-
-    // Apply filters in-memory due to JSON field filtering requirements
-    let filteredMeals = allMeals;
-
-    // Filter by meal type
     if (mealType) {
-      filteredMeals = filteredMeals.filter(meal => meal.mealType === mealType);
+      conditions.push(eq(meals.mealType, mealType));
     }
 
-    // Filter by search term (case-insensitive)
     if (search) {
-      const searchLower = search.toLowerCase();
-      filteredMeals = filteredMeals.filter(meal => 
-        meal.name.toLowerCase().includes(searchLower) || 
-        (meal.description && meal.description.toLowerCase().includes(searchLower))
+      conditions.push(
+        sql`(${meals.mealName} ILIKE ${`%${search}%`} OR ${meals.tagline} ILIKE ${`%${search}%`})`
       );
     }
 
-    // Filter by tags (must have ALL specified tags)
-    if (tags.length > 0) {
-      filteredMeals = filteredMeals.filter(meal => {
-        const mealTags = Array.isArray(meal.tags) ? meal.tags : [];
-        return tags.every(tag => mealTags.includes(tag));
-      });
+    if (hasImage) {
+      conditions.push(sql`${meals.imageUrl} IS NOT NULL AND ${meals.imageUrl} != ''`);
     }
 
-    // Filter by nutrition (min protein)
-    if (minProtein !== null) {
-      filteredMeals = filteredMeals.filter(meal => {
-        const nutrition = typeof meal.nutrition === 'string' 
-          ? JSON.parse(meal.nutrition) 
-          : meal.nutrition;
-        return nutrition && nutrition.protein >= minProtein;
-      });
+    if (tags && tags.length > 0) {
+      // Check if any of the provided tags exist in the meal's tags array
+      const tagConditions = tags.map(tag => 
+        sql`${meals.tags}::jsonb ? ${tag}`
+      );
+      conditions.push(sql`(${sql.join(tagConditions, sql` OR `)})`);
     }
 
-    // Filter by nutrition (max calories)
-    if (maxCalories !== null) {
-      filteredMeals = filteredMeals.filter(meal => {
-        const nutrition = typeof meal.nutrition === 'string' 
-          ? JSON.parse(meal.nutrition) 
-          : meal.nutrition;
-        return nutrition && nutrition.calories <= maxCalories;
-      });
-    }
+    // Execute query
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    
+    const mealsResult = await db.select()
+      .from(meals)
+      .where(whereClause)
+      .limit(limit)
+      .offset(offset)
+      .orderBy(meals.createdAt);
 
-    // Sort by createdAt DESC
-    filteredMeals.sort((a, b) => {
-      const dateA = new Date(a.createdAt).getTime();
-      const dateB = new Date(b.createdAt).getTime();
-      return dateB - dateA;
-    });
-
-    // Calculate summary statistics
-    const totalMeals = filteredMeals.length;
-    let totalCalories = 0;
-    let totalProtein = 0;
-    let validNutritionCount = 0;
-
-    filteredMeals.forEach(meal => {
-      const nutrition = typeof meal.nutrition === 'string' 
-        ? JSON.parse(meal.nutrition) 
-        : meal.nutrition;
-      if (nutrition && nutrition.calories !== undefined && nutrition.protein !== undefined) {
-        totalCalories += nutrition.calories;
-        totalProtein += nutrition.protein;
-        validNutritionCount++;
-      }
-    });
-
-    const avgCalories = validNutritionCount > 0 ? Math.round(totalCalories / validNutritionCount) : 0;
-    const avgProtein = validNutritionCount > 0 ? Math.round(totalProtein / validNutritionCount) : 0;
-
-    // Apply pagination
-    const paginatedMeals = filteredMeals.slice(offset, offset + limit);
-
-    // Parse JSON fields for response
-    const meals = paginatedMeals.map(meal => ({
-      id: meal.id,
-      name: meal.name,
-      description: meal.description,
-      mealType: meal.mealType,
-      prepTime: meal.prepTime,
-      cookTime: meal.cookTime,
-      servings: meal.servings,
-      ingredients: typeof meal.ingredients === 'string' 
-        ? JSON.parse(meal.ingredients) 
-        : meal.ingredients,
-      instructions: typeof meal.instructions === 'string' 
-        ? JSON.parse(meal.instructions) 
-        : meal.instructions,
-      nutrition: typeof meal.nutrition === 'string' 
-        ? JSON.parse(meal.nutrition) 
-        : meal.nutrition,
-      tags: typeof meal.tags === 'string' 
-        ? JSON.parse(meal.tags) 
-        : meal.tags,
-      createdAt: meal.createdAt
-    }));
-
-    // Build filters object
-    const filters: Record<string, any> = {
-      limit,
-      offset
-    };
-    if (mealType) filters.meal_type = mealType;
-    if (tags.length > 0) filters.tags = tags;
-    if (minProtein !== null) filters.min_protein = minProtein;
-    if (maxCalories !== null) filters.max_calories = maxCalories;
-    if (search) filters.search = search;
+    // Get total count for pagination
+    const totalCountResult = await db.select({ count: sql<number>`count(*)` })
+      .from(meals)
+      .where(whereClause);
+    
+    const totalCount = totalCountResult[0]?.count || 0;
 
     return NextResponse.json({
       success: true,
-      meals,
-      count: totalMeals,
-      filters,
-      summary: {
-        totalMeals,
-        avgCalories,
-        avgProtein
-      }
-    }, { status: 200 });
+      meals: mealsResult,
+      pagination: {
+        total: totalCount,
+        limit,
+        offset,
+        hasMore: offset + limit < totalCount,
+      },
+      filters: {
+        mealType,
+        tags,
+        search,
+        hasImage,
+      },
+    });
 
   } catch (error) {
-    console.error('GET meals/library error:', error);
+    console.error('Meal library API error:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch meals from library' },
+      { status: 500 }
+    );
+  }
+}
+
+// POST endpoint for advanced meal selection (used by Bedrock)
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { 
+      mealTypes = [], 
+      tags = [], 
+      excludeTags = [],
+      nutritionCriteria = {},
+      maxResults = 28,
+      diversityMode = true 
+    } = body;
+
+    console.log('🔍 Bedrock meal selection criteria:', {
+      mealTypes,
+      tags,
+      excludeTags,
+      nutritionCriteria,
+      maxResults,
+    });
+
+    // Build base query conditions
+    const conditions = [];
+
+    // Filter by meal types
+    if (mealTypes.length > 0) {
+      conditions.push(inArray(meals.mealType, mealTypes));
+    }
+
+    // Must have image
+    conditions.push(sql`${meals.imageUrl} IS NOT NULL AND ${meals.imageUrl} != ''`);
+
+    // Include tags (at least one must match)
+    if (tags.length > 0) {
+      const tagConditions = tags.map((tag: string) => 
+        sql`${meals.tags}::jsonb ? ${tag}`
+      );
+      conditions.push(sql`(${sql.join(tagConditions, sql` OR `)})`);
+    }
+
+    // Exclude tags (none should match)
+    if (excludeTags.length > 0) {
+      const excludeConditions = excludeTags.map((tag: string) => 
+        sql`NOT (${meals.tags}::jsonb ? ${tag})`
+      );
+      conditions.push(sql`(${sql.join(excludeConditions, sql` AND `)})`);
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    // Get all matching meals
+    let selectedMeals = await db.select()
+      .from(meals)
+      .where(whereClause)
+      .orderBy(sql`RANDOM()`); // Random order for diversity
+
+    // If we have more meals than needed and diversity mode is on
+    if (diversityMode && selectedMeals.length > maxResults) {
+      // Ensure we have a good distribution across meal types
+      const mealsByType = selectedMeals.reduce((acc, meal) => {
+        if (!acc[meal.mealType]) acc[meal.mealType] = [];
+        acc[meal.mealType].push(meal);
+        return acc;
+      }, {} as Record<string, any[]>);
+
+      const finalMeals = [];
+      const targetPerType = Math.floor(maxResults / Object.keys(mealsByType).length);
+      
+      // Take roughly equal amounts from each meal type
+      for (const [type, typeMeals] of Object.entries(mealsByType)) {
+        const takeCount = Math.min(targetPerType, typeMeals.length);
+        finalMeals.push(...typeMeals.slice(0, takeCount));
+      }
+
+      // Fill remaining slots with random meals
+      const remaining = maxResults - finalMeals.length;
+      if (remaining > 0) {
+        const unusedMeals = selectedMeals.filter(meal => 
+          !finalMeals.some(fm => fm.id === meal.id)
+        );
+        finalMeals.push(...unusedMeals.slice(0, remaining));
+      }
+
+      selectedMeals = finalMeals;
+    } else {
+      // Just take the first maxResults
+      selectedMeals = selectedMeals.slice(0, maxResults);
+    }
+
+    console.log(`✅ Selected ${selectedMeals.length} meals from library`);
+
     return NextResponse.json({
-      error: 'Internal server error: ' + error,
-      code: 'INTERNAL_ERROR'
-    }, { status: 500 });
+      success: true,
+      meals: selectedMeals,
+      selectionCriteria: {
+        mealTypes,
+        tags,
+        excludeTags,
+        nutritionCriteria,
+        maxResults,
+        diversityMode,
+      },
+      stats: {
+        totalSelected: selectedMeals.length,
+        byType: selectedMeals.reduce((acc, meal) => {
+          acc[meal.mealType] = (acc[meal.mealType] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>),
+      },
+    });
+
+  } catch (error) {
+    console.error('Meal selection API error:', error);
+    return NextResponse.json(
+      { error: 'Failed to select meals from library' },
+      { status: 500 }
+    );
   }
 }

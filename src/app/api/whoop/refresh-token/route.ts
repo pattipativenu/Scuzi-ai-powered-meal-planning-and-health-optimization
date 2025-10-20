@@ -13,8 +13,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No refresh token available" }, { status: 401 });
     }
 
-    const clientId = process.env.WHOOP_CLIENT_ID;
-    const clientSecret = process.env.WHOOP_CLIENT_SECRET;
+    // Get credentials from secrets manager
+    const { getAppSecrets } = await import('@/lib/secrets-manager');
+    const secrets = await getAppSecrets();
+    
+    const clientId = secrets.whoop.clientId;
+    const clientSecret = secrets.whoop.clientSecret;
 
     if (!clientId || !clientSecret) {
       console.error("❌ Missing WHOOP credentials");
