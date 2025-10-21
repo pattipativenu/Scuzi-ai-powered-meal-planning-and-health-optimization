@@ -1,14 +1,18 @@
 import { BedrockRuntimeClient, ConverseCommand } from "@aws-sdk/client-bedrock-runtime";
 import { WhoopAnalysis } from "./whoop-analyzer";
 
+let client: BedrockRuntimeClient | null = null;
+
 const getBedrockClient = () => {
+  if (client) return client;
+  
   const bearerToken = process.env.AWS_BEARER_TOKEN_BEDROCK;
 
   if (!bearerToken) {
     throw new Error("AWS_BEARER_TOKEN_BEDROCK is required");
   }
 
-  const client = new BedrockRuntimeClient({
+  client = new BedrockRuntimeClient({
     region: process.env.AWS_REGION || "us-east-1",
   });
 
@@ -23,8 +27,6 @@ const getBedrockClient = () => {
 
   return client;
 };
-
-const client = getBedrockClient();
 
 export interface GeneratedMeal {
   day: string;
@@ -188,7 +190,7 @@ CRITICAL: Count your meals before responding. You must have exactly 28 meals in 
     });
 
     console.log(`[AI-MEAL-GEN] Sending request to Claude 3.5 Sonnet v2`);
-    const response = await client.send(command);
+    const response = await getBedrockClient().send(command);
     const rawText = response.output?.message?.content?.[0]?.text || "";
 
     console.log(`[AI-MEAL-GEN] Received response, parsing JSON...`);
@@ -338,7 +340,7 @@ Generate 4-6 meals only - quality over quantity.`;
     });
 
     console.log(`[AI-MEAL-GEN-SMALL] Sending request to Claude 3.5 Sonnet v2`);
-    const response = await client.send(command);
+    const response = await getBedrockClient().send(command);
     const rawText = response.output?.message?.content?.[0]?.text || "";
 
     console.log(`[AI-MEAL-GEN-SMALL] Received response, parsing JSON...`);
@@ -1244,7 +1246,7 @@ Focus on creating meals that will help move me from struggling to thriving in th
       },
     });
 
-    const response = await client.send(command);
+    const response = await getBedrockClient().send(command);
     const rawText = response.output?.message?.content?.[0]?.text || "";
 
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
