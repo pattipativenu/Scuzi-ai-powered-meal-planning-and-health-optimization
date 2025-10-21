@@ -3,30 +3,32 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
 import { GeneratedMeal } from "./ai-meal-generator";
 
+let bedrockClient: BedrockRuntimeClient | null = null;
+
 const getBedrockClient = () => {
+  if (bedrockClient) return bedrockClient;
+  
   const bearerToken = process.env.AWS_BEARER_TOKEN_BEDROCK;
   
   if (!bearerToken) {
     throw new Error("AWS_BEARER_TOKEN_BEDROCK is required");
   }
   
-  const client = new BedrockRuntimeClient({
+  bedrockClient = new BedrockRuntimeClient({
     region: process.env.AWS_REGION || "us-east-1",
   });
 
   // Add bearer token to the client
-  const originalSend = client.send.bind(client);
-  client.send = function(command: any) {
+  const originalSend = bedrockClient.send.bind(bedrockClient);
+  bedrockClient.send = function(command: any) {
     if (!command.input) command.input = {};
     if (!command.input.headers) command.input.headers = {};
     command.input.headers['Authorization'] = `Bearer ${bearerToken}`;
     return originalSend(command);
   };
 
-  return client;
+  return bedrockClient;
 };
-
-const bedrockClient = getBedrockClient();
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION || "us-east-1",
@@ -92,7 +94,7 @@ No text, logos, or watermarks. Photorealistic style.`;
     accept: "application/json",
   });
 
-  const response = await retryOperation(() => bedrockClient.send(command), 3, 2000);
+  const response = await retryOperation(() => getBedrockClient().send(command), 3, 2000);
   const responseBody = JSON.parse(new TextDecoder().decode(response.body));
   const base64Image = responseBody.images[0];
   

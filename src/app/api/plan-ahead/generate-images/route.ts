@@ -8,18 +8,22 @@ import {
 // AWS CLIENTS WITH BEARER TOKEN
 // ============================================
 
+let bedrockClient: BedrockRuntimeClient | null = null;
+
 const getBedrockClient = () => {
+  if (bedrockClient) return bedrockClient;
+  
   const bearerToken = process.env.AWS_BEARER_TOKEN_BEDROCK;
   
   if (!bearerToken) {
     throw new Error("AWS_BEARER_TOKEN_BEDROCK is required");
   }
   
-  const client = new BedrockRuntimeClient({
+  bedrockClient = new BedrockRuntimeClient({
     region: process.env.AWS_REGION || "us-east-1",
   });
 
-  client.middlewareStack.add(
+  bedrockClient.middlewareStack.add(
     (next: any) => async (args: any) => {
       args.request.headers.Authorization = `Bearer ${bearerToken}`;
       return next(args);
@@ -30,10 +34,8 @@ const getBedrockClient = () => {
     }
   );
 
-  return client;
+  return bedrockClient;
 };
-
-const bedrockClient = getBedrockClient();
 
 // ============================================
 // DISHWARE MAPPING BY MEAL TYPE
@@ -115,7 +117,7 @@ async function generateMealImage(meal: any): Promise<string> {
     accept: "application/json",
   });
 
-  const response = await retryOperation(() => bedrockClient.send(command), 3, 2000);
+  const response = await retryOperation(() => getBedrockClient().send(command), 3, 2000);
   const responseBody = JSON.parse(new TextDecoder().decode(response.body));
   const base64Image = responseBody.images[0];
   

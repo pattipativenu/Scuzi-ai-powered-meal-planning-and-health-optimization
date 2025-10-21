@@ -8,18 +8,22 @@ import { DynamoDBDocumentClient, QueryCommand, ScanCommand } from "@aws-sdk/lib-
 // AWS BEDROCK CLIENT WITH BEARER TOKEN
 // ============================================
 
+let bedrockClient: BedrockRuntimeClient | null = null;
+
 const getBedrockClient = () => {
+  if (bedrockClient) return bedrockClient;
+  
   const bearerToken = process.env.AWS_BEARER_TOKEN_BEDROCK;
   
   if (!bearerToken) {
     throw new Error("AWS_BEARER_TOKEN_BEDROCK is required");
   }
   
-  const client = new BedrockRuntimeClient({
+  bedrockClient = new BedrockRuntimeClient({
     region: process.env.AWS_REGION || "us-east-1",
   });
 
-  client.middlewareStack.add(
+  bedrockClient.middlewareStack.add(
     (next: any) => async (args: any) => {
       if (!args.request.headers) {
         args.request.headers = {};
@@ -34,10 +38,8 @@ const getBedrockClient = () => {
     }
   );
 
-  return client;
+  return bedrockClient;
 };
-
-const client = getBedrockClient();
 
 const dynamoClient = new DynamoDBClient({
   region: process.env.AWS_REGION || "us-east-1",
@@ -231,7 +233,7 @@ Return ONLY valid JSON in this exact format:
         },
       });
 
-      const response = await client.send(command);
+      const response = await getBedrockClient().send(command);
       const rawText = response.output?.message?.content?.[0]?.text || "";
 
       const jsonMatch = rawText.match(/\{[\s\S]*\}/);
