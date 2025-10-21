@@ -1,10 +1,10 @@
-import { 
-  SecretsManagerClient, 
-  PutSecretValueCommand, 
+import {
+  SecretsManagerClient,
+  PutSecretValueCommand,
   GetSecretValueCommand,
   DeleteSecretCommand,
   CreateSecretCommand,
-  ResourceNotFoundException 
+  ResourceNotFoundException
 } from '@aws-sdk/client-secrets-manager';
 
 // Use IAM role or instance profile for authentication in production
@@ -83,11 +83,11 @@ async function getSecret(secretName: string): Promise<any> {
     const response = await client.send(new GetSecretValueCommand({
       SecretId: secretName,
     }));
-    
+
     if (!response.SecretString) {
       throw new Error(`Secret ${secretName} has no value`);
     }
-    
+
     const value = JSON.parse(response.SecretString);
     secretsCache.set(secretName, { value, timestamp: Date.now() });
     return value;
@@ -97,6 +97,22 @@ async function getSecret(secretName: string): Promise<any> {
     }
     throw error;
   }
+}
+
+/**
+ * Get AWS Bedrock credentials from existing secret
+ */
+export async function getBedrockCredentials(): Promise<any> {
+  const bedrockSecretArn = 'arn:aws:secretsmanager:us-east-1:639261426100:secret:awsbedrock-gnhhkv';
+  return await getSecret(bedrockSecretArn);
+}
+
+/**
+ * Get AWS access keys from existing secret
+ */
+export async function getAwsCredentials(): Promise<any> {
+  const awsKeysSecretArn = 'arn:aws:secretsmanager:us-east-1:639261426100:secret:awskeys-VUPUDx';
+  return await getSecret(awsKeysSecretArn);
 }
 
 /**
@@ -113,13 +129,13 @@ export async function getAppSecrets(): Promise<AppSecrets> {
  */
 export async function storeAppSecrets(secrets: AppSecrets): Promise<void> {
   const secretName = process.env.APP_SECRETS_ARN || 'scuzi-app-secrets';
-  
+
   try {
     await client.send(new PutSecretValueCommand({
       SecretId: secretName,
       SecretString: JSON.stringify(secrets),
     }));
-    
+
     // Clear cache
     secretsCache.delete(secretName);
     console.log(`✅ Updated application secrets`);
@@ -130,7 +146,7 @@ export async function storeAppSecrets(secrets: AppSecrets): Promise<void> {
         SecretString: JSON.stringify(secrets),
         Description: 'Scuzi application secrets',
       }));
-      
+
       console.log(`✅ Created application secrets`);
     } else {
       throw error;
@@ -144,7 +160,7 @@ export async function storeAppSecrets(secrets: AppSecrets): Promise<void> {
  */
 export async function storeWhoopTokens(userId: string, tokens: Omit<WhoopTokens, 'userId' | 'createdAt' | 'updatedAt'>): Promise<void> {
   const secretName = `whoop/tokens/${userId}`;
-  
+
   const secretValue: WhoopTokens = {
     ...tokens,
     userId,
@@ -158,7 +174,7 @@ export async function storeWhoopTokens(userId: string, tokens: Omit<WhoopTokens,
       SecretId: secretName,
       SecretString: JSON.stringify(secretValue),
     }));
-    
+
     console.log(`✅ Updated WHOOP tokens for user ${userId}`);
   } catch (error: any) {
     if (error instanceof ResourceNotFoundException) {
@@ -168,7 +184,7 @@ export async function storeWhoopTokens(userId: string, tokens: Omit<WhoopTokens,
         SecretString: JSON.stringify(secretValue),
         Description: `WHOOP OAuth tokens for user ${userId}`,
       }));
-      
+
       console.log(`✅ Created WHOOP tokens for user ${userId}`);
     } else {
       throw error;
@@ -181,16 +197,16 @@ export async function storeWhoopTokens(userId: string, tokens: Omit<WhoopTokens,
  */
 export async function getWhoopTokens(userId: string): Promise<WhoopTokens | null> {
   const secretName = `whoop/tokens/${userId}`;
-  
+
   try {
     const response = await client.send(new GetSecretValueCommand({
       SecretId: secretName,
     }));
-    
+
     if (!response.SecretString) {
       return null;
     }
-    
+
     return JSON.parse(response.SecretString) as WhoopTokens;
   } catch (error: any) {
     if (error instanceof ResourceNotFoundException) {
@@ -206,13 +222,13 @@ export async function getWhoopTokens(userId: string): Promise<WhoopTokens | null
  */
 export async function deleteWhoopTokens(userId: string): Promise<void> {
   const secretName = `whoop/tokens/${userId}`;
-  
+
   try {
     await client.send(new DeleteSecretCommand({
       SecretId: secretName,
       ForceDeleteWithoutRecovery: true,
     }));
-    
+
     console.log(`✅ Deleted WHOOP tokens for user ${userId}`);
   } catch (error: any) {
     if (error instanceof ResourceNotFoundException) {
@@ -228,15 +244,15 @@ export async function deleteWhoopTokens(userId: string): Promise<void> {
  */
 export async function refreshWhoopAccessToken(userId: string): Promise<WhoopTokens | null> {
   const tokens = await getWhoopTokens(userId);
-  
+
   if (!tokens || !tokens.refreshToken) {
     console.error(`❌ No refresh token found for user ${userId}`);
     return null;
   }
-  
+
   try {
     const secrets = await getAppSecrets();
-    
+
     const response = await fetch('https://api.prod.whoop.com/oauth/token', {
       method: 'POST',
       headers: {
@@ -249,22 +265,22 @@ export async function refreshWhoopAccessToken(userId: string): Promise<WhoopToke
         client_secret: secrets.whoop.clientSecret,
       }),
     });
-    
+
     if (!response.ok) {
       console.error(`❌ Failed to refresh token: ${response.status} ${response.statusText}`);
       return null;
     }
-    
+
     const data = await response.json();
-    
+
     const newTokens: Omit<WhoopTokens, 'userId' | 'createdAt' | 'updatedAt'> = {
       accessToken: data.access_token,
       refreshToken: data.refresh_token || tokens.refreshToken,
       expiresAt: new Date(Date.now() + data.expires_in * 1000).toISOString(),
     };
-    
+
     await storeWhoopTokens(userId, newTokens);
-    
+
     return await getWhoopTokens(userId);
   } catch (error) {
     console.error(`❌ Error refreshing token for user ${userId}:`, error);

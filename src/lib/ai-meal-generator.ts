@@ -87,18 +87,24 @@ CRITICAL MEAL GENERATION REQUIREMENTS:
 1. YOU MUST GENERATE EXACTLY 28 MEALS - NO MORE, NO LESS
 2. STRUCTURE: 7 days × 4 meals per day = 28 total meals
 3. DAYS: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday
-4. MEAL TYPES: Breakfast, Lunch, Snack, Dinner (exactly 4 per day)
+4. MEAL TYPES: Breakfast, Lunch, Snack, Dinner (exactly 4 per day in this order)
 5. Each meal must include all required fields: day, meal_type, name, description, ingredients, instructions, prep_time, cook_time, servings, nutrition, image_prompt, whoop_rationale
 
+🎯 STRICT SEQUENCING & REPETITION RULES:
+6. MEAL SEQUENCING: Each day must follow EXACTLY this order: Breakfast → Lunch → Snack → Dinner
+7. REPETITION CONSTRAINT: A single meal can appear AT MOST TWICE across the entire 7-day plan, and ONLY if nutritionally essential
+8. SAME-DAY RULE: The SAME meal MUST NEVER appear as both Lunch AND Dinner on the same day
+9. PRIORITIZE MEALS WITH IMAGES: Strongly favor meals that would have appealing visual presentation
+
 PERSONALIZATION RULES:
-6. Tailor nutrition to the user's current physiological state and trends
-7. Include detailed whoop_rationale for each meal explaining why it supports their current needs
-8. Create vivid, appetizing image_prompt for each meal
-9. Ensure nutritional balance across the week
-10. Consider recovery foods if fatigue is high
-11. Emphasize anti-inflammatory ingredients if recommended
-12. Adjust portion sizes based on metabolic demand
-13. Include hydrating foods if hydration focus is needed
+10. Tailor nutrition to the user's current physiological state and trends
+11. Include detailed whoop_rationale for each meal explaining why it supports their current needs
+12. Create vivid, appetizing image_prompt for each meal (prioritize visually appealing meals)
+13. Ensure nutritional balance across the week
+14. Consider recovery foods if fatigue is high
+15. Emphasize anti-inflammatory ingredients if recommended
+16. Adjust portion sizes based on metabolic demand
+17. Include hydrating foods if hydration focus is needed
 
 VALIDATION: Before responding, count your meals to ensure you have exactly 28 meals (7 days × 4 meals each).
 
@@ -142,15 +148,20 @@ export async function generatePersonalizedMeals(whoopAnalysis: WhoopAnalysis): P
 
 Create a complete 7-day personalized meal plan with exactly 28 meals total:
 
-REQUIRED STRUCTURE:
-- Monday: Breakfast, Lunch, Snack, Dinner (4 meals)
-- Tuesday: Breakfast, Lunch, Snack, Dinner (4 meals)  
-- Wednesday: Breakfast, Lunch, Snack, Dinner (4 meals)
-- Thursday: Breakfast, Lunch, Snack, Dinner (4 meals)
-- Friday: Breakfast, Lunch, Snack, Dinner (4 meals)
-- Saturday: Breakfast, Lunch, Snack, Dinner (4 meals)
-- Sunday: Breakfast, Lunch, Snack, Dinner (4 meals)
+REQUIRED STRUCTURE (STRICT SEQUENCING):
+- Monday: Breakfast → Lunch → Snack → Dinner (4 meals in exact order)
+- Tuesday: Breakfast → Lunch → Snack → Dinner (4 meals in exact order)  
+- Wednesday: Breakfast → Lunch → Snack → Dinner (4 meals in exact order)
+- Thursday: Breakfast → Lunch → Snack → Dinner (4 meals in exact order)
+- Friday: Breakfast → Lunch → Snack → Dinner (4 meals in exact order)
+- Saturday: Breakfast → Lunch → Snack → Dinner (4 meals in exact order)
+- Sunday: Breakfast → Lunch → Snack → Dinner (4 meals in exact order)
 TOTAL: 28 meals
+
+🚨 CRITICAL CONSTRAINTS:
+- Maximum 2 occurrences of any single meal across the entire week
+- NEVER use the same meal for Lunch AND Dinner on the same day
+- Prioritize visually appealing meals that would photograph well
 
 PERSONALIZATION FOCUS:
 - Support my ${whoopAnalysis.physiologicalState.recoveryStatus} recovery status
@@ -1295,10 +1306,13 @@ function createWeeklyMealPlan(libraryMeals: any[], aiMeals: GeneratedMeal[], nee
     image_prompt: meal.image_prompt || `Healthy ${meal.meal_type?.toLowerCase() || 'meal'} with ${meal.ingredients?.slice(0, 3).map(i => i.name || i).join(', ') || 'nutritious ingredients'}`
   }));
 
-  // Track used meals to avoid repetition in same day
-  const usedMealsPerDay: { [key: string]: Set<string> } = {};
+  // 🎯 STRICT SEQUENCING & REPETITION TRACKING
+  const mealUsageCount = new Map<string, number>(); // Track meal usage (max 2 times)
+  const dailyMealIds = new Map<string, Set<string>>(); // Track meals used per day for same-day rule
+
+  // Initialize daily meal tracking
   days.forEach(day => {
-    usedMealsPerDay[day] = new Set();
+    dailyMealIds.set(day, new Set<string>());
   });
 
   // Meal type indices to ensure variety
@@ -1311,8 +1325,10 @@ function createWeeklyMealPlan(libraryMeals: any[], aiMeals: GeneratedMeal[], nee
 
   let aiMealIndex = 0;
 
-  // Distribute meals across the week
+  // 🎯 STRICT SEQUENCING: Distribute meals across the week following B-L-S-D order
   days.forEach((day, dayIndex) => {
+    const dailyMeals = dailyMealIds.get(day)!;
+
     mealTypes.forEach((mealType) => {
       const mealTypeKey = mealType.toLowerCase() as keyof typeof mealsByType;
 
@@ -1323,12 +1339,14 @@ function createWeeklyMealPlan(libraryMeals: any[], aiMeals: GeneratedMeal[], nee
 
       if (shouldUseAIMeal) {
         const aiMeal = processedAIMeals[aiMealIndex];
+        const aiMealId = `ai_${aiMeal.name}_${mealType}`;
 
         // Validate AI meal has all required fields
         const validatedAIMeal = {
           ...aiMeal,
           day,
           meal_type: mealType,
+          meal_id: aiMealId,
           name: aiMeal.name || `AI ${mealType}`,
           description: aiMeal.description || `AI-generated ${mealType.toLowerCase()} for your health needs`,
           ingredients: aiMeal.ingredients || [{ name: "Various ingredients", amount: "as needed" }],
@@ -1348,27 +1366,33 @@ function createWeeklyMealPlan(libraryMeals: any[], aiMeals: GeneratedMeal[], nee
         };
 
         weeklyPlan.push(validatedAIMeal);
-        usedMealsPerDay[day].add(aiMeal.meal_id);
+
+        // 🎯 UPDATE TRACKING
+        const currentCount = mealUsageCount.get(aiMealId) || 0;
+        mealUsageCount.set(aiMealId, currentCount + 1);
+        dailyMeals.add(aiMealId);
+
         aiMealIndex++;
       } else {
-        // Use library meal of correct type
+        // Use library meal of correct type with constraint checking
         const availableMeals = mealsByType[mealTypeKey];
         if (availableMeals.length === 0) {
           console.warn(`No ${mealType} meals available in library`);
           return; // Use return instead of continue in forEach
         }
 
-        // Find a meal that hasn't been used today, with proper cycling
+        // 🎯 CONSTRAINT-AWARE MEAL SELECTION
         let selectedMeal = null;
         let attempts = 0;
-        const maxAttempts = availableMeals.length * 2;
+        const maxAttempts = availableMeals.length * 3;
 
         while (!selectedMeal && attempts < maxAttempts) {
           const mealIndex = mealTypeIndices[mealTypeKey] % availableMeals.length;
           const candidateMeal = availableMeals[mealIndex];
+          const candidateMealId = candidateMeal.meal_id || candidateMeal.name;
 
-          // Check if this meal has already been used today
-          if (!usedMealsPerDay[day].has(candidateMeal.meal_id)) {
+          // Check all constraints
+          if (canUseMealInPlan(candidateMealId, day, mealUsageCount, dailyMeals)) {
             selectedMeal = candidateMeal;
           }
 
@@ -1376,29 +1400,77 @@ function createWeeklyMealPlan(libraryMeals: any[], aiMeals: GeneratedMeal[], nee
           attempts++;
         }
 
-        // If we couldn't find an unused meal, use the next available one
+        // 🚨 FALLBACK: If no meal meets constraints, relax repetition rule but maintain same-day rule
         if (!selectedMeal) {
-          const mealIndex = mealTypeIndices[mealTypeKey] % availableMeals.length;
-          selectedMeal = availableMeals[mealIndex];
-          mealTypeIndices[mealTypeKey]++;
+          for (const candidateMeal of availableMeals) {
+            const candidateMealId = candidateMeal.meal_id || candidateMeal.name;
+            if (!dailyMeals.has(candidateMealId)) {
+              selectedMeal = candidateMeal;
+              console.warn(`⚠️ Relaxed repetition rule for ${day} ${mealType}: ${selectedMeal.name}`);
+              break;
+            }
+          }
         }
 
-        // Always increment the index to ensure variety across days
-        mealTypeIndices[mealTypeKey]++;
+        // 🚨 FINAL FALLBACK: Use any available meal (should rarely happen)
+        if (!selectedMeal) {
+          selectedMeal = availableMeals[mealTypeIndices[mealTypeKey] % availableMeals.length];
+          mealTypeIndices[mealTypeKey]++;
+          console.warn(`⚠️ Using final fallback meal for ${day} ${mealType}: ${selectedMeal.name}`);
+        }
+
+        const finalMealId = selectedMeal.meal_id || selectedMeal.name;
 
         weeklyPlan.push({
           ...selectedMeal,
           day,
           meal_type: mealType,
-          meal_id: `${selectedMeal.meal_id}_${day}_${mealType}`,
+          meal_id: `${finalMealId}_${day}_${mealType}`,
           imageUrl: selectedMeal.imageUrl || selectedMeal.image || "/placeholder-meal.jpg"
         });
 
-        usedMealsPerDay[day].add(selectedMeal.meal_id);
+        // 🎯 UPDATE TRACKING
+        const currentCount = mealUsageCount.get(finalMealId) || 0;
+        mealUsageCount.set(finalMealId, currentCount + 1);
+        dailyMeals.add(finalMealId);
       }
     });
   });
 
-  console.log(`[WEEKLY-PLAN] Created complete 28-meal plan with proper meal type distribution`);
+  // 🎯 VALIDATION LOG: Show repetition compliance
+  const repetitionStats = Array.from(mealUsageCount.entries())
+    .filter(([_, count]) => count > 1)
+    .map(([mealId, count]) => `${mealId}: ${count}x`);
+
+  if (repetitionStats.length > 0) {
+    console.log(`📊 Repeated meals (max 2x allowed): ${repetitionStats.join(', ')}`);
+  } else {
+    console.log(`✅ No meal repetitions - perfect variety achieved`);
+  }
+
+  console.log(`[WEEKLY-PLAN] Created complete 28-meal plan with strict sequencing and repetition rules`);
   return weeklyPlan;
+}
+
+/**
+ * 🎯 CONSTRAINT CHECKER: Determine if a meal can be used based on repetition and same-day rules
+ */
+function canUseMealInPlan(
+  mealId: string,
+  day: string,
+  mealUsageCount: Map<string, number>,
+  dailyMeals: Set<string>
+): boolean {
+  // Rule 1: Maximum 2 uses per week
+  const currentCount = mealUsageCount.get(mealId) || 0;
+  if (currentCount >= 2) {
+    return false;
+  }
+
+  // Rule 2: Same-day rule - meal cannot be used twice on same day
+  if (dailyMeals.has(mealId)) {
+    return false;
+  }
+
+  return true;
 }

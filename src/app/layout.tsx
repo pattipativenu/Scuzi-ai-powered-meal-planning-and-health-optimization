@@ -52,7 +52,7 @@ children: React.ReactNode;
             </div>
             
             {/* Main Content Area - Scrollable with proper padding for fixed nav */}
-            <main className="md:flex-none flex-1 overflow-y-auto scrollbar-hide md:pb-0 pb-20 pt-40">
+            <main className="md:flex-none flex-1 overflow-y-auto scrollbar-hide md:pb-0 pb-20 pt-20 md:pt-40">
               {children}
             </main>
             

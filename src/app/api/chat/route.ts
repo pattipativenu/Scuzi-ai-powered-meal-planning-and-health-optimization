@@ -216,33 +216,19 @@ function extractImageMetadata(text: string): {
   const match = text.match(metadataRegex);
   
   if (!match) {
-    console.log("[METADATA] 🚨 No IMAGE_METADATA tags found, checking for recipe format...");
+    console.log("[METADATA] 🚨 No IMAGE_METADATA tags found, checking for COMPLETE recipe format...");
     
-    // AGGRESSIVE FALLBACK: Check if this is ANY recipe response
-    const hasRecipeIndicators = 
-      text.includes("Ingredients:") || 
-      text.includes("**Ingredients:**") ||
-      text.includes("ingredients:") ||
-      text.includes("Step-by-Step Instructions") ||
-      text.includes("Instructions:") ||
-      text.includes("instructions:") ||
-      text.includes("🥘") ||
-      text.includes("recipe") ||
-      text.includes("Recipe") ||
-      text.includes("cook") ||
-      text.includes("Cook") ||
-      text.includes("prep") ||
-      text.includes("Prep") ||
-      text.includes("servings") ||
-      text.includes("Servings") ||
-      (text.includes("minutes") && text.includes("min")) ||
-      text.includes("tbsp") ||
-      text.includes("tsp") ||
-      text.includes("cup") ||
-      text.includes("oz");
+    // STRICT RECIPE DETECTION: Only generate images for COMPLETE recipes with full format
+    const hasCompleteRecipe = 
+      text.includes("🥘") && // Must have recipe emoji
+      text.includes("**Ingredients:**") && // Must have ingredients section
+      text.includes("Step-by-Step Instructions") && // Must have instructions section
+      text.includes("**Nutrition Table") && // Must have nutrition table
+      (text.includes("Servings:") || text.includes("servings")) && // Must have servings
+      (text.includes("Time:") || text.includes("min")); // Must have timing
     
-    if (hasRecipeIndicators) {
-      console.log("[METADATA] 🚨 AGGRESSIVE recipe detection - generating image for ANY recipe-like content!");
+    if (hasCompleteRecipe) {
+      console.log("[METADATA] ✅ Complete recipe detected - generating image for full recipe!");
       
       // Extract dish name from 🥘 emoji heading
       const dishNameMatch = text.match(/🥘\s*\*\*(.+?)\*\*/);
@@ -268,7 +254,7 @@ function extractImageMetadata(text: string): {
       else if (lowerText.includes("steam")) cookingMethod = "steamed";
       else if (lowerText.includes("boil")) cookingMethod = "boiled";
       
-      console.log("[METADATA] Fallback metadata created:", { dishName, cuisineStyle, cookingMethod });
+      console.log("[METADATA] Complete recipe metadata created:", { dishName, cuisineStyle, cookingMethod });
       
       return {
         shouldGenerate: true,
@@ -280,7 +266,7 @@ function extractImageMetadata(text: string): {
       };
     }
     
-    console.log("[METADATA] No recipe detected, skipping image generation");
+    console.log("[METADATA] ❌ No complete recipe detected, skipping image generation (recipe suggestions, health advice, etc. won't generate images)");
     return {
       shouldGenerate: false,
       dishName: "",

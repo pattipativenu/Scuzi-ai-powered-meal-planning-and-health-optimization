@@ -17,8 +17,12 @@ import { motion, AnimatePresence } from "framer-motion";
 interface MealData {
   day: string;
   meal_type: string;
+  original_meal_type?: string;
+  meal_id?: string;
   name: string;
+  tagline?: string;
   description: string;
+  whyThisMeal?: string;
   ingredients: Array<{ name: string; amount: string }>;
   instructions: string[];
   prep_time: number;
@@ -29,9 +33,19 @@ interface MealData {
     protein: number;
     carbs: number;
     fat: number;
+    fiber?: number;
+    sodium?: number;
+    saturated_fat?: number;
+    sugars?: number;
+    serving_unit?: string;
+    summary?: string;
   };
   image: string;
   image_base64?: string;
+  tags?: string[];
+  raw_ingredients?: any;
+  raw_nutrition?: any;
+  raw_method?: any;
 }
 
 export default function MealDetailPage() {
@@ -48,6 +62,9 @@ export default function MealDetailPage() {
   >("ingredients");
   const [cookingMode, setCookingMode] = useState(false);
   const [reviewText, setReviewText] = useState("");
+  const [isChangingMeal, setIsChangingMeal] = useState(false);
+  const [mealTransition, setMealTransition] = useState(false);
+  const [changeMessage, setChangeMessage] = useState("");
 
   // Cooking Mode Component
   const CookingModeToggle = ({ className = "" }) => (
@@ -144,62 +161,46 @@ export default function MealDetailPage() {
   useEffect(() => {
     const loadMeal = async () => {
       try {
-        // First check localStorage for immediate access
-        const cachedMeals = localStorage.getItem("currentMealPlan");
-        if (cachedMeals) {
-          const meals = JSON.parse(cachedMeals);
-          const [day, mealType] = mealId.split("-");
+        console.log(`🔍 Loading meal with ID: ${mealId}`);
 
-          const foundMeal = meals.find(
-            (m: any) => m.day === day && m.meal_type === mealType
-          );
-
-          if (foundMeal) {
-            // Convert image URL to use proxy if it's an S3 URL
-            if (
-              foundMeal.image &&
-              foundMeal.image.includes("s3.") &&
-              foundMeal.image.includes(".amazonaws.com")
-            ) {
-              foundMeal.image = `/api/image-proxy?url=${encodeURIComponent(foundMeal.image)}`;
-            }
-            setMeal(foundMeal);
+        // Try RDS meal ID format first (B-0001, LD-0001, etc.)
+        const response = await fetch(`/api/meals/${mealId}`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.meal) {
+            console.log(`✅ Found meal: ${data.meal.name}`);
+            setMeal(data.meal);
             setLoading(false);
             return;
           }
         }
 
-        // Fall back to API
-        const response = await fetch("/api/plan-ahead/retrieve");
-        const data = await response.json();
-
-        if (data.status === "success" && data.mealPlan?.meals) {
-          const [day, mealType] = mealId.split("-");
-
-          const foundMeal = data.mealPlan.meals.find(
-            (m: any) => m.day === day && m.meal_type === mealType
-          );
-
-          if (foundMeal) {
-            // Convert image URL to use proxy if it's an S3 URL
-            if (
-              foundMeal.image &&
-              foundMeal.image.includes("s3.") &&
-              foundMeal.image.includes(".amazonaws.com")
-            ) {
-              foundMeal.image = `/api/image-proxy?url=${encodeURIComponent(foundMeal.image)}`;
+        // If not found, try current week meals for Day-MealType format
+        if (mealId.includes('-')) {
+          const [day, mealType] = mealId.split('-');
+          const currentWeekResponse = await fetch('/api/meals/current-week');
+          const currentWeekData = await currentWeekResponse.json();
+          
+          if (currentWeekData.status === 'success' && currentWeekData.meals) {
+            const foundMeal = currentWeekData.meals.find(
+              (m: any) => m.day === day && m.meal_type === mealType
+            );
+            
+            if (foundMeal) {
+              console.log(`✅ Found current week meal: ${foundMeal.name}`);
+              setMeal(foundMeal);
+              setLoading(false);
+              return;
             }
-            setMeal(foundMeal);
-          } else {
-            setError("Meal not found");
           }
-        } else {
-          setError("No meal plan available");
         }
+
+        setError("Meal not found");
+        setLoading(false);
       } catch (error) {
-        console.error("Error loading meal:", error);
+        console.error("❌ Error loading meal:", error);
         setError("Failed to load meal details");
-      } finally {
         setLoading(false);
       }
     };
@@ -232,6 +233,58 @@ export default function MealDetailPage() {
     if (!meal) return value;
     const ratio = servings / meal.servings;
     return Math.round(value * ratio);
+  };
+
+  const handleChangeMeal = async () => {
+    if (!meal || isChangingMeal) return;
+
+    setIsChangingMeal(true);
+    
+    try {
+      console.log(`🔄 Changing meal: ${meal.meal_id || mealId}`);
+      
+      // Get the current meal ID (prefer meal_id from database)
+      const currentMealId = meal.meal_id || mealId;
+      
+      const response = await fetch(`/api/meals/alternatives/${currentMealId}`);
+      const data = await response.json();
+
+      if (data.success && data.meal) {
+        console.log(`✅ Found alternative: ${data.meal.name}`);
+        
+        // Add smooth transition effect
+        setMealTransition(true);
+        
+        // Small delay for transition effect
+        setTimeout(() => {
+          // Update the meal data with the new alternative
+          setMeal(data.meal);
+          
+          // Reset servings to the new meal's default
+          setServings(data.meal.servings || 1);
+          
+          // Update the URL to reflect the new meal
+          window.history.replaceState(null, '', `/meal/${data.meal.meal_id}`);
+          
+          console.log(`🎯 Changed from ${meal.name} to ${data.meal.name}`);
+          
+          // Show success message
+          setChangeMessage(`Changed to ${data.meal.name}!`);
+          setTimeout(() => setChangeMessage(""), 3000);
+          
+          // Remove transition effect
+          setTimeout(() => setMealTransition(false), 100);
+        }, 200);
+      } else {
+        console.warn('No alternative meals found:', data.message);
+        // You could show a toast notification here
+      }
+    } catch (error) {
+      console.error('Error changing meal:', error);
+      // You could show an error toast here
+    } finally {
+      setIsChangingMeal(false);
+    }
   };
 
   if (loading) {
@@ -272,7 +325,7 @@ export default function MealDetailPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Mobile: Hide for now as requested */}
+      {/* Desktop Version */}
       <div className="hidden md:block">
         <div className="max-w-[1600px] mx-auto px-6 py-8">
           {/* Back Button */}
@@ -289,12 +342,13 @@ export default function MealDetailPage() {
             {/* Recipe Header Section */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              animate={{ opacity: mealTransition ? 0.3 : 1, y: 0 }}
+              transition={{ duration: 0.3 }}
               className="grid grid-cols-1 lg:grid-cols-5 gap-12 mb-16 lg:items-end"
             >
               {/* Left: Recipe Info (2 columns) - Aligned to bottom */}
               <div className="lg:col-span-2 space-y-8 lg:pb-0">
-                <h1 className="heading-h1">{meal.name}</h1>
+                <h1 className="text-4xl font-bold leading-tight">{meal.name}</h1>
 
                 {/* Rating and Meta Info */}
                 <div className="flex items-center gap-8">
@@ -331,20 +385,50 @@ export default function MealDetailPage() {
                   </div>
                 </div>
 
-                {/* Description */}
-                <p className="text-xl text-muted-foreground leading-relaxed">
-                  This is Scuzi's latest meal with cauliflower recipes, with
-                  servings of 4 servings. Discover delicious and nutritious
-                  recipes that are optimized based on your WHOOP data to support
-                  your recovery, energy levels, and overall wellness goals.
-                </p>
+                {/* Why This Meal Section */}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold text-gray-900">Why this meal is important</h3>
+                  <p className="text-base text-muted-foreground leading-relaxed">
+                    {meal.whyThisMeal || meal.description || 'This delicious and nutritious recipe is optimized based on your WHOOP data to support your recovery, energy levels, and overall wellness goals.'}
+                  </p>
+                  
+                  {/* Tags */}
+                  {meal.tags && meal.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {meal.tags.map((tag, index) => (
+                        <span
+                          key={index}
+                          className="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full font-medium"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-                {/* Created by Scuzi */}
-                <div className="flex items-center gap-3 text-lg text-muted-foreground">
-                  <ChefHat className="w-6 h-6" />
-                  <span className="font-medium">
-                    Created by <strong>SCUZI</strong>
-                  </span>
+                {/* Created by Scuzi and Change Meal Button */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 text-lg text-muted-foreground">
+                    <ChefHat className="w-6 h-6" />
+                    <span className="font-medium">
+                      created by <strong>Scuzi</strong>
+                    </span>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <button 
+                      onClick={handleChangeMeal}
+                      disabled={isChangingMeal}
+                      className="px-4 py-2 bg-gray-100 hover:bg-blue-500 hover:text-white text-gray-700 rounded-lg font-medium transition-all duration-300 hover:shadow-lg hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    >
+                      {isChangingMeal ? 'Finding Alternative...' : 'Change Meal'}
+                    </button>
+                    {changeMessage && (
+                      <span className="text-sm text-green-600 font-medium animate-fade-in">
+                        {changeMessage}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -354,13 +438,13 @@ export default function MealDetailPage() {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.2 }}
-                  className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl"
+                  className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl group cursor-pointer"
                 >
                   <Image
                     src={imageUrl}
                     alt={meal.name}
                     fill
-                    className="object-cover"
+                    className="object-cover transition-transform duration-500 group-hover:scale-110"
                     sizes="(max-width: 768px) 100vw, 60vw"
                     priority
                   />
@@ -504,10 +588,7 @@ export default function MealDetailPage() {
                             Saturated Fat
                           </span>
                           <span className="text-lg font-semibold">
-                            {Math.round(
-                              calculateNutrition(meal.nutrition.fat) * 0.3
-                            )}
-                            g
+                            {calculateNutrition(meal.nutrition.saturated_fat || Math.round(meal.nutrition.fat * 0.3))}g
                           </span>
                         </div>
                         <div className="flex justify-between items-center py-3 border-b border-border/30">
@@ -515,10 +596,7 @@ export default function MealDetailPage() {
                             Dietary Fibre
                           </span>
                           <span className="text-lg font-semibold">
-                            {Math.round(
-                              calculateNutrition(meal.nutrition.carbs) * 0.15
-                            )}
-                            g
+                            {calculateNutrition(meal.nutrition.fiber || Math.round(meal.nutrition.carbs * 0.15))}g
                           </span>
                         </div>
                         <div className="flex justify-between items-center py-3 border-b border-border/30">
@@ -532,10 +610,7 @@ export default function MealDetailPage() {
                         <div className="flex justify-between items-center py-3 border-b border-border/30">
                           <span className="text-lg font-medium">Sugars</span>
                           <span className="text-lg font-semibold">
-                            {Math.round(
-                              calculateNutrition(meal.nutrition.carbs) * 0.25
-                            )}
-                            g
+                            {calculateNutrition(meal.nutrition.sugars || Math.round(meal.nutrition.carbs * 0.25))}g
                           </span>
                         </div>
                         <div className="flex justify-between items-center py-3 border-b border-border/30">
@@ -547,10 +622,7 @@ export default function MealDetailPage() {
                         <div className="flex justify-between items-center py-3 border-b border-border/30">
                           <span className="text-lg font-medium">Sodium</span>
                           <span className="text-lg font-semibold">
-                            {Math.round(
-                              calculateNutrition(meal.nutrition.calories) * 0.3
-                            )}
-                            mg
+                            {calculateNutrition(meal.nutrition.sodium || Math.round(meal.nutrition.calories * 0.3))}mg
                           </span>
                         </div>
                       </div>
@@ -686,13 +758,13 @@ export default function MealDetailPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="relative w-full aspect-square rounded-2xl overflow-hidden"
+            className="relative w-full aspect-square rounded-2xl overflow-hidden group cursor-pointer"
           >
             <Image
               src={imageUrl}
               alt={meal.name}
               fill
-              className="object-cover"
+              className="object-cover transition-transform duration-500 group-hover:scale-110"
               sizes="100vw"
               priority
             />
@@ -705,7 +777,7 @@ export default function MealDetailPage() {
             transition={{ delay: 0.1 }}
             className="space-y-4"
           >
-            <h1 className="heading-h2">{meal.name}</h1>
+            <h1 className="text-2xl font-bold leading-tight">{meal.name}</h1>
 
             {/* Rating and Meta */}
             <div className="flex items-center gap-4">
@@ -736,19 +808,50 @@ export default function MealDetailPage() {
               </div>
             </div>
 
-            {/* Description */}
-            <p className="text-muted-foreground leading-relaxed">
-              This is Scuzi's latest meal with cauliflower recipes, with
-              servings of 4 servings. Discover delicious and nutritious recipes
-              that are optimized based on your WHOOP data.
-            </p>
+            {/* Why This Meal Section */}
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-gray-900">Why this meal is important</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {meal.whyThisMeal || meal.description || 'This delicious and nutritious recipe is optimized based on your WHOOP data to support your recovery, energy levels, and overall wellness goals.'}
+              </p>
+              
+              {/* Tags */}
+              {meal.tags && meal.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {meal.tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full font-medium"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
 
-            {/* Created by */}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <ChefHat className="w-4 h-4" />
-              <span>
-                Created by <strong>SCUZI</strong>
-              </span>
+            {/* Created by and Change Meal Button */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <ChefHat className="w-4 h-4" />
+                <span>
+                  created by <strong>Scuzi</strong>
+                </span>
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                <button 
+                  onClick={handleChangeMeal}
+                  disabled={isChangingMeal}
+                  className="px-3 py-1.5 bg-gray-100 hover:bg-blue-500 hover:text-white text-gray-700 rounded-lg text-sm font-medium transition-all duration-300 hover:shadow-lg hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                >
+                  {isChangingMeal ? 'Finding...' : 'Change Meal'}
+                </button>
+                {changeMessage && (
+                  <span className="text-xs text-green-600 font-medium animate-fade-in">
+                    {changeMessage}
+                  </span>
+                )}
+              </div>
             </div>
           </motion.div>
 
@@ -888,19 +991,13 @@ export default function MealDetailPage() {
                       <div className="flex justify-between items-center py-2 border-b border-border/30">
                         <span className="font-medium">Saturated Fat</span>
                         <span className="font-semibold">
-                          {Math.round(
-                            calculateNutrition(meal.nutrition.fat) * 0.3
-                          )}
-                          g
+                          {calculateNutrition(meal.nutrition.saturated_fat || Math.round(meal.nutrition.fat * 0.3))}g
                         </span>
                       </div>
                       <div className="flex justify-between items-center py-2 border-b border-border/30">
                         <span className="font-medium">Dietary Fibre</span>
                         <span className="font-semibold">
-                          {Math.round(
-                            calculateNutrition(meal.nutrition.carbs) * 0.15
-                          )}
-                          g
+                          {calculateNutrition(meal.nutrition.fiber || Math.round(meal.nutrition.carbs * 0.15))}g
                         </span>
                       </div>
                       <div className="flex justify-between items-center py-2 border-b border-border/30">
@@ -912,10 +1009,7 @@ export default function MealDetailPage() {
                       <div className="flex justify-between items-center py-2 border-b border-border/30">
                         <span className="font-medium">Sugars</span>
                         <span className="font-semibold">
-                          {Math.round(
-                            calculateNutrition(meal.nutrition.carbs) * 0.25
-                          )}
-                          g
+                          {calculateNutrition(meal.nutrition.sugars || Math.round(meal.nutrition.carbs * 0.25))}g
                         </span>
                       </div>
                       <div className="flex justify-between items-center py-2 border-b border-border/30">
@@ -927,10 +1021,7 @@ export default function MealDetailPage() {
                       <div className="flex justify-between items-center py-2 border-b border-border/30">
                         <span className="font-medium">Sodium</span>
                         <span className="font-semibold">
-                          {Math.round(
-                            calculateNutrition(meal.nutrition.calories) * 0.3
-                          )}
-                          mg
+                          {calculateNutrition(meal.nutrition.sodium || Math.round(meal.nutrition.calories * 0.3))}mg
                         </span>
                       </div>
                     </div>

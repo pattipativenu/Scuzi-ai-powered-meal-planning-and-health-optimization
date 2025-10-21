@@ -1,20 +1,20 @@
 import mysql from "mysql2/promise";
 
 export interface WhoopHealthData {
-  userId: string;
+  user_id: string;
   date: string;
-  recoveryScore: number | null;
+  recovery_score: number | null;
   strain: number | null;
-  sleepHours: number | null;
-  caloriesBurned: number | null;
-  avgHr: number | null;
+  sleep_hours: number | null;
+  calories_burned: number | null;
+  avg_hr: number | null;
   rhr: number | null;
   hrv: number | null;
   spo2: number | null;
-  skinTemp: number | null;
-  respiratoryRate: number | null;
-  createdAt: string;
-  updatedAt: string;
+  skin_temp: number | null;
+  respiratory_rate: number | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface WhoopAnalysis {
@@ -52,9 +52,9 @@ export interface WhoopAnalysis {
 async function getDbConnection() {
   return mysql.createConnection({
     host: process.env.RDS_HOST,
-    user: process.env.RDS_USERNAME || process.env.RDS_USER,
+    user: process.env.RDS_USER,
     password: process.env.RDS_PASSWORD,
-    database: "WHOOPHEALTHDATA", // Database name is uppercase
+    database: process.env.RDS_DATABASE, // Use the database from env (scuzi_meals)
     port: Number(process.env.RDS_PORT) || 3306,
   });
 }
@@ -63,18 +63,28 @@ export async function fetchUserWhoopData(userId: string, days: number = 7): Prom
   try {
     const connection = await getDbConnection();
     
+    console.log(`🔍 [WHOOP-DB] Fetching data for user: ${userId}, days: ${days}`);
+    
     const [rows] = await connection.execute(
       `SELECT * FROM whoop_health_data 
-       WHERE userId = ? 
+       WHERE user_id = ? 
        ORDER BY date DESC 
        LIMIT ?`,
-      [userId, days * 2] // Get more records to ensure we have enough data
+      [userId, (days * 2).toString()] // Convert to string for MySQL
     );
 
     await connection.end();
-    return rows as WhoopHealthData[];
+    
+    console.log(`✅ [WHOOP-DB] Found ${(rows as any[]).length} records from database`);
+    
+    if ((rows as any[]).length > 0) {
+      return rows as WhoopHealthData[];
+    } else {
+      console.warn(`⚠️ [WHOOP-DB] No records found for user ${userId}, using mock data`);
+    }
   } catch (error) {
-    console.warn("⚠️ [WHOOP-DB] Database connection failed, using mock data for testing:", error);
+    console.error("❌ [WHOOP-DB] Database connection failed:", error);
+    console.warn("⚠️ [WHOOP-DB] Falling back to mock data for testing");
     
     // Return mock WHOOP data for testing AWS Bedrock integration
     const mockData: WhoopHealthData[] = [];
@@ -85,20 +95,20 @@ export async function fetchUserWhoopData(userId: string, days: number = 7): Prom
       date.setDate(date.getDate() - i);
       
       mockData.push({
-        userId,
+        user_id: userId,
         date: date.toISOString().split('T')[0],
-        recoveryScore: Math.floor(Math.random() * 40) + 50, // 50-90
+        recovery_score: Math.floor(Math.random() * 40) + 50, // 50-90
         strain: Math.random() * 10 + 8, // 8-18
-        sleepHours: Math.random() * 2 + 6.5, // 6.5-8.5
-        caloriesBurned: Math.floor(Math.random() * 800) + 2000, // 2000-2800
-        avgHr: Math.floor(Math.random() * 30) + 140, // 140-170
+        sleep_hours: Math.random() * 2 + 6.5, // 6.5-8.5
+        calories_burned: Math.floor(Math.random() * 800) + 2000, // 2000-2800
+        avg_hr: Math.floor(Math.random() * 30) + 140, // 140-170
         rhr: Math.floor(Math.random() * 20) + 55, // 55-75
         hrv: Math.floor(Math.random() * 30) + 30, // 30-60
         spo2: Math.random() * 2 + 97, // 97-99
-        skinTemp: Math.random() * 2 + 97.5, // 97.5-99.5
-        respiratoryRate: Math.random() * 4 + 14, // 14-18
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        skin_temp: Math.random() * 2 + 97.5, // 97.5-99.5
+        respiratory_rate: Math.random() * 4 + 14, // 14-18
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       });
     }
     
@@ -112,12 +122,12 @@ export function analyzeWhoopData(data: WhoopHealthData[]): WhoopAnalysis {
   }
 
   // Calculate averages (excluding null values)
-  const validRecovery = data.filter(d => d.recoveryScore !== null).map(d => d.recoveryScore!);
+  const validRecovery = data.filter(d => d.recovery_score !== null).map(d => d.recovery_score!);
   const validStrain = data.filter(d => d.strain !== null).map(d => d.strain!);
-  const validSleep = data.filter(d => d.sleepHours !== null).map(d => d.sleepHours!);
+  const validSleep = data.filter(d => d.sleep_hours !== null).map(d => d.sleep_hours!);
   const validHrv = data.filter(d => d.hrv !== null).map(d => d.hrv!);
   const validRhr = data.filter(d => d.rhr !== null).map(d => d.rhr!);
-  const validCalories = data.filter(d => d.caloriesBurned !== null).map(d => d.caloriesBurned!);
+  const validCalories = data.filter(d => d.calories_burned !== null).map(d => d.calories_burned!);
 
   const averages = {
     recovery: validRecovery.length > 0 ? validRecovery.reduce((a, b) => a + b, 0) / validRecovery.length : 50,
@@ -146,12 +156,12 @@ export function analyzeWhoopData(data: WhoopHealthData[]): WhoopAnalysis {
 
   const trends = {
     recovery: calculateTrend(
-      recent.filter(d => d.recoveryScore !== null).map(d => d.recoveryScore!),
-      older.filter(d => d.recoveryScore !== null).map(d => d.recoveryScore!)
+      recent.filter(d => d.recovery_score !== null).map(d => d.recovery_score!),
+      older.filter(d => d.recovery_score !== null).map(d => d.recovery_score!)
     ),
     sleep: calculateTrend(
-      recent.filter(d => d.sleepHours !== null).map(d => d.sleepHours!),
-      older.filter(d => d.sleepHours !== null).map(d => d.sleepHours!)
+      recent.filter(d => d.sleep_hours !== null).map(d => d.sleep_hours!),
+      older.filter(d => d.sleep_hours !== null).map(d => d.sleep_hours!)
     ),
     strain: calculateTrend(
       recent.filter(d => d.strain !== null).map(d => d.strain!),
@@ -180,7 +190,7 @@ export function analyzeWhoopData(data: WhoopHealthData[]): WhoopAnalysis {
   };
 
   return {
-    userId: data[0].userId,
+    userId: data[0].user_id,
     dataPoints: data.length,
     dateRange: {
       start: data[data.length - 1].date,

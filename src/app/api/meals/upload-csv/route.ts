@@ -149,16 +149,21 @@ export async function POST(request: NextRequest) {
                 let mealResult;
                 if (existingMeal.length > 0) {
                     // Update existing meal
-                    mealResult = await db.update(meals)
+                    await db.update(meals)
                         .set({
                             ...mealData,
                             updatedAt: new Date(),
                         })
-                        .where(eq(meals.mealId, record.mealId))
-                        .returning();
+                        .where(eq(meals.mealId, record.mealId));
+                    
+                    // Get the updated meal
+                    mealResult = await db.select().from(meals).where(eq(meals.mealId, record.mealId)).limit(1);
                 } else {
                     // Insert new meal
-                    mealResult = await db.insert(meals).values(mealData).returning();
+                    await db.insert(meals).values(mealData);
+                    
+                    // Get the inserted meal
+                    mealResult = await db.select().from(meals).where(eq(meals.mealId, record.mealId)).limit(1);
                 }
 
                 results.meals.push(mealResult[0]);

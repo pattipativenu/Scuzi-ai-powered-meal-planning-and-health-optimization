@@ -1,5 +1,5 @@
-import { db } from './postgres-connection';
-import { meals, ingredients, mealIngredients, tags, mealTags } from './postgres-schema';
+import { db } from './mysql-connection';
+import { meals, ingredients, mealIngredients, tags, mealTags } from './mysql-schema';
 import { eq, and, inArray } from 'drizzle-orm';
 
 export interface MealData {

@@ -17,7 +17,7 @@ import type { HistoryItem } from "@/hooks/useHistoryFeed";
 export default function Home() {
   const router = useRouter();
   
-  // Fetch real current week meals from database
+  // Fetch real current week meals from AWS database (90+ meals available)
   const { meals: currentWeekMealsData, isLoading: mealsLoading } = useCurrentWeekMeals();
 
   // Calculate dates dynamically
@@ -137,8 +137,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen pb-20 md:pb-0" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
-      {/* Hero Section */}
-      <div className="hero-container">
+      {/* Hero Section - Takes majority of mobile viewport */}
+      <div className="hero-container md:mb-0 -mb-4">
         <AnimatedHeroSection />
       </div>
 
@@ -218,30 +218,46 @@ export default function Home() {
             </div>
           }
 
-          {/* Mobile: 2-column grid with optimized sizing */}
+          {/* Mobile: Horizontal scrolling cards for each day */}
           {!mealsLoading && currentWeekMealsData.length > 0 &&
-          <div className="md:hidden space-y-6">
+          <div className="md:hidden space-y-8">
               {daysOfWeek.map(({ day, date }) => {
             const dayMeals = mealTypes.map(type => getMealForDayAndType(day, type)).filter(Boolean);
             if (dayMeals.length === 0) return null;
             
             return (
-              <div key={day}>
-                  <div className="flex items-center justify-between mb-3 px-2">
-                    <h4>
-                      {day}, {date}
-                    </h4>
+              <div key={day} className="space-y-4">
+                  <div className="flex items-center justify-between px-4">
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-lg font-semibold text-gray-900">
+                        {day}, {date}
+                      </h4>
+                      <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
+                        Swipe →
+                      </span>
+                    </div>
                     <Link
                       href="/plan-ahead"
-                      className="flex items-center gap-1 text-xs text-secondary"
+                      className="flex items-center gap-1 text-xs text-secondary hover:text-primary transition-colors"
                     >
+                      Next Week
                       <ChevronRight className="w-3 h-3" />
                     </Link>
                   </div>
-                  <div className="grid grid-cols-2 gap-3 px-2">
+                  
+                  {/* Horizontal scrolling meal cards */}
+                  <div 
+                    className="flex gap-4 overflow-x-auto pb-4 px-4 snap-x snap-mandatory scrollbar-hide" 
+                    style={{ 
+                      WebkitOverflowScrolling: 'touch', 
+                      scrollBehavior: 'smooth',
+                      transform: 'translateZ(0)',
+                      willChange: 'scroll-position'
+                    }}
+                  >
                     {dayMeals.map((meal) => 
-                      <div key={meal!.id} className="w-full">
-                        <MealCard meal={meal!} size="small" />
+                      <div key={meal!.id} className="snap-start flex-shrink-0 w-[260px]">
+                        <MealCard meal={meal!} size="medium" />
                       </div>
                     )}
                   </div>

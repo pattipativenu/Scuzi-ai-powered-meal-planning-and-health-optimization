@@ -24,7 +24,7 @@ let HISTORY_TABLE_NAME: string;
       },
     });
 
-    HISTORY_TABLE_NAME = secrets.aws_services.dynamodb.tableHistory;
+    HISTORY_TABLE_NAME = secrets.aws_services?.dynamodb?.tableHistory || "ScuziHistory";
   } catch (error) {
     console.error('Failed to initialize DynamoDB client:', error);
     // Fallback to environment variables

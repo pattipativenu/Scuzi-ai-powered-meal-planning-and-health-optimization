@@ -24,7 +24,24 @@ export async function GET(request: NextRequest) {
 
     // Generate simple state token
     const state = randomBytes(32).toString('hex');
-    const redirectUri = `${request.nextUrl.origin}/api/whoop/callback`;
+    
+    // Determine the correct redirect URI based on environment
+    const currentOrigin = request.nextUrl.origin;
+    let redirectUri = `${currentOrigin}/api/whoop/callback`;
+
+    // If we have multiple redirect URIs configured, use the matching one
+    if (secrets.whoop.redirectUri && secrets.whoop.redirectUri.includes(',')) {
+      const availableUris = secrets.whoop.redirectUri.split(',').map(uri => uri.trim());
+      const matchingUri = availableUris.find(uri => uri.startsWith(currentOrigin));
+      if (matchingUri) {
+        redirectUri = matchingUri;
+      }
+    } else if (secrets.whoop.redirectUri) {
+      redirectUri = secrets.whoop.redirectUri;
+    }
+    
+    console.log("🎯 Using redirect URI:", redirectUri);
+    console.log("🌍 Current origin:", currentOrigin);
 
     console.log("🔍 WHOOP OAuth Configuration:");
     console.log("  Client ID:", clientId);
@@ -56,6 +73,8 @@ export async function GET(request: NextRequest) {
       maxAge: 600, // 10 minutes
       path: "/",
     });
+    
+    console.log("🍪 State cookie set:", state);
 
     console.log("✅ OAuth URL generated and state stored");
     return response;

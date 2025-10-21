@@ -41,36 +41,55 @@ export default function PlanAheadPage() {
   const mealTypes = ["Breakfast", "Lunch", "Snack", "Dinner"];
   const MAX_MEALS = 28;
 
-  // Load existing meal plan on mount - PERSISTENT MEALS
+  // 🎯 STATE MANAGEMENT: Load existing meal plan with refresh detection
   useEffect(() => {
-    loadExistingMealPlan();
+    // Detect full website refresh vs navigation
+    const isFullRefresh = !sessionStorage.getItem('navigationState');
+    
+    if (isFullRefresh) {
+      // Full website refresh - clear meal plan and show initial state
+      console.log('🔄 Full website refresh detected - clearing meal plan state');
+      localStorage.removeItem('persistentMealPlan');
+      sessionStorage.setItem('navigationState', 'active');
+      setMeals([]);
+    } else {
+      // Internal navigation - load existing meal plan
+      console.log('🧭 Internal navigation detected - loading existing meal plan');
+      loadExistingMealPlan();
+    }
+    
+    // Set navigation state for future page loads
+    sessionStorage.setItem('navigationState', 'active');
   }, []);
 
   const loadExistingMealPlan = async () => {
     try {
-      // First check localStorage for immediate access
+      console.log("🔍 Loading plan-ahead meals (disconnected from home page)");
+      
+      // First check localStorage for immediate access (plan-ahead specific)
       const cachedMeals = localStorage.getItem("persistentMealPlan");
       if (cachedMeals) {
         const parsed = JSON.parse(cachedMeals);
-        console.log("📱 Loaded persistent meal plan from localStorage:", parsed.length, "meals");
+        console.log("📱 Loaded plan-ahead meals from localStorage:", parsed.length, "meals");
         setMeals(parsed);
         return;
       }
 
-      // Fall back to API to check for saved meal plan
-      const response = await fetch("/api/plan-ahead/retrieve");
+      // Use dedicated plan-ahead meals API (completely separate from home page)
+      const response = await fetch("/api/plan-ahead/meals");
       const data = await response.json();
       
-      if (data.status === "success" && data.mealPlan?.meals) {
-        console.log("💾 Loaded persistent meal plan from database:", data.mealPlan.meals.length, "meals");
-        setMeals(data.mealPlan.meals);
+      if (data.status === "success" && data.meals && data.meals.length > 0) {
+        console.log("💾 Loaded plan-ahead meals from API:", data.meals.length, "meals");
+        setMeals(data.meals);
         // Cache to localStorage with persistent key
-        localStorage.setItem("persistentMealPlan", JSON.stringify(data.mealPlan.meals));
+        localStorage.setItem("persistentMealPlan", JSON.stringify(data.meals));
       } else {
-        console.log("📝 No existing meal plan found - user needs to generate first plan");
+        console.log("📝 No plan-ahead meals found - user needs to generate first plan");
+        console.log("🔗 Plan-ahead meals are completely disconnected from home page meals");
       }
     } catch (error) {
-      console.error("Error loading meal plan:", error);
+      console.error("Error loading plan-ahead meals:", error);
     }
   };
 
@@ -81,162 +100,76 @@ export default function PlanAheadPage() {
     setGenerationStep("Analyzing your WHOOP health data...");
 
     try {
-      // Step 1: Check meal library and generation capabilities
-      setGenerationStep("Checking meal library and your health data...");
-      setMealProgress(2);
-      
-      let apiEndpoint = "/api/plan-ahead/generate-from-library";
-      let capabilities;
-      
-      try {
-        // First try library-based generation (preferred)
-        const libraryResponse = await fetch(apiEndpoint);
-        
-        if (libraryResponse.ok) {
-          capabilities = await libraryResponse.json();
-          console.log("✅ Using meal library generation mode");
-        } else {
-          console.warn("Library API not ready, falling back to AI generation");
-          
-          // Fallback to AI generation
-          apiEndpoint = "/api/plan-ahead/generate-ai-meals";
-          const aiResponse = await fetch(apiEndpoint);
-          
-          if (!aiResponse.ok) {
-            // Final fallback
-            apiEndpoint = "/api/plan-ahead/generate-ai-meals-fallback";
-            const fallbackResponse = await fetch(apiEndpoint);
-            
-            if (!fallbackResponse.ok) {
-              throw new Error("All meal generation APIs are unavailable");
-            }
-            
-            capabilities = await fallbackResponse.json();
-            console.log("✅ Using fallback AI generation mode");
-          } else {
-            capabilities = await aiResponse.json();
-            console.log("✅ Using AI generation mode");
-          }
-        }
-      } catch (error) {
-        console.error("All meal generation APIs failed:", error);
-        throw new Error("Meal generation is currently unavailable. Please try again later.");
-      }
-
-      // Step 2: Start meal generation
-      const isLibraryMode = apiEndpoint.includes('generate-from-library');
-      setGenerationStep(isLibraryMode
-        ? "Selecting optimal meals from library based on your WHOOP data..."
-        : capabilities.has_whoop_data 
-          ? "Analyzing your WHOOP data to personalize meals..." 
-          : capabilities.mode === "fallback" 
-            ? "Generating test meals (fallback mode)..."
-            : "Generating personalized meals with AI...");
+      // Step 1: Always use WHOOP-powered library generation
+      const apiEndpoint = "/api/plan-ahead/generate-from-library";
+      setGenerationStep("Collecting your WHOOP health data...");
       setMealProgress(5);
+      
+      // Step 2: Generate meals with regeneration flag
+      const isRegeneration = meals.length > 0;
+      setGenerationStep(isRegeneration 
+        ? "🔄 Regenerating meals with fresh WHOOP analysis..." 
+        : "🎯 Analyzing your WHOOP data to find optimal meals...");
+      setMealProgress(10);
       
       const generateResponse = await fetch(apiEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          regenerate: meals.length > 0,
-          shuffleOnly: false 
+          regenerate: isRegeneration,
+          forceNewSelection: true, // Always get different meals
+          timestamp: Date.now() // Ensure fresh selection
         }),
       });
 
       if (!generateResponse.ok) {
         const errorText = await generateResponse.text();
-        console.error("AI meal generation failed:", errorText);
-        
-        // Check if it's an HTML error page
-        if (errorText.includes("<!DOCTYPE")) {
-          throw new Error("AI meal generation service is currently unavailable. Please check your configuration and try again.");
-        }
-        
-        // Try to parse as JSON for structured errors
-        try {
-          const errorData = JSON.parse(errorText);
-          if (errorData.suggestion === "shuffle_existing") {
-            const shouldShuffle = confirm(
-              `${errorData.message}\n\nClick OK to shuffle existing meals, or Cancel to generate completely new ones.`
-            );
-            
-            if (shouldShuffle) {
-              return handleShuffleMeals();
-            } else {
-              return handleGenerateNewMeals();
-            }
-          }
-          throw new Error(errorData.error || "Failed to generate AI meals");
-        } catch (parseError) {
-          throw new Error("AI meal generation failed. Please try again.");
-        }
+        console.error("WHOOP meal generation failed:", errorText);
+        throw new Error("Failed to generate WHOOP-powered meals. Please try again.");
       }
 
       const generateData = await generateResponse.json();
 
-      // Step 3: Simulate progress updates during generation
-      if (generateData.step !== "completed") {
-        if (isLibraryMode) {
-          setGenerationStep("Analyzing your WHOOP health patterns...");
-          setMealProgress(10);
-          await new Promise(resolve => setTimeout(resolve, 1500));
-          
-          setGenerationStep("Selecting meals that match your needs...");
-          setMealProgress(20);
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          
-          setGenerationStep("Creating your personalized meal plan...");
-          setMealProgress(25);
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        } else if (capabilities.mode === "fallback") {
-          setGenerationStep("Creating test meal plan...");
-          setMealProgress(15);
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        } else {
-          setGenerationStep("Generating personalized recipes with Claude AI...");
-          setMealProgress(10);
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          
-          setGenerationStep("Creating meal images with Titan AI...");
-          setMealProgress(15);
-          await new Promise(resolve => setTimeout(resolve, 3000));
-          
-          setGenerationStep("Storing meals in your library...");
-          setMealProgress(25);
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      }
+      // Step 3: Show WHOOP analysis progress
+      setGenerationStep("📊 Understanding your recovery patterns...");
+      setMealProgress(15);
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      setGenerationStep("🎯 Matching meals to your physiological needs...");
+      setMealProgress(20);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      setGenerationStep("🍽️ Selecting optimal meals from 150+ database...");
+      setMealProgress(25);
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
       setMealProgress(MAX_MEALS);
       
-      // Step 4: Display meals immediately AND cache to localStorage (PERSISTENT)
+      // Step 4: Display new meals and save to localStorage
       setMeals(generateData.meals);
       localStorage.setItem("persistentMealPlan", JSON.stringify(generateData.meals));
-      console.log("💾 Saved new meal plan with", generateData.meals.length, "UNIQUE meals");
       
-      setGenerationStep(isLibraryMode
-        ? "Meal plan ready! Selected from library based on your WHOOP data."
-        : capabilities.has_whoop_data 
-          ? "AI meal plan ready! Personalized for your WHOOP data." 
-          : capabilities.mode === "fallback"
-            ? "Test meal plan ready! (Configure Bedrock for full AI)"
-            : "AI meal plan ready!");
+      const mealCount = generateData.meals.length;
+      const uniqueMealIds = new Set(generateData.meals.map(m => m.meal_id)).size;
       
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      console.log(`💾 ${isRegeneration ? 'Regenerated' : 'Generated'} meal plan:`, {
+        totalMeals: mealCount,
+        uniqueMeals: uniqueMealIds,
+        whoopInsights: generateData.whoop_insights
+      });
+      
+      setGenerationStep(isRegeneration
+        ? `🎉 Meals regenerated! Found ${uniqueMealIds} different meals based on your WHOOP data.`
+        : `🎉 Meal plan ready! Selected ${uniqueMealIds} optimal meals from your WHOOP analysis.`);
+      
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
       setGenerationStep("");
       setIsGenerating(false);
-
-      console.log("✅ AI meal generation completed:", {
-        type: generateData.generation_type,
-        whoop_data: capabilities.has_whoop_data,
-        processing_time: generateData.processing_time_ms,
-        insights: generateData.whoop_insights
-      });
       
     } catch (error) {
-      console.error("Error generating AI meals:", error);
-      setError(error instanceof Error ? error.message : "Failed to generate AI-powered meals");
+      console.error("Error generating WHOOP-powered meals:", error);
+      setError(error instanceof Error ? error.message : "Failed to generate WHOOP-powered meals");
       setIsGenerating(false);
       setGenerationStep("");
       setMealProgress(0);
@@ -391,23 +324,26 @@ export default function PlanAheadPage() {
   const totalPrepTime = meals.reduce((sum, m) => sum + (m.prep_time || 0) + (m.cook_time || 0), 0);
   const totalCalories = meals.reduce((sum, m) => sum + (m.nutrition?.calories || 0), 0);
 
-  // Convert GeneratedMeal to Meal format for MealCard
+  // Convert GeneratedMeal to Meal format for MealCard with proper meal ID routing
   const convertToMeal = (meal: GeneratedMeal): Meal => {
     // Handle different image field names (image, imageUrl, image_base64)
     let imageUrl = meal.image || (meal as any).imageUrl;
+    
+    // 🎯 CLASS B MEAL HANDLING: Check if this is a Class B meal (no image)
+    const isClassB = (meal as any).imageClass === 'B' || (meal as any).showImagePlaceholder || !(meal as any).hasImage;
     
     // If image_base64 exists but no image URL, convert to data URL
     if (!imageUrl && (meal as any).image_base64) {
       imageUrl = `data:image/png;base64,${(meal as any).image_base64}`;
     }
     
-    // If S3 URL, use proxy to avoid 403 errors
-    if (imageUrl && imageUrl.includes('s3.') && imageUrl.includes('.amazonaws.com')) {
+    // If S3 URL and not already proxied, use proxy to avoid 403 errors
+    if (imageUrl && imageUrl.includes('s3.') && imageUrl.includes('.amazonaws.com') && !imageUrl.includes('/api/image-proxy')) {
       imageUrl = `/api/image-proxy?url=${encodeURIComponent(imageUrl)}`;
     }
     
-    // Fallback to placeholder if no image
-    if (!imageUrl) {
+    // 🎯 CLASS B HANDLING: For Class B meals, explicitly use placeholder
+    if (isClassB || !imageUrl || imageUrl.trim() === '') {
       imageUrl = "/placeholder-meal.jpg";
     }
     
@@ -421,8 +357,11 @@ export default function PlanAheadPage() {
       fat: 15
     };
     
+    // 🎯 FIXED ROUTING: Use meal_id for proper routing to individual meal pages
+    const mealId = (meal as any).meal_id || `${meal.day}-${meal.meal_type}`;
+    
     return {
-      id: `${meal.day}-${meal.meal_type}`,
+      id: mealId, // Use actual meal_id (B-0001, LD-0100, etc.) for proper routing
       name: meal.name || "Unnamed Meal",
       description: meal.description || "Delicious and nutritious meal",
       image: imageUrl,
@@ -463,12 +402,12 @@ export default function PlanAheadPage() {
               {isGenerating ? (
                 <>
                   <Sparkles className="w-4 h-4 animate-pulse" />
-                  AI Generating...
+                  Analyzing WHOOP...
                 </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4" />
-                  {meals.length > 0 ? "Get New Meals" : "Generate Meal Plan"}
+                  {meals.length > 0 ? "Regenerate Meals" : "Generate Meals"}
                 </>
               )}
             </button>
@@ -495,12 +434,12 @@ export default function PlanAheadPage() {
               {isGenerating ? (
                 <>
                   <Sparkles className="w-4 h-4 animate-pulse" />
-                  Selecting Meals...
+                  Analyzing WHOOP...
                 </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4" />
-                  {meals.length > 0 ? "Get New Meals" : "Generate Meal Plan"}
+                  {meals.length > 0 ? "Regenerate Meals" : "Generate Meals"}
                 </>
               )}
             </button>
@@ -529,12 +468,12 @@ export default function PlanAheadPage() {
               {isGenerating ? (
                 <>
                   <Sparkles className="w-5 h-5 animate-pulse" />
-                  Selecting Meals...
+                  Analyzing WHOOP...
                 </>
               ) : (
                 <>
                   <Sparkles className="w-5 h-5" />
-                  {meals.length > 0 ? "Get New Meals" : "Generate Meal Plan"}
+                  {meals.length > 0 ? "Regenerate Meals" : "Generate Meals"}
                 </>
               )}
             </button>
@@ -616,6 +555,30 @@ export default function PlanAheadPage() {
               </div>
             </div>
 
+            {/* 🎯 IMAGE CLASS VALIDATION BANNER - Mobile */}
+            {meals.length > 0 && (meals[0] as any).imageClassValidation && (
+              <div className="md:hidden bg-green-50 border border-green-200 rounded-lg p-3 mb-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-green-600 text-sm font-medium">📸 Visual Coverage</span>
+                  </div>
+                  <div className="text-sm text-green-700">
+                    {(meals[0] as any).imageClassValidation.classACount}/{totalMeals} meals
+                  </div>
+                </div>
+                <div className="mt-2 flex items-center space-x-3 text-xs">
+                  <span className="text-green-600">
+                    ✅ {(meals[0] as any).imageClassValidation.classAPercentage}% with images
+                  </span>
+                  {(meals[0] as any).imageClassValidation.meetsRequirement && (
+                    <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full">
+                      Meets 75% requirement
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Tablet & Desktop: Original layout */}
             <div className="hidden md:grid md:grid-cols-3 gap-4 mb-8">
               <div className="bg-card border border-border rounded-lg p-6">
@@ -642,6 +605,40 @@ export default function PlanAheadPage() {
                 <p className="text-3xl font-bold">{totalCalories.toLocaleString()}</p>
               </div>
             </div>
+
+            {/* 🎯 IMAGE CLASS VALIDATION BANNER - Desktop */}
+            {meals.length > 0 && (meals[0] as any).imageClassValidation && (
+              <div className="hidden md:block bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-green-600 text-lg font-semibold">📸 Visual Meal Coverage</span>
+                  </div>
+                  <div className="text-sm text-green-700">
+                    {(meals[0] as any).imageClassValidation.classACount}/{totalMeals} meals with images
+                  </div>
+                </div>
+                <p className="text-green-700 mt-2">
+                  Generated {totalMeals} meals with {(meals[0] as any).imageClassValidation.classAPercentage}% visual coverage, 
+                  prioritizing meals with images for optimal user experience.
+                </p>
+                <div className="mt-3 flex items-center space-x-4 text-sm">
+                  <span className="text-green-600">
+                    ✅ Class A meals: {(meals[0] as any).imageClassValidation.classACount}
+                  </span>
+                  <span className="text-gray-600">
+                    📷 Class B meals: {(meals[0] as any).imageClassValidation.classBCount}
+                  </span>
+                  <span className="text-green-600 font-medium">
+                    {(meals[0] as any).imageClassValidation.classAPercentage}% visual coverage
+                  </span>
+                  {(meals[0] as any).imageClassValidation.meetsRequirement && (
+                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full font-medium">
+                      ✅ Meets 75% requirement
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Collapsible Days */}
             <div className="space-y-4">

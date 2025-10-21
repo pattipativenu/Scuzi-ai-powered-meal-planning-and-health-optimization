@@ -9,49 +9,54 @@ export function AnimatedHeroSection() {
   const [imageError, setImageError] = useState(false);
 
   return (
-    <section className="relative overflow-hidden bg-white py-16 md:py-12 lg:py-4">
-      <div className="mx-auto px-2 sm:px-6 lg:px-12 max-w-[98vw] sm:max-w-[95vw] lg:max-w-[96vw]">
+    <section className="relative overflow-hidden bg-white py-4 md:py-12 lg:py-4">
+      <div className="mx-auto px-4 sm:px-6 lg:px-12 max-w-[94vw] sm:max-w-[95vw] lg:max-w-[96vw]">
         {/* Hero Content with Yellow Background - L-shaped container */}
         <div
-          className="relative rounded-[33px] overflow-hidden"
+          className="relative rounded-[33px] overflow-hidden min-h-[85vh] md:min-h-0"
           style={{ backgroundColor: "rgb(247, 248, 212)" }}
         >
-          {/* Mobile Layout */}
-          <div className="block md:hidden">
-            <div className="px-4 py-8 text-center space-y-4">
-              {/* H1 Title */}
+          {/* Mobile Layout - Optimized spacing distribution */}
+          <div className="flex md:hidden min-h-[85vh] flex-col">
+            {/* Enhanced top padding for optimal border visibility */}
+            <div className="pt-16"></div>
+            
+            {/* Content section with tighter spacing */}
+            <div className="px-6 text-center space-y-2 flex-1 flex flex-col justify-center">
+              {/* H1 Title - Larger and more prominent */}
               <h1
-                className="heading-h3"
+                className="heading-h2"
                 style={{
                   color: "rgb(0, 0, 0)",
+                  lineHeight: "1.1",
                 }}
               >
                 your home for easy, delicious meal prep recipes
               </h1>
 
-              {/* Tagline */}
+              {/* Tagline - Closer to heading */}
               <p
-                style={{ color: "rgb(0, 0, 0)", fontSize: "14px" }}
-                className="max-w-xs mx-auto"
+                style={{ color: "rgb(0, 0, 0)", fontSize: "15px" }}
+                className="max-w-sm mx-auto leading-relaxed"
               >
                 AI-powered meals personalized for you, fueled by your WHOOP
                 data.
               </p>
-
-              {/* Start Planning Button - Full width on mobile */}
-              <div className="pt-2">
-                <Link
-                  href="/personalize"
-                  className="btn inline-flex items-center justify-center gap-2 bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors shadow-lg w-full max-w-xs mx-auto"
-                >
-                  Start Planning
-                  <ChevronRight className="w-4 h-4" />
-                </Link>
-              </div>
             </div>
 
-            {/* Mobile Image - Touches bottom with curvature */}
-            <div className="relative h-[280px] -mx-0 -mb-0 rounded-b-[33px] overflow-hidden">
+            {/* Button positioned closer to content */}
+            <div className="px-6 pb-6 -mt-4">
+              <Link
+                href="/personalize"
+                className="btn inline-flex items-center justify-center gap-2 bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors shadow-lg w-full max-w-sm mx-auto"
+              >
+                Start Planning
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            {/* Mobile Image - Properly fitted without main content cropping */}
+            <div className="relative h-[38vh] -mx-0 -mb-0 rounded-b-[33px] overflow-hidden">
               {!imageError ? (
                 <Image
                   src="https://scuziassests.s3.us-east-1.amazonaws.com/mealprepmobile-1_2025-05-15-142854_zkhw.png"
@@ -59,7 +64,8 @@ export function AnimatedHeroSection() {
                   fill
                   priority
                   unoptimized
-                  className="object-cover object-center"
+                  className="object-cover object-top"
+                  style={{ objectPosition: 'center top' }}
                   onError={() => setImageError(true)}
                 />
               ) : (

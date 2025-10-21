@@ -12,10 +12,10 @@ export async function POST(request: NextRequest) {
     const session = await auth.api.getSession({ headers: request.headers });
     let userId = session?.user?.id;
 
-    // TEMPORARY: For testing, use test user if no auth
+    // Use the actual WHOOP user ID from your uploaded data
     if (!userId) {
-      console.warn('⚠️ [AUTH] No authentication found, using test user');
-      userId = 'test_user_library_integration';
+      console.warn('⚠️ [AUTH] No authentication found, using main WHOOP user');
+      userId = 'whoop_user_main'; // This matches the user_id in your uploaded WHOOP data
     }
 
     console.log(`✅ [AUTH] User authenticated: ${userId}`);
@@ -80,13 +80,29 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Step 4: Select meals from library based on WHOOP analysis
+    // Step 4: Parse request body for regeneration options
+    let requestBody = {};
+    try {
+      requestBody = await request.json();
+    } catch (e) {
+      // No body or invalid JSON, use defaults
+    }
+
+    const { regenerate = false, forceNewSelection = false, timestamp } = requestBody as any;
+    
+    console.log('🎯 [SELECTION] Selection options:', { regenerate, forceNewSelection, timestamp });
+
+    // Step 5: Select meals from library based on WHOOP analysis
     console.log('🎯 [SELECTION] Selecting optimal meals from library...');
     
     let mealSelection;
     try {
-      mealSelection = await MealLibraryService.selectMealsFromLibrary(whoopAnalysis);
-      console.log(`✅ [SELECTION] Selected ${mealSelection.meals.length} meals from library`);
+      mealSelection = await MealLibraryService.selectMealsFromLibrary(whoopAnalysis, {
+        regenerate,
+        forceNewSelection,
+        timestamp
+      });
+      console.log(`✅ [SELECTION] ${regenerate ? 'Regenerated' : 'Selected'} ${mealSelection.meals.length} meals from library`);
     } catch (selectionError) {
       console.error('❌ [SELECTION] Error selecting meals from library:', selectionError);
       return NextResponse.json({
@@ -96,7 +112,7 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Step 5: Return the meal plan
+    // Step 5: Return the meal plan with image class validation
     const duration = Date.now() - startTime;
     console.log(`🎉 [SUCCESS] Library-based meal generation completed in ${duration}ms`);
 
@@ -114,13 +130,20 @@ export async function POST(request: NextRequest) {
         servings: meal.servings,
         nutrition: meal.nutrition,
         image: meal.image,
+        imageUrl: meal.imageUrl, // Ensure imageUrl is included
         meal_id: meal.meal_id,
+        // 🎯 CLASS IDENTIFICATION
+        imageClass: meal.imageUrl && meal.imageUrl.trim() !== '' ? 'A' : 'B',
+        hasImage: meal.imageUrl && meal.imageUrl.trim() !== '',
+        showImagePlaceholder: !meal.imageUrl || meal.imageUrl.trim() === ''
       })),
       generation_type: 'library_based',
       whoop_analysis: whoopAnalysis,
       whoop_insights: mealSelection.whoopInsights,
       generation_summary: mealSelection.selectionSummary,
       library_stats: libraryStats,
+      // 🎯 IMAGE CLASS VALIDATION DATA
+      imageClassValidation: mealSelection.imageClassValidation,
       processing_time_ms: duration,
       step: 'completed'
     });

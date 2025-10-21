@@ -101,11 +101,13 @@ export function useWhoopConnect() {
       
       const response = await fetch("/api/whoop/connect");
       console.log("📡 Connect API response status:", response.status);
-      console.log("📡 Connect API response headers:", response.headers);
+      console.log("📡 Connect API response ok:", response.ok);
       
       if (!response.ok) {
+        const errorText = await response.text();
         console.error("❌ API response not ok:", response.status, response.statusText);
-        throw new Error(`API request failed: ${response.status}`);
+        console.error("❌ API error details:", errorText);
+        throw new Error(`API request failed: ${response.status} - ${errorText}`);
       }
       
       const data = await response.json();
@@ -115,8 +117,24 @@ export function useWhoopConnect() {
         console.log("🔗 Opening WHOOP OAuth in new tab:", data.authUrl);
         console.log("📍 Redirect URI:", data.redirectUri);
         
-        // Open WHOOP OAuth in a new tab
-        const authWindow = window.open(data.authUrl, '_blank', 'noopener,noreferrer,width=600,height=700');
+        // Debug: Show user what's happening
+        console.log("🚀 About to open WHOOP OAuth window");
+        
+        // Open WHOOP OAuth in a popup window (not a new tab)
+        const authWindow = window.open(
+          data.authUrl, 
+          'whoopAuth', 
+          'width=600,height=700,scrollbars=yes,resizable=yes,status=yes,location=yes,toolbar=no,menubar=no'
+        );
+        
+        if (!authWindow) {
+          console.error("❌ Failed to open popup window - popup blocked?");
+          alert("Popup blocked! Please allow popups for this site and try again, or check your browser settings.");
+          setIsLoading(false);
+          return;
+        }
+        
+        console.log("✅ OAuth window opened successfully");
         
         // Start polling immediately in case postMessage doesn't work
         console.log("🔄 Starting immediate polling for connection");
